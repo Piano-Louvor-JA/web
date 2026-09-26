@@ -18,6 +18,7 @@ import {
   formatElapsedMs,
 } from '../services/countdown-format'
 import { publishToStageRelay } from '@shared/services/palco-cloud-bridge'
+import { getPresetDurationMs, type AlertPresetKey } from '../services/alert-tone'
 import {
   loadCountdownDisplayConfig,
   saveCountdownDisplayConfig,
@@ -31,8 +32,10 @@ import {
   DEFAULT_COUNTDOWN_DURATION_MS,
   DEFAULT_COUNTDOWN_RUNTIME,
   type CountdownDisplayConfig,
+  type CountdownMode,
   type CountdownRuntimeState,
   type CountdownTimeFormat,
+  type SabbathModeConfig,
 } from '../types/countdown'
 
 export const useCountdownStore = defineStore('countdown', () => {
@@ -44,6 +47,7 @@ export const useCountdownStore = defineStore('countdown', () => {
   })
   const isProjecting = ref(false)
   const configOpen = ref(false)
+  const displayConfigOpen = ref(false)
   const hydrated = ref(false)
 
   let projectionWatchTimer: ReturnType<typeof setInterval> | null = null
@@ -52,7 +56,11 @@ export const useCountdownStore = defineStore('countdown', () => {
   const isRunning = computed(() => runtime.value.status === 'running')
   const isPaused = computed(() => runtime.value.status === 'paused')
   const canStart = computed(
-    () => runtime.value.durationMs > 0 && !runtime.value.finished,
+    () =>
+      runtime.value.durationMs > 0 &&
+      !runtime.value.finished &&
+      // não deixa iniciar com menos tempo que a soma dos áudios habilitados (modo ES)
+      (config.value.mode !== 'sabbath' || runtime.value.durationMs >= minDurationMs()),
   )
 
   function stopProjectionWatch() {
@@ -82,35 +90,38 @@ export const useCountdownStore = defineStore('countdown', () => {
   }
 
   function checkFinished() {
-    if (runtime.value.status !== 'running' || runtime.value.finished) return
+      if (runtime.value.status !== 'running' || runtime.value.finished) return
 
-    const remaining = computeRemainingMs(
-      runtime.value.durationMs,
-      runtime.value.accumulatedMs,
-      runtime.value.segmentStartedAt,
-      'running',
-      Date.now(),
-    )
+      const remaining = computeRemainingMs(
+        runtime.value.durationMs,
+        runtime.value.accumulatedMs,
+        runtime.value.segmentStartedAt,
+        'running',
+        Date.now(),
+      )
 
-    if (remaining > 0) return
+      // Se allowNegative=true, não pausa no zero — continua rodando (tempo negativo)
+      if (config.value.allowNegative) return
 
-    const elapsed = computeElapsedMs(
-      runtime.value.accumulatedMs,
-      runtime.value.segmentStartedAt,
-      'running',
-      Date.now(),
-    )
+      if (remaining > 0) return
 
-    runtime.value = {
-      ...runtime.value,
-      status: 'paused',
-      segmentStartedAt: null,
-      accumulatedMs: Math.min(elapsed, runtime.value.durationMs),
-      finished: true,
+      const elapsed = computeElapsedMs(
+        runtime.value.accumulatedMs,
+        runtime.value.segmentStartedAt,
+        'running',
+        Date.now(),
+      )
+
+      runtime.value = {
+        ...runtime.value,
+        status: 'paused',
+        segmentStartedAt: null,
+        accumulatedMs: Math.min(elapsed, runtime.value.durationMs),
+        finished: true,
+      }
+      syncRuntime()
+      stopFinishWatch()
     }
-    syncRuntime()
-    stopFinishWatch()
-  }
 
   function startFinishWatch() {
     stopFinishWatch()
@@ -155,11 +166,55 @@ export const useCountdownStore = defineStore('countdown', () => {
   }
 
   function setTextColor(textColor: string) {
-    config.value = { ...config.value, textColor }
-    persistConfig()
-  }
+      config.value = { ...config.value, textColor }
+      persistConfig()
+    }
 
-  function resetDisplayToDefault() {
+    function setAllowNegative(allowNegative: boolean) {
+      config.value = { ...config.value, allowNegative }
+      persistConfig()
+    }
+
+    function setAlertTonePreset(
+      marker: keyof NonNullable<CountdownDisplayConfig['alertTonePresets']>,
+      preset: AlertPresetKey | 'none',
+    ) {
+      config.value = {
+        ...config.value,
+        alertTonePresets: { ...config.value.alertTonePresets, [marker]: preset },
+      }
+      persistConfig()
+    }
+
+    function setMode(mode: CountdownMode) {
+      if (mode === config.value.mode) return
+      if (mode === 'sabbath') {
+        config.value = {
+          ...config.value,
+          mode,
+          sabbathConfig: config.value.sabbathConfig ?? { scheduleMode: 'endOnly', endTime: '10:15' },
+        }
+      } else {
+        // volta ao padrão: comportamento como era antes do modo ES
+        config.value = { ...config.value, mode, sabbathConfig: undefined }
+      }
+      persistConfig()
+    }
+
+    function setSabbathConfig(sabbathConfig: SabbathModeConfig) {
+      config.value = { ...config.value, mode: 'sabbath', sabbathConfig }
+      persistConfig()
+    }
+
+    /** Adiciona (delta > 0) ou remove (delta < 0) tempo da contagem, em qualquer status.
+     *  Remove nunca deixa abaixo de zero. Não reseta a contagem em curso. */
+    function adjustTime(deltaMs: number) {
+      const next = Math.max(0, runtime.value.durationMs + Math.floor(deltaMs))
+      runtime.value = { ...runtime.value, durationMs: next, finished: false }
+      syncRuntime()
+    }
+
+    function resetDisplayToDefault() {
     config.value = { ...DEFAULT_COUNTDOWN_DISPLAY_CONFIG }
     persistConfig()
   }
@@ -172,10 +227,30 @@ export const useCountdownStore = defineStore('countdown', () => {
     configOpen.value = false
   }
 
+  function openDisplayConfig() {
+    displayConfigOpen.value = true
+  }
+
+  function closeDisplayConfig() {
+    displayConfigOpen.value = false
+  }
+
+  /** Duração mínima permitida: soma dos áudios habilitados, para que todos toquem na íntegra.
+   *  Só se aplica em modo Escola Sabatina. */
+  function minDurationMs(): number {
+    if (config.value.mode !== 'sabbath') return 0
+    const presets = config.value.alertTonePresets ?? {}
+    return (['start', '5min', '1min'] as const).reduce((total, marker) => {
+      const preset = presets[marker] ?? DEFAULT_COUNTDOWN_DISPLAY_CONFIG.alertTonePresets?.[marker]
+      if (!preset || preset === 'none') return total
+      return total + getPresetDurationMs(preset)
+    }, 0)
+  }
+
   function setDurationMs(durationMs: number) {
     if (runtime.value.status === 'running') return
 
-    const next = Math.max(0, Math.floor(durationMs))
+    const next = Math.max(minDurationMs(), Math.floor(durationMs))
     runtime.value = {
       ...runtime.value,
       durationMs: next,
@@ -189,6 +264,38 @@ export const useCountdownStore = defineStore('countdown', () => {
 
   function start() {
     if (runtime.value.status === 'running') return
+
+    // Modo Escola Sabatina: runtime é derivado dos horários início/término —
+    // NUNCA herda durationMs/acumulado do cronômetro normal.
+    if (config.value.mode === 'sabbath' && config.value.sabbathConfig) {
+      const sc = config.value.sabbathConfig
+      if (!/^\d{2}:\d{2}$/.test(sc.endTime)) return
+      const now = new Date()
+      const nowCheckMs = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000
+      const nowMs = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000
+      const [eh, em] = sc.endTime.split(':').map(Number)
+      const endMs = (eh * 3600 + em * 60) * 1000
+      // término em outro dia (já passou da meia-noite)? trata como amanhã
+      const durationMs = endMs > nowMs ? endMs - nowMs : endMs - nowMs + 24 * 3600 * 1000
+      let startAtMs = nowMs
+      if (sc.scheduleMode === 'start' && /^\d{2}:\d{2}$/.test(sc.startTime ?? '')) {
+        const [sh, sm] = (sc.startTime ?? '').split(':').map(Number)
+        startAtMs = (sh * 3600 + sm * 60) * 1000
+      }
+      const accum = Math.max(0, nowMs - startAtMs)
+      runtime.value = {
+        ...runtime.value,
+        durationMs,
+        accumulatedMs: Math.min(accum, durationMs),
+        segmentStartedAt: Date.now(),
+        status: 'running',
+        finished: false,
+      }
+      syncRuntime()
+      startFinishWatch()
+      return
+    }
+
     if (runtime.value.durationMs <= 0 || runtime.value.finished) return
 
     const remaining = computeRemainingMs(
@@ -329,10 +436,18 @@ export const useCountdownStore = defineStore('countdown', () => {
     setTimeFormat,
     setBgColor,
     setTextColor,
-    resetDisplayToDefault,
+    setAllowNegative,
+    setAlertTonePreset,
+        setMode,
+        setSabbathConfig,
+        resetDisplayToDefault,
     openConfig,
     closeConfig,
+    displayConfigOpen,
+    openDisplayConfig,
+    closeDisplayConfig,
     setDurationMs,
+    adjustTime,
     start,
     pause,
     reset,

@@ -116,6 +116,13 @@ function patchModuleTimeFormat(value: string) {
   }
 }
 
+function patchModuleAllowNegative(value: boolean) {
+  if (activeScope.value === 'countdown') {
+    const current = effectiveSettings.value.countdown ?? DEFAULT_COUNTDOWN_MODULE_SETTINGS
+    draftPatch({ countdown: { ...current, allowNegative: value } })
+  }
+}
+
 const moduleTimeFormat = computed(() => {
   if (activeScope.value === 'timer') {
     return settings.value.timer?.timeFormat ?? DEFAULT_TIMER_MODULE_SETTINGS.timeFormat
@@ -615,6 +622,26 @@ const hasDraft = computed(() => draft.value !== null)
             {{ opt.label }}
           </button>
         </div>
+
+        <template v-if="activeScope === 'countdown'">
+          <p class="stage-custom__label stage-custom__label--sub">
+            {{ t('countdown.allowNegative') }}
+          </p>
+          <div class="stage-custom__segment" role="radiogroup">
+            <button
+              v-for="opt in [{ value: false, label: t('common.off') }, { value: true, label: t('common.on') }]"
+              :key="String(opt.value)"
+              type="button"
+              role="radio"
+              :aria-checked="(effectiveSettings.countdown?.allowNegative ?? false) === opt.value"
+              class="stage-custom__segment-btn"
+              :class="{ 'stage-custom__segment-btn--active': (effectiveSettings.countdown?.allowNegative ?? false) === opt.value }"
+              @click="patchModuleAllowNegative(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+        </template>
       </div>
     </template>
 

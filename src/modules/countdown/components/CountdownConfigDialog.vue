@@ -1,17 +1,36 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { GlassCard } from '@design-system/index'
 
 import {
-  COUNTDOWN_BG_PRESETS,
-  COUNTDOWN_TEXT_PRESETS,
   COUNTDOWN_TIME_FORMATS,
   type CountdownDisplayConfig,
+  type CountdownMode,
   type CountdownTimeFormat,
 } from '../types/countdown'
+import {
+  getAvailablePresets,
+  getCustomAudio,
+  getPresetDurationMs,
+  saveCustomTone,
+  type AlertPresetKey,
+} from '../services/alert-tone'
+import { DEFAULT_ALERT_TONE_PRESETS } from '../composables/useCountdown'
+import { useCountdownStore } from '../stores/useCountdownStore'
 
-defineProps<{
+type ToneMarkerKey = keyof NonNullable<CountdownDisplayConfig['alertTonePresets']>
+
+const ALERT_MARKERS: Array<{ key: 'start' | '5min' | '1min'; labelKey: string }> = [
+  { key: 'start', labelKey: 'countdown.toneMarkerStart' },
+  { key: '5min', labelKey: 'countdown.toneMarker5min' },
+  { key: '1min', labelKey: 'countdown.toneMarker1min' },
+]
+
+const DEFAULT_TONE_PRESETS = DEFAULT_ALERT_TONE_PRESETS
+
+const props = defineProps<{
   open: boolean
   config: CountdownDisplayConfig
 }>()
@@ -19,22 +38,60 @@ defineProps<{
 const emit = defineEmits<{
   close: []
   'update:timeFormat': [value: CountdownTimeFormat]
-  'update:bgColor': [value: string]
-  'update:textColor': [value: string]
+  'update:allowNegative': [value: boolean]
+  'update:alertTonePreset': [value: { marker: ToneMarkerKey; preset: string }]
+  'update:mode': [value: CountdownMode]
+  'update:sabbathConfig': [value: SabbathModeConfig]
   reset: []
 }>()
 
 const { t } = useI18n()
 
-function onBgInput(event: Event) {
-  const target = event.target as HTMLInputElement
-  emit('update:bgColor', target.value)
+/** Duração legível (ex.: 30s) do preset selecionado em cada marco. */
+function presetDurationLabel(marker: 'start' | '5min' | '1min', config: CountdownDisplayConfig): string {
+  const preset = config.alertTonePresets?.[marker] ?? DEFAULT_TONE_PRESETS[marker]
+  if (!preset || preset === 'none') return ''
+  const ms = getPresetDurationMs(preset, getCustomAudio(marker))
+  const s = Math.round(ms / 1000)
+  return s >= 60 ? `${Math.floor(s / 60)}min${s % 60 ? ` ${s % 60}s` : ''}` : `${s}s`
 }
 
-function onTextInput(event: Event) {
-  const target = event.target as HTMLInputElement
-  emit('update:textColor', target.value)
+/** Soma das durações dos áudios habilitados — tempo mínimo recomendado. */
+function totalTonesMs(config: CountdownDisplayConfig): number {
+  return (['start', '5min', '1min'] as const).reduce((total, marker) => {
+    const preset = config.alertTonePresets?.[marker] ?? DEFAULT_TONE_PRESETS[marker]
+    if (!preset || preset === 'none') return total
+    return total + getPresetDurationMs(preset, getCustomAudio(marker))
+  }, 0)
 }
+
+const runtime = computed(() => useCountdownStore().runtime)
+const tooShortWarning = computed(() => {
+  const total = totalTonesMs(props.config)
+  if (total <= 0) return ''
+  if (runtime.value.durationMs >= total) return ''
+  const s = Math.round(total / 1000)
+  const label = s >= 60 ? `${Math.floor(s / 60)}min${s % 60 ? ` ${s % 60}s` : ''}` : `${s}s`
+  return t('countdown.toneMinDurationWarning', { min: label })
+})
+
+function onCustomAudioFile(marker: 'start' | '5min' | '1min', event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      saveCustomTone(marker, String(reader.result))
+      // seleciona 'custom' automaticamente no select
+      emit('update:alertTonePreset', { marker, preset: 'custom' })
+    } catch {
+      alert(t('countdown.customToneTooLarge'))
+    }
+  }
+  reader.readAsDataURL(file)
+}
+
 
 </script>
 
@@ -54,22 +111,22 @@ function onTextInput(event: Event) {
           :padding="false"
         >
           <header class="countdown-config__header">
-            <div class="countdown-config__heading">
-              <div class="countdown-config__heading-icon">
-                <i
-                  class="ti ti-palette"
-                  aria-hidden="true"
-                />
-              </div>
-              <div>
-                <h2 class="countdown-config__title">
-                  {{ t('countdown.configTitle') }}
-                </h2>
-                <p class="countdown-config__subtitle">
-                  {{ t('countdown.configSubtitle') }}
-                </p>
-              </div>
-            </div>
+                      <div class="countdown-config__heading">
+                        <div class="countdown-config__heading-icon">
+                          <i
+                            class="ti ti-settings"
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <div>
+                          <h2 class="countdown-config__title">
+                            {{ t('countdown.configTitle') }}
+                          </h2>
+                          <p class="countdown-config__subtitle">
+                            {{ t('countdown.configSubtitle') }}
+                          </p>
+                        </div>
+                      </div>
             <button
               type="button"
               class="countdown-config__icon-btn"
@@ -84,92 +141,6 @@ function onTextInput(event: Event) {
           </header>
 
           <div class="countdown-config__body">
-            <section class="countdown-config__section">
-              <div class="countdown-config__section-head">
-                <i
-                  class="ti ti-paint"
-                  aria-hidden="true"
-                />
-                <div>
-                  <h3>{{ t('countdown.bgColor') }}</h3>
-                  <p>{{ t('countdown.bgColorHint') }}</p>
-                </div>
-              </div>
-              <div
-                class="countdown-config__swatches"
-                role="radiogroup"
-                :aria-label="t('countdown.bgColor')"
-              >
-                <button
-                  v-for="color in COUNTDOWN_BG_PRESETS"
-                  :key="`bg-${color}`"
-                  type="button"
-                  class="countdown-config__swatch"
-                  :class="{ 'countdown-config__swatch--active': config.bgColor === color }"
-                  :style="{ background: color }"
-                  role="radio"
-                  :aria-checked="config.bgColor === color"
-                  :aria-label="color"
-                  @click="emit('update:bgColor', color)"
-                />
-                <label class="countdown-config__custom">
-                  <input
-                    type="color"
-                    :value="config.bgColor"
-                    :aria-label="t('countdown.customColor')"
-                    @input="onBgInput"
-                  >
-                  <i
-                    class="ti ti-color-picker"
-                    aria-hidden="true"
-                  />
-                </label>
-              </div>
-            </section>
-
-            <section class="countdown-config__section">
-              <div class="countdown-config__section-head">
-                <i
-                  class="ti ti-typography"
-                  aria-hidden="true"
-                />
-                <div>
-                  <h3>{{ t('countdown.textColor') }}</h3>
-                  <p>{{ t('countdown.textColorHint') }}</p>
-                </div>
-              </div>
-              <div
-                class="countdown-config__swatches"
-                role="radiogroup"
-                :aria-label="t('countdown.textColor')"
-              >
-                <button
-                  v-for="color in COUNTDOWN_TEXT_PRESETS"
-                  :key="`text-${color}`"
-                  type="button"
-                  class="countdown-config__swatch"
-                  :class="{ 'countdown-config__swatch--active': config.textColor === color }"
-                  :style="{ background: color }"
-                  role="radio"
-                  :aria-checked="config.textColor === color"
-                  :aria-label="color"
-                  @click="emit('update:textColor', color)"
-                />
-                <label class="countdown-config__custom">
-                  <input
-                    type="color"
-                    :value="config.textColor"
-                    :aria-label="t('countdown.customColor')"
-                    @input="onTextInput"
-                  >
-                  <i
-                    class="ti ti-color-picker"
-                    aria-hidden="true"
-                  />
-                </label>
-              </div>
-            </section>
-
             <section class="countdown-config__section">
               <div class="countdown-config__section-head">
                 <i
@@ -200,9 +171,89 @@ function onTextInput(event: Event) {
                 </button>
               </div>
             </section>
+
+            <section class="countdown-config__section">
+                          <div class="countdown-config__section-head">
+                            <i
+                              class="ti ti-clock-pause"
+                              aria-hidden="true"
+                            />
+                            <div>
+                              <h3>{{ t('countdown.allowNegative') }}</h3>
+                              <p>{{ t('countdown.allowNegativeHint') }}</p>
+                            </div>
+                          </div>
+                          <label class="countdown-config__toggle">
+                            <input
+                              type="checkbox"
+                              role="switch"
+                              :checked="config.allowNegative ?? false"
+                              :aria-label="t('countdown.allowNegative')"
+                              @change="emit('update:allowNegative', ($event.target as HTMLInputElement).checked)"
+                            >
+                          </label>
+                        </section>
+
+                        <section class="countdown-config__section">
+              <div class="countdown-config__section-head">
+                <i
+                  class="ti ti-bell"
+                  aria-hidden="true"
+                />
+                <div>
+                  <h3>{{ t('countdown.alertTones') }}</h3>
+                  <p>{{ t('countdown.alertTonesHint') }}</p>
+                </div>
+              </div>
+              <div
+                v-for="marker in ALERT_MARKERS"
+                :key="marker.key"
+                class="countdown-config__tone-block"
+              >
+                <div class="countdown-config__tone-row">
+                  <span class="countdown-config__tone-marker">{{ t(marker.labelKey) }}</span>
+                  <select
+                    class="countdown-config__tone-select"
+                    :value="config.alertTonePresets?.[marker.key] ?? DEFAULT_TONE_PRESETS[marker.key]"
+                    :aria-label="t(marker.labelKey)"
+                    @change="emit('update:alertTonePreset', { marker: marker.key, preset: ($event.target as HTMLSelectElement).value })"
+                  >
+                    <option
+                      v-for="p in getAvailablePresets()"
+                      :key="p.key"
+                      :value="p.key"
+                    >
+                      {{ p.label }}
+                    </option>
+                  </select>
+                </div>
+                <span
+                    v-if="presetDurationLabel(marker.key, config)"
+                    class="countdown-config__tone-duration"
+                  >{{ t('countdown.toneDuration', { dur: presetDurationLabel(marker.key, config) }) }}</span>
+                <label class="countdown-config__tone-file">
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    @change="onCustomAudioFile(marker.key, $event)"
+                  >
+                </label>
+              </div>
+            </section>
           </div>
 
           <footer class="countdown-config__footer">
+            <p
+              v-if="tooShortWarning"
+              class="countdown-config__tone-warning"
+              role="alert"
+            >
+              <i
+                class="ti ti-alert-triangle"
+                aria-hidden="true"
+              />
+              {{ tooShortWarning }}
+            </p>
             <button
               type="button"
               class="countdown-config__btn countdown-config__btn--danger"
@@ -239,7 +290,7 @@ function onTextInput(event: Event) {
 
 .countdown-config__panel {
   display: flex;
-  width: min(100%, 32rem);
+  width: min(100%, 42rem);
   max-height: min(90vh, 40rem);
   flex-direction: column;
   overflow: hidden;
@@ -329,6 +380,78 @@ function onTextInput(event: Event) {
   padding: 1rem;
   border-radius: var(--ds-radius-md, 0.75rem);
   background: color-mix(in srgb, var(--ds-color-on-surface) 4%, transparent);
+}
+
+.countdown-config__tone-block {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ds-color-on-surface) 8%, transparent);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.countdown-config__tone-duration {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--ds-color-on-surface-muted, var(--ds-color-on-surface));
+            margin-top: 0.1rem;
+          }
+
+          .countdown-config__tone-warning {
+            display: flex;
+            flex-basis: 100%;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0 0 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            background: color-mix(in srgb, #f59e0b 15%, transparent);
+            color: #b45309;
+            font-size: 0.78rem;
+          }
+
+          .countdown-config__tone-file {
+  display: block;
+  margin-top: 0.35rem;
+  margin-left: calc(180px + 1rem);
+  font-size: 0.85rem;
+  color: var(--ds-color-on-surface-variant);
+
+  input[type='file'] {
+    max-width: 320px;
+    font-size: 0.85rem;
+  }
+}
+
+.countdown-config__tone-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+
+  > label,
+  > span.countdown-config__tone-marker {
+    flex: 0 0 180px;
+    color: var(--ds-color-on-surface);
+    font-size: 0.95rem;
+  }
+
+  .countdown-config__tone-select {
+    flex: 1;
+    max-width: 320px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--ds-color-outline);
+    border-radius: var(--ds-radius-sm);
+    background: var(--ds-color-surface-container);
+    color: var(--ds-color-on-surface);
+    font-size: 0.95rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23757575' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+  }
 }
 
 .countdown-config__section-head {
