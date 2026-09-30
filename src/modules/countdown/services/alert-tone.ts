@@ -57,9 +57,10 @@ export async function playAlertTone(
 ): Promise<void> {
   // Presets sintéticos usam WebAudio
   const syntheticKeys = ['beep', 'chime', 'gong'] as const
-  if (syntheticKeys.includes(preset as 'beep' | 'chime' | 'gong')) {
+  const syntheticPreset = syntheticKeys.find((key) => key === preset)
+  if (syntheticPreset != null) {
     if (!ctx) return
-    const p = ALERT_PRESETS[preset]
+    const p = ALERT_PRESETS[syntheticPreset]
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = p.type
@@ -78,7 +79,8 @@ export async function playAlertTone(
       // segundo tom
       osc.frequency.setValueAtTime(p.freq[1], ctx.currentTime + p.duration)
     } else {
-      osc.frequency.setValueAtTime(p.freq, ctx.currentTime)
+      const singleFreq = Array.isArray(p.freq) ? p.freq[0] : p.freq
+      osc.frequency.setValueAtTime(singleFreq, ctx.currentTime)
     }
     osc.connect(gain)
     gain.connect(ctx.destination)

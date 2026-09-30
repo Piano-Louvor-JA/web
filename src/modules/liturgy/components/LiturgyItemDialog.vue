@@ -63,9 +63,7 @@ const startTimeRequiredMissing = computed(
 const endTimeRequiredMissing = computed(
   () => isCategory.value && !normalizeLiturgyTimeHHmm(props.draft.endTime),
 )
-const categoryRequiredMissing = computed(
-  () => hasTypeSelection.value && !isCategory.value && !props.draft.categoryId,
-)
+const categoryRequiredMissing = computed(() => false)
 
 const durationLabel = computed(() => formatMomentDuration(props.draft.durationMs))
 
@@ -767,10 +765,6 @@ function isLightDot(hex: string): boolean {
                 for="moment-category"
               >
                 {{ t('liturgy.dialog.categoryField') }}
-                <span
-                  class="moment-dialog__required"
-                  aria-hidden="true"
-                >*</span>
               </label>
               <select
                 id="moment-category"

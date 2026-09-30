@@ -276,8 +276,8 @@ function hasValidCategoryTimes(draft: LiturgyItemDraft): boolean {
 }
 
 function hasValidTypeSpecificFields(draft: LiturgyItemDraft): boolean {
+  // Categoria é OPCIONAL: item pode viver na raiz da timeline sem pai.
   if (draft.type === 'music' && draft.musicId == null) return false
-  if (draft.type !== 'category' && !draft.categoryId) return false
   if (draft.type === 'images') {
     return resolveImagePaths(draft).length > 0
   }
