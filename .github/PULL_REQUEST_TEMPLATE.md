@@ -1,30 +1,58 @@
-## Resumo
+<!--
+  PR Template — pianolouvorja/web
+  Base: SEMPRE `staging` (DEPLOY.md). main só via PR de staging.
+  Uma PR única quando a funcionalidade INTEIRA estiver pronta (F0..F5) — NÃO uma PR por fase.
+  Commits por fase dentro da branch feat/...
+-->
 
-<!-- O que mudou e por quê? -->
+## 📋 Descrição
+<!-- O que muda e por quê. Link para issue/spec se houver. -->
 
-## Tipo
+## ✅ Checklist de Qualidade (obrigatório)
+- [ ] `npm run lint` passa
+- [ ] `npm run type-check` passa
+- [ ] `npm run build` passa
+- [ ] `npm run test` passa (cobertura ≥ threshold)
+- [ ] Testes de mutação (`npm run test:mutation`) — score ≥ 80% ou justificativa
+- [ ] **Evidência de Regressão** preenchida abaixo
 
-- [ ] Correção
-- [ ] Feature
-- [ ] Refactor
-- [ ] Documentação
-- [ ] CI / infraestrutura
-- [ ] Segurança
+## 🔁 Evidência de Regressão (obrigatório — anti-regressão)
+| Métrica | Baseline (staging) | Pós-mudança (esta PR) |
+|---------|-------------------|----------------------|
+| Testes passed | | |
+| Testes failed | | |
+| Type-check | OK / FAIL | OK / FAIL |
+| Build | OK / FAIL | OK / FAIL |
 
-## Validação
+**Como obter:**
+```bash
+# 1. Em staging (baseline)
+git checkout staging && git pull
+npm run test:regression -- --baseline
 
-- [ ] Testes relevantes passam
-- [ ] Analyze/lint/typecheck passam
-- [ ] Build relevante passa
-- [ ] Fluxo manual foi testado quando há UI
-- [ ] Sem segredo, credencial ou dado pessoal no diff
+# 2. Na branch da PR (comparação)
+git checkout feat/sua-branch
+npm run test:regression -- --compare
+```
+Cole os números acima. Se houver regressão → **PR não passa no CI** (gate `regression-gate`).
 
-## Evidência
+## 🎯 Consumidores impactados (paridade web↔app↔APK)
+- [ ] Nenhum (mudança isolada)
+- [ ] `pianolouvorja/app` (desktop Electron) — módulos: ____
+- [ ] `pianolouvorja/apk` (Flutter) — módulos: ____
+- [ ] `pianolouvorja/api` (Hono) — endpoints: ____
+- [ ] Outro: ____
 
-<!-- Screenshots, logs, vídeo, ou N/A. -->
+## 📸 Evidência visual (se UI/UX)
+| Antes | Depois |
+|-------|--------|
+| ![antes](url) | ![depois](url) |
 
-## Risco / rollback
+## 🧪 Como testar localmente
+```bash
+# passos para reproduzir/validar
+```
 
-<!-- Impacto, compatibilidade e como reverter; ou N/A. -->
+---
 
-Closes #
+> **Lembrete:** Paridade literal com `~/pianolouvorja/app` (F0..F5). Testes com música SACRA IASD (Athus, Vox, Arautos). Botões devem PARECER botões (borda/fundo). Fullscreen automático sem chrome/overlays.

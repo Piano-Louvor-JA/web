@@ -17,7 +17,7 @@ function setEnv(key: string, value: string | undefined) {
 const fetchMock = vi.fn()
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  fetchMock.mockReset()
   vi.stubGlobal('fetch', fetchMock)
   for (const key of ['VITE_URL_DATABASE', 'VITE_URL_FILES', 'VITE_API_TOKEN', 'VITE_API_FALLBACK_URLS']) {
     setEnv(key, undefined)
