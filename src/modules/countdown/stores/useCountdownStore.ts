@@ -49,6 +49,13 @@ import {
 
 export const useCountdownStore = defineStore('countdown', () => {
   const config = ref<CountdownDisplayConfig>({ ...DEFAULT_COUNTDOWN_DISPLAY_CONFIG })
+  // F3 (web#175): disparos da execução ATUAL vivem no store — a janela de
+  // projeção remonta o composable a cada open e NÃO pode repetir alerta.
+  const firedMarkers = new Set<string>()
+  // F2 (web#175): controles de áudio do operador na projeção.
+  const audioMuted = ref(false)
+  const audioVolume = ref(1)
+  const audioStopTick = ref(0)
   const runtime = ref<CountdownRuntimeState>({
     ...DEFAULT_COUNTDOWN_RUNTIME,
     savedTimesMs: [],
@@ -285,6 +292,22 @@ export const useCountdownStore = defineStore('countdown', () => {
       if (!current.some((m) => m.id === id)) return false
       setAlertMarkers(current.filter((m) => m.id !== id))
       return true
+    }
+
+    // ── F2 (web#175): controles de áudio do operador ─────────────────────
+    function setAudioMuted(muted: boolean) {
+      audioMuted.value = muted
+    }
+
+    function setAudioVolume(volume: number) {
+      audioVolume.value = Math.min(1, Math.max(0, volume))
+    }
+
+    /** Stop: corta o áudio em execução E arma os marcadores de novo
+     *  (o operador decide re-disparar iniciando de novo). */
+    function stopAudio() {
+      audioStopTick.value += 1
+      firedMarkers.clear()
     }
 
     function setMode(mode: CountdownMode) {
@@ -547,6 +570,13 @@ export const useCountdownStore = defineStore('countdown', () => {
             updateAlertMarker,
             removeAlertMarker,
             isOffsetTaken,
+            firedMarkers,
+            audioMuted,
+            audioVolume,
+            audioStopTick,
+            setAudioMuted,
+            setAudioVolume,
+            stopAudio,
             setMode,
         setSabbathConfig,
         resetDisplayToDefault,

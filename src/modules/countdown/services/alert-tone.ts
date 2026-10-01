@@ -54,42 +54,46 @@ export async function playAlertTone(
   preset: AlertPresetKey | 'custom',
   ctx?: AudioContext,
   customAudio?: HTMLAudioElement,
+  control?: { volume?: number },
 ): Promise<void> {
+  const volume = control?.volume ?? 1
   // Presets sintéticos usam WebAudio
   const syntheticKeys = ['beep', 'chime', 'gong'] as const
   const syntheticPreset = syntheticKeys.find((key) => key === preset)
-  if (syntheticPreset != null) {
-    if (!ctx) return
-    const p = ALERT_PRESETS[syntheticPreset]
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = p.type
-    if (Array.isArray(p.freq)) {
-      // chime: dois osciladores em sequência
-      const osc2 = ctx.createOscillator()
-      const gain2 = ctx.createGain()
-      osc2.type = p.type
-      osc2.frequency.setValueAtTime(p.freq[0], ctx.currentTime)
-      osc2.connect(gain2)
-      gain2.connect(ctx.destination)
-      gain2.gain.setValueAtTime(0.3, ctx.currentTime)
-      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + p.duration)
-      osc2.start(ctx.currentTime)
-      osc2.stop(ctx.currentTime + p.duration)
-      // segundo tom
-      osc.frequency.setValueAtTime(p.freq[1], ctx.currentTime + p.duration)
-    } else {
-      const singleFreq = Array.isArray(p.freq) ? p.freq[0] : p.freq
-      osc.frequency.setValueAtTime(singleFreq, ctx.currentTime)
+    if (syntheticPreset != null) {
+      if (!ctx) return
+      const p = ALERT_PRESETS[syntheticPreset]
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = p.type
+      // F2: volume do operador (0–1) escala o ganho fixo 0.3
+      const baseGain = 0.3 * volume
+      if (Array.isArray(p.freq)) {
+        // chime: dois osciladores em sequência
+        const osc2 = ctx.createOscillator()
+        const gain2 = ctx.createGain()
+        osc2.type = p.type
+        osc2.frequency.setValueAtTime(p.freq[0], ctx.currentTime)
+        osc2.connect(gain2)
+        gain2.connect(ctx.destination)
+        gain2.gain.setValueAtTime(baseGain, ctx.currentTime)
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + p.duration)
+        osc2.start(ctx.currentTime)
+        osc2.stop(ctx.currentTime + p.duration)
+        // segundo tom
+        osc.frequency.setValueAtTime(p.freq[1], ctx.currentTime + p.duration)
+      } else {
+        const singleFreq = Array.isArray(p.freq) ? p.freq[0] : p.freq
+        osc.frequency.setValueAtTime(singleFreq, ctx.currentTime)
+      }
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      gain.gain.setValueAtTime(baseGain, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + p.duration)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + p.duration)
+      return
     }
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + p.duration)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + p.duration)
-    return
-  }
 
   // Presets MP3 (oficiais LouvorJA) + custom
   let audio: HTMLAudioElement | undefined
@@ -102,11 +106,38 @@ export async function playAlertTone(
   }
   if (!audio) return
   try {
+    audio.volume = volume
     audio.currentTime = 0
+    registerActiveAudio(audio)
     await audio.play()
   } catch {
     // autoplay bloqueado — silencioso
   }
+}
+
+// ── F2 (web#175): stop global — o operador corta o que estiver tocando ──
+const activeAudios = new Set<HTMLAudioElement>()
+const activeStopHooks = new Set<() => void>()
+
+function registerActiveAudio(audio: HTMLAudioElement): void {
+  activeAudios.add(audio)
+  audio.addEventListener('ended', () => activeAudios.delete(audio), { once: true })
+}
+
+/** Registra hook de stop pra áudio sintético (WebAudio em curso). */
+export function registerStopHook(hook: () => void): () => void {
+  activeStopHooks.add(hook)
+  return () => activeStopHooks.delete(hook)
+}
+
+/** Corta TUDO que está tocando agora (mute do operador / Stop). */
+export function stopAllAlerts(): void {
+  for (const audio of [...activeAudios]) {
+    if (typeof audio.pause === 'function') audio.pause()
+    activeAudios.delete(audio)
+  }
+  for (const hook of [...activeStopHooks]) hook()
+  activeStopHooks.clear()
 }
 
 // Exporta lista de presets para UI (sintéticos + oficiais + desabilitado)

@@ -20,7 +20,7 @@ import type {
   CountdownRuntimeState,
 } from '../types/countdown'
 import { useCountdownStore } from '../stores/useCountdownStore'
-import { playAlertTone } from '../services/alert-tone'
+import { playAlertTone, stopAllAlerts } from '../services/alert-tone'
 import { getLibraryTone } from '../services/alert-tone-library'
 import {
   DEFAULT_ALERT_MARKERS,
@@ -134,22 +134,33 @@ export function useCountdownDisplay(
     // Marcos vêm da config (alertMarkers); fallback = seeds padrão.
     // offset 0 ("start") dispara na transição pra running; demais por
     // cruzamento decrescente. preset 'custom:{id}' toca da biblioteca local.
-    const firedMarkers = new Set<string>()
+    // F3 (web#175): firedMarkers vive NO STORE — reabrir a janela de projeção
+    // remonta o composable e NÃO repete alertas da mesma execução.
+    const firedMarkers = store.firedMarkers
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
     const activeMarkers = computed(() => config.value.alertMarkers ?? DEFAULT_ALERT_MARKERS)
 
     function playMarkerPreset(preset: string, markerId: string): void {
+      if (store.audioMuted) return // F2: operador silenciou
       if (preset.startsWith('custom:')) {
         const audio = getCustomAudioById(preset.slice('custom:'.length))
         if (!audio) return
+        audio.volume = store.audioVolume
         void audio.play().catch(() => {
           // autoplay bloqueado — silencioso
         })
         return
       }
-      void playAlertTone(preset as AlertPresetKey, undefined, undefined)
+      void playAlertTone(preset as AlertPresetKey, undefined, undefined, {
+        volume: store.audioVolume,
+      })
     }
+
+    // F2: Stop do operador corta na hora o que estiver tocando
+    watch(() => store.audioStopTick, () => {
+      stopAllAlerts()
+    })
 
     watch(remainingRawMs, (raw, prevRaw) => {
       if (runtime.value.status !== 'running') return

@@ -1,8 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { ProjectionBackground } from '@design-system/index'
 import { BROWSER_STORAGE_KEYS } from '@shared/constants/storage-keys'
+
+import { useCountdownStore } from '../stores/useCountdownStore'
+
+const { t } = useI18n()
+const store = useCountdownStore()
+const {
+  audioMuted,
+  audioVolume,
+  setAudioMuted,
+  setAudioVolume,
+  stopAudio,
+} = store
 
 import type { StageSettings } from '../../settings/types/stage-settings'
 import {
@@ -154,6 +167,48 @@ const effectiveConfig = computed(() => {
         :runtime="runtime"
       />
     </div>
+
+    <!-- F2 (web#175): controles de áudio do operador na janela de projeção -->
+    <div
+      class="countdown-projection__audio-controls"
+      data-testid="projection-audio-controls"
+    >
+      <button
+        type="button"
+        class="countdown-projection__audio-btn"
+        :class="{ 'countdown-projection__audio-btn--muted': audioMuted }"
+        :aria-label="audioMuted ? t('countdown.unmuteAudio') : t('countdown.muteAudio')"
+        :title="audioMuted ? t('countdown.unmuteAudio') : t('countdown.muteAudio')"
+        @click="setAudioMuted(!audioMuted)"
+      >
+        <i
+          :class="audioMuted ? 'ti ti-volume-off' : 'ti ti-volume'"
+          aria-hidden="true"
+        />
+      </button>
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.05"
+        class="countdown-projection__audio-volume"
+        :value="audioVolume"
+        :aria-label="t('countdown.audioVolume')"
+        @input="setAudioVolume(Number(($event.target as HTMLInputElement).value))"
+      >
+      <button
+        type="button"
+        class="countdown-projection__audio-btn countdown-projection__audio-btn--stop"
+        :aria-label="t('countdown.stopAudio')"
+        :title="t('countdown.stopAudio')"
+        @click="stopAudio()"
+      >
+        <i
+          class="ti ti-player-stop"
+          aria-hidden="true"
+        />
+      </button>
+    </div>
   </ProjectionBackground>
 </template>
 
@@ -167,5 +222,59 @@ const effectiveConfig = computed(() => {
 .countdown-projection__stage {
   width: 100%;
   height: 100%;
+}
+
+/* F2 (web#175): controles de áudio do operador */
+.countdown-projection__audio-controls {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 55%, transparent);
+  backdrop-filter: blur(6px);
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+
+  &:hover,
+  &:focus-within {
+    opacity: 1;
+  }
+}
+
+.countdown-projection__audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(255 255 255 / 15%);
+  }
+
+  &--muted {
+    color: #ff8a65;
+  }
+
+  &--stop:hover {
+    background: rgb(255 82 82 / 30%);
+    color: #ff8a80;
+  }
+}
+
+.countdown-projection__audio-volume {
+  width: 5.5rem;
+  accent-color: #ffb300;
 }
 </style>

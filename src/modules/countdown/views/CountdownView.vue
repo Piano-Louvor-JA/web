@@ -844,17 +844,16 @@ const effectiveConfig = computed(() => {
     }
 
     .countdown-view__duration {
-  position: absolute;
-  top: 0.75rem;
-  left: 50%;
-  z-index: 2;
-  transform: translateX(-50%);
+  /* F1 (web#175): fluxo, não overlay — inputs nunca mais cobrem os dígitos */
+  position: static;
+  transform: none;
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
   border-radius: var(--ds-radius-md, 0.75rem 0 0.75rem 0);
   overflow: visible;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 25%);
+  margin: 0.5rem auto 0;
+  width: fit-content;
 }
 
 .countdown-view__duration .countdown-view__sabbath-time-field {
