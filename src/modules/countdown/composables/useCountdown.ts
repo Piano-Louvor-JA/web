@@ -137,12 +137,14 @@ export function useCountdownDisplay(
     // F3 (web#175): firedMarkers vive NO STORE — reabrir a janela de projeção
     // remonta o composable e NÃO repete alertas da mesma execução.
     // web#175 F2-v5: o disparo acontece SÓ na janela de PROJEÇÃO (popup).
-    // Critério tem que ser DA PRÓPRIA JANELA: popup de projeção tem
-    // window.opener (aberta via window.open pela principal). getPopupModule()
-    // lê storage COMPARTILHADO — a principal se auto-declararia popup com o
-    // popup aberto e dispararia 2 áudios com firedMarkers separados
-    // (Pinias separadas), fazendo o retomar reiniciar do zero.
-    const isProjectionWindow = typeof window !== 'undefined' && window.opener != null
+    // Critério robusto (opener pode faltar com COOP/redirect): a rota do
+    // popup é /popup?module=countdown (buildPopupUrl) — checar CAMINHO +
+    // query, imutáveis pra cada janela.
+    const isProjectionWindow =
+      typeof window !== 'undefined' &&
+      (window.opener != null ||
+        (window.location.pathname.includes('/popup') &&
+          new URLSearchParams(window.location.search).get('module') === 'countdown'))
     // O popup não roda hydrate() — inicia a escuta do canal de controle aqui
     // (idempotente no store) pra receber mute/volume/stop do operador.
     if (isProjectionWindow) store.startAudioControlSync()
