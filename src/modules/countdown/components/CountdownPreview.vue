@@ -21,7 +21,7 @@ const containerRef = useTemplateRef<HTMLElement>('container')
 const sizeWidth = ref(0)
 const sizeHeight = ref(0)
 
-const { formattedTime, isUrgent, isFinished } = useCountdownDisplay(
+const { formattedTime, formattedTimeWithSign, isUrgent, isFinished, isNegative } = useCountdownDisplay(
   () => props.config,
   () => props.runtime,
 )
@@ -36,16 +36,20 @@ const digitalFontSize = computed(() => {
 const surfaceStyle = computed(() => ({
   background: 'transparent',
   color: props.preview
-    ? isFinished.value // NOSONAR
-      ? 'var(--ds-color-error, #ffb4ab)'
-      : isUrgent.value // NOSONAR
-        ? '#ffa726'
-        : 'var(--ds-color-on-surface)'
-    : isFinished.value // NOSONAR
+    ? isNegative.value
       ? '#ff6b6b'
-      : isUrgent.value // NOSONAR
-        ? '#ffa726'
-        : props.config.textColor,
+      : isFinished.value // NOSONAR
+        ? 'var(--ds-color-error, #ffb4ab)'
+        : isUrgent.value // NOSONAR
+          ? '#ffa726'
+          : 'var(--ds-color-on-surface)'
+    : isNegative.value
+      ? '#ff6b6b'
+      : isFinished.value // NOSONAR
+        ? '#ff6b6b'
+        : isUrgent.value // NOSONAR
+          ? '#ffa726'
+          : props.config.textColor,
 }))
 
 function measure() {
@@ -71,23 +75,24 @@ onUnmounted(() => {
 
 <template>
   <div
-    ref="container"
-    class="countdown-preview"
-    :class="{
-      'countdown-preview--urgent': isUrgent,
-      'countdown-preview--finished': isFinished,
-    }"
-    :style="surfaceStyle"
-  >
-    <div
-      class="countdown-preview__digital"
-      :style="{
-        fontSize: `${digitalFontSize}px`,
-        textShadow: preview ? 'none' : '0 4px 30px rgba(0, 0, 0, 0.35)',
+      ref="container"
+      class="countdown-preview"
+      :class="{
+        'countdown-preview--urgent': isUrgent,
+        'countdown-preview--finished': isFinished,
+        'countdown-preview--negative': isNegative,
       }"
+      :style="surfaceStyle"
     >
-      {{ formattedTime }}
-    </div>
+      <div
+        class="countdown-preview__digital"
+        :style="{
+          fontSize: `${digitalFontSize}px`,
+          textShadow: preview ? 'none' : '0 4px 30px rgba(0, 0, 0, 0.35)',
+        }"
+      >
+        {{ formattedTimeWithSign }}
+      </div>
     <div
       v-if="isFinished"
       class="countdown-preview__finished"
@@ -130,6 +135,20 @@ onUnmounted(() => {
 
 .countdown-preview--urgent .countdown-preview__digital {
   animation: countdown-pulse 1s ease-in-out infinite;
+}
+
+.countdown-preview--negative .countdown-preview__digital {
+  animation: countdown-blink 1s step-end infinite;
+}
+
+@keyframes countdown-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 @keyframes countdown-pulse {

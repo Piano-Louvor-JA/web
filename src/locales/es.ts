@@ -62,5 +62,27 @@ export default {
     confirmYes: 'Sí, rechazar',
     confirmNo: 'Volver',
     exitMessage: 'No aceptó los términos del EULA. La aplicación no puede continuar.'
-  }
-}
+  },
+  countdown: {
+        title: 'Cuenta regresiva',
+        backToUtilities: 'Volver a Utilidades',
+        mode: 'Modo',
+        modeHint: 'Alternar entre modo estándar y Escuela Sabática',
+        modeSabbath: 'Escuela Sabática',
+        config: 'Configuración del contador',
+        personalize: 'Personalizar',
+        projecting: 'Proyectando',
+        start: 'Iniciar',
+        pause: 'Pausar',
+        reset: 'Reiniciar',
+        save: 'Guardar',
+        addMinute: '+1 min',
+        subMinute: '-1 min',
+        addFiveMinutes: '+5 min',
+        subFiveMinutes: '-5 min',
+        sabbathSchedule: 'Agenda Escuela Sabática',
+        sabbathScheduleHint: 'Defina la hora de término (obligatorio) y opcionalmente la de inicio',
+        scheduleEndOnly: 'Solo término',
+        scheduleStartEnd: 'Inicio y término',
+      },
+    }

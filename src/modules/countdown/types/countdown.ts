@@ -4,12 +4,35 @@ export type CountdownTimeFormat =
   | 'mm:ss.ms'
   | 'mm:ss'
 
+import type { AlertPresetKey } from '../services/alert-tone'
+
 export type CountdownStatus = 'idle' | 'running' | 'paused'
+
+export type CountdownMode = 'standard' | 'sabbath'
+
+export interface SabbathModeConfig {
+  /** 'start' = usuário define horário início + fim; 'endOnly' = só fim */
+  scheduleMode: 'start' | 'endOnly'
+  /** Horário de fim (ex: "10:15") — obrigatório. */
+  endTime: string
+  /** Horário de início (ex: "09:00") — opcional, só se scheduleMode === 'start'. */
+  startTime?: string
+}
 
 export interface CountdownDisplayConfig {
   timeFormat: CountdownTimeFormat
   bgColor: string
   textColor: string
+  /** Se true, o cronômetro continua rodando após zerar (tempo negativo).
+   *  Se false (padrão), trava em zero e pausa automaticamente. */
+  allowNegative?: boolean
+  /** Mapeia marco → preset de áudio. Chaves: 'start', '5min', '1min'.
+   *  Valor: key de ALERT_PRESETS, 'none' (desabilitado) ou 'custom' (áudio do usuário). */
+  alertTonePresets?: Partial<Record<'start' | '5min' | '1min', AlertPresetKey | 'none'>>
+  /** Modo de operação. 'sabbath' carrega todas as funcionalidades da Escola Sabatina. */
+  mode?: CountdownMode
+  /** Configuração extra quando mode === 'sabbath'. */
+  sabbathConfig?: SabbathModeConfig
 }
 
 export interface CountdownRuntimeState {
