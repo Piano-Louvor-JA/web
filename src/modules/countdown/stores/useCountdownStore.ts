@@ -21,6 +21,7 @@ import { publishToStageRelay } from '@shared/services/palco-cloud-bridge'
 import {
   getPresetDurationMs,
   loadCustomTones,
+  stopAllAlerts,
   LEGACY_CUSTOM_TONES_KEY,
   type AlertPresetKey,
 } from '../services/alert-tone'
@@ -468,6 +469,8 @@ export const useCountdownStore = defineStore('countdown', () => {
     }
     syncRuntime()
     stopFinishWatch()
+    // F2 (web#175): pausar o cronômetro corta o alerta em execução
+    stopAllAlerts()
   }
 
   function reset() {
