@@ -731,13 +731,14 @@ const effectiveConfig = computed(() => {
   flex-direction: column;
 }
 
-/* web#175 (960×906 do Ezequias): no modo ES o conteúdo (agendamento +
-   preview + 2 fileiras de controles + áudio + badge) passa do que o
-   aspect-ratio 21/9 dá. Card com altura por CONTEÚDO (sem aspect-ratio,
-   sem max-height rígido): o preview cede via flex e NADA some.
-   O display escala sozinho (container queries). */
+/* web#175: modo ES por breakpoint (a web PODE usar media queries; o app é
+   que não). Largo (>1280, tela do Rafael): mantém a proporção 21/9 bonita
+   com teto 30rem. Estreito (≤1280, 960×906 do Ezequias): altura por
+   CONTEÚDO (sem aspect-ratio, sem max-height) — o preview cede via flex,
+   o display escala pelas container queries e NADA é cortado. */
 .countdown-view__widget--sabbath {
-  aspect-ratio: auto;
+  aspect-ratio: 21 / 9;
+  max-height: min(100%, 30rem);
   min-height: 20rem;
 }
 
