@@ -100,6 +100,23 @@ const canStartSabbath = computed(() => {
 
 const sabbathPanelOpen = ref(false)
 
+// web#175: popover de agendamento fecha ao clicar fora (document-level,
+// captura qualquer clique fora do popover — o popover faz @click.stop)
+function onDocumentClick() {
+  sabbathPanelOpen.value = false
+}
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') sabbathPanelOpen.value = false
+}
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onKeydown)
+})
+
 /** Converte HH:MM → ms desde meia-noite */
 function timeToMs(val: string): number {
   if (!/^\d{2}:\d{2}$/.test(val)) return 0
@@ -272,9 +289,11 @@ const effectiveConfig = computed(() => {
                               v-if="effectiveConfig.mode === 'sabbath'"
                               type="button"
                               class="countdown-view__tool-btn"
+                              :class="{ 'countdown-view__tool-btn--active': sabbathPanelOpen }"
                               :aria-label="t('countdown.sabbathSchedule')"
                               :title="t('countdown.sabbathScheduleHint')"
-                              @click="sabbathPanelOpen = !sabbathPanelOpen"
+                              data-testid="sabbath-schedule-toggle"
+                              @click.stop="sabbathPanelOpen = !sabbathPanelOpen"
                             >
                               <i
                                 class="ti ti-calendar-clock"
@@ -284,11 +303,12 @@ const effectiveConfig = computed(() => {
                           </div>
                         </div>
 
-                        <!-- Popover de agendamento Escola Sabatina -->
+                        <!-- Popover de agendamento Escola Sabatina (fecha ao clicar fora) -->
                         <Transition name="countdown-popover">
                           <div
                             v-if="effectiveConfig.mode === 'sabbath' && sabbathPanelOpen"
                             class="countdown-view__sabbath-popover"
+                            @click.stop
                           >
                             <div class="countdown-view__sabbath-head">
                               <i
@@ -782,6 +802,12 @@ const effectiveConfig = computed(() => {
   background: color-mix(in srgb, var(--ds-color-primary) 18%, transparent);
   color: var(--ds-color-primary);
   cursor: pointer;
+
+  /* web#175: popover aberto — botão de agenda fica no estado ativo */
+  &--active {
+    background: var(--ds-color-primary);
+    color: var(--ds-color-on-primary, #131313);
+  }
   transition:
     transform 160ms ease,
     background-color 160ms ease;
@@ -851,14 +877,14 @@ const effectiveConfig = computed(() => {
       margin-left: 0.5rem;
     }
 
-    /* Popover de agendamento */
+    /* Popover de agendamento — ancorado abaixo do botão de agenda */
     .countdown-view__sabbath-popover {
-                  position: absolute;
-                  top: 3.5rem;
-              right: 1rem;
-              z-index: 10;
-              min-width: min(20rem, calc(100vw - 2rem));
-              max-width: calc(100vw - 2rem);
+              position: absolute;
+              top: 3.5rem;
+          right: 0;
+          z-index: 10;
+          min-width: min(20rem, calc(100vw - 2rem));
+          max-width: calc(100vw - 2rem);
       padding: 1rem;
       border-radius: 1rem;
       background: var(--ds-color-surface-elevated, var(--ds-color-surface));
