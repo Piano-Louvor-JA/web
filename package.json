@@ -63,6 +63,7 @@
   "description": "LouvorJA - PIANO — versão web para gerenciamento de culto",
   "author": "Ezequias Fonseca",
   "overrides": {
+    "@grpc/grpc-js": "1.14.5",
     "@tabler/icons-webfont": {
       "svgtofont": "npm:noop2@2.0.0",
       "svg-path-commander": "npm:noop2@2.0.0",
