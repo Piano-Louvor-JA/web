@@ -13,6 +13,8 @@ const props = defineProps<{
   disabled?: boolean
   /** Modo compacto: só os campos HH:MM:SS inline, sem cabeçalho (usado no card do grupo de tempo). */
   compact?: boolean
+  /** Esconde o campo de segundos (ex.: agendamento Escola Sabatina HH:MM). */
+  noSeconds?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -105,23 +107,25 @@ function onSeconds(event: Event) {
           @change="onMinutes"
         >
       </label>
-      <span
-        class="countdown-duration__sep"
-        aria-hidden="true"
-      >:</span>
-      <label class="countdown-duration__field">
-        <span>{{ t('countdown.seconds') }}</span>
-        <input
-          type="number"
-          min="0"
-          max="59"
-          inputmode="numeric"
-          :value="parts.seconds"
-          :disabled="disabled"
-          :aria-label="t('countdown.seconds')"
-          @change="onSeconds"
-        >
-      </label>
+      <template v-if="!noSeconds">
+        <span
+          class="countdown-duration__sep"
+          aria-hidden="true"
+        >:</span>
+        <label class="countdown-duration__field">
+          <span>{{ t('countdown.seconds') }}</span>
+          <input
+            type="number"
+            min="0"
+            max="59"
+            inputmode="numeric"
+            :value="parts.seconds"
+            :disabled="disabled"
+            :aria-label="t('countdown.seconds')"
+            @change="onSeconds"
+          >
+        </label>
+      </template>
     </div>
   </div>
 </template>

@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "catalogKey de hinário não é credencial"
+regexTarget = "match"
+regexes = ['''catalogKey:\s*['"][^'"]+['"]''']

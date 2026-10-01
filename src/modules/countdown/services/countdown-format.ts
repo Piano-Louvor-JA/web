@@ -63,6 +63,26 @@ export function computeRemainingMs(
   return Math.max(0, durationMs - elapsed)
 }
 
+export function computeRemainingRawMs(
+  durationMs: number,
+  accumulatedMs: number,
+  segmentStartedAt: number | null,
+  status: CountdownStatus,
+  nowMs: number,
+): number {
+  const elapsed = computeElapsedMs(accumulatedMs, segmentStartedAt, status, nowMs)
+  return durationMs - elapsed
+}
+
+export function formatCountdownWithSign(
+  remainingMs: number,
+  timeFormat: CountdownTimeFormat,
+): string {
+  const negative = remainingMs < 0
+  const body = formatElapsedMs(Math.abs(remainingMs), timeFormat)
+  return negative ? `-${body}` : body
+}
+
 export function durationPartsFromMs(ms: number): CountdownDurationParts {
   const safe = Math.max(0, Math.floor(ms))
   return {
