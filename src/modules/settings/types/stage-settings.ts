@@ -76,7 +76,7 @@ export type StageSettings = {
    */
   clock?: { style: 'digital' | 'analog'; showSeconds: boolean; format24h: boolean }
   timer?: { timeFormat: 'hh:mm:ss.ms' | 'hh:mm:ss' | 'mm:ss.ms' | 'mm:ss' }
-  countdown?: { timeFormat: 'hh:mm:ss' | 'mm:ss' }
+  countdown?: { timeFormat: 'hh:mm:ss' | 'mm:ss'; allowNegative?: boolean }
   random?: { fontSizePc: number; textTransform: 'none' | 'uppercase' | 'lowercase'; animationSpeed: 'slow' | 'normal' | 'fast' }
 }
 
@@ -92,6 +92,7 @@ export const DEFAULT_TIMER_MODULE_SETTINGS: NonNullable<StageSettings['timer']> 
 
 export const DEFAULT_COUNTDOWN_MODULE_SETTINGS: NonNullable<StageSettings['countdown']> = {
   timeFormat: 'hh:mm:ss',
+  allowNegative: false,
 }
 
 export const DEFAULT_RANDOM_MODULE_SETTINGS: NonNullable<StageSettings['random']> = {
