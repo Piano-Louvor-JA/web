@@ -125,8 +125,10 @@ function timeToMs(val: string): number {
 }
 
 // web#175: no modo ES com cronômetro idle, o preview tem que mostrar a
-// duração DERIVADA do agendamento (fim − início|agora), igual o start()
-// calcula — não o 00:05:00 do cronômetro normal ("fica fixo, não atualiza").
+// duração DERIVADA do agendamento — não o 00:05:00 do cronômetro normal
+// ("fica fixo, não atualiza"). Regra: scheduleMode 'start' → duração =
+// Término − Início (a aula inteira, acumulado 0 — o relógio do preview
+// mostra o total configurado); 'endOnly' → Término − agora.
 const sabbathIdlePreviewRuntime = computed(() => {
   if (effectiveConfig.value.mode !== 'sabbath') return null
   if (runtime.value.status !== 'idle') return null
@@ -135,16 +137,17 @@ const sabbathIdlePreviewRuntime = computed(() => {
   const now = new Date()
   const nowMs = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000
   const endMs = timeToMs(sc.endTime)
-  const durationMs = endMs > nowMs ? endMs - nowMs : endMs - nowMs + 24 * 3600 * 1000
-  let startAtMs = nowMs
-  if (sc.scheduleMode === 'start' && /^\d{2}:\d{2}$/.test(sc.startTime ?? '')) {
-    startAtMs = timeToMs(sc.startTime ?? '')
-  }
-  const accumulatedMs = Math.max(0, Math.min(nowMs - startAtMs, durationMs))
+  const endVsNow = endMs > nowMs ? endMs - nowMs : endMs - nowMs + 24 * 3600 * 1000
+  const usesStart =
+    sc.scheduleMode === 'start' && /^\d{2}:\d{2}$/.test(sc.startTime ?? '')
+  const startMs = usesStart ? timeToMs(sc.startTime ?? '') : 0
+  const durationMs = usesStart
+    ? Math.max(0, endMs - startMs)
+    : endVsNow
   return {
     ...runtime.value,
     durationMs,
-    accumulatedMs,
+    accumulatedMs: 0,
     segmentStartedAt: null,
     status: 'idle' as const,
     finished: false,
