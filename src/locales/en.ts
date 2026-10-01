@@ -62,5 +62,27 @@ export default {
     confirmYes: 'Yes, decline',
     confirmNo: 'Back',
     exitMessage: 'You have not accepted the EULA terms. The application cannot continue.'
-  }
+  },
+  countdown: {
+    title: 'Countdown',
+    backToUtilities: 'Back to Utilities',
+    mode: 'Mode',
+    modeHint: 'Toggle between standard and Sabbath School mode',
+    modeSabbath: 'Sabbath School',
+    config: 'Countdown settings',
+    personalize: 'Customize',
+    projecting: 'Projecting',
+    start: 'Start',
+    pause: 'Pause',
+    reset: 'Reset',
+    save: 'Save',
+    addMinute: '+1 min',
+    subMinute: '-1 min',
+    addFiveMinutes: '+5 min',
+    subFiveMinutes: '-5 min',
+    sabbathSchedule: 'Sabbath School schedule',
+    sabbathScheduleHint: 'Set the end time (required) and optionally the start time',
+    scheduleEndOnly: 'End only',
+    scheduleStartEnd: 'Start and end',
+  },
 }

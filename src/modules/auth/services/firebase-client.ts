@@ -63,9 +63,10 @@ async function persistSession(credential: UserCredential): Promise<AuthSession |
   // (POST /v1/custom/auth/firebase-session — middleware firebaseAuth valida
   // via Admin SDK e faz upsert em custom_users).
   try {
-      // Same-origin: o Vite faz proxy de /v1/custom → API local (ver vite.config).
-      // Usar VITE_PALCO_API_URL (túnel cross-origin) quebraria no CORS em dev.
-      const url = '/v1/custom/auth/firebase-session'
+    // Produção: URL absoluta da API (VITE_URL_DATABASE). URL relativa só
+    // funciona em dev (proxy do Vite) — no deploy o host do web não tem /v1.
+    const base = (import.meta.env.VITE_URL_DATABASE as string | undefined)?.replace(/\/+$/, '').replace(/\/json_db$/, '') ?? ''
+    const url = `${base}/v1/custom/auth/firebase-session`
       const response = await fetch(url, {
         method: 'POST',
         headers: { authorization: `Bearer ${idToken}` },

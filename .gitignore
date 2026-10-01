@@ -58,3 +58,9 @@ AUDIT-RECOMMENDATIONS.md
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .planning/
+
+# artifacts de execucao local
+test-results/
+reports/
+.stryker-tmp/
+GAUNTLET-STATE.md
