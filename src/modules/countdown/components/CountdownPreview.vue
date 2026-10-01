@@ -18,6 +18,7 @@ const props = withDefaults(
 
 const { t } = useI18n()
 const containerRef = useTemplateRef<HTMLElement>('container')
+let resizeObserver: ResizeObserver | null = null
 const sizeWidth = ref(0)
 const sizeHeight = ref(0)
 
@@ -66,10 +67,15 @@ function measure() {
 onMounted(() => {
   measure()
   window.addEventListener('resize', measure)
+  // F4 (web#175): remount/mudança de layout (ex.: card de inputs entrou no
+  // fluxo e mudou a altura do preview) sem evento de window resize
+  resizeObserver = new ResizeObserver(measure)
+  if (containerRef.value) resizeObserver.observe(containerRef.value)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', measure)
+  resizeObserver?.disconnect()
 })
 </script>
 
