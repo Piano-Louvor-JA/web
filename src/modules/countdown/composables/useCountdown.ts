@@ -20,7 +20,28 @@ import type {
   CountdownRuntimeState,
 } from '../types/countdown'
 import { useCountdownStore } from '../stores/useCountdownStore'
-import { playAlertTone, getCustomAudio } from '../services/alert-tone'
+import { playAlertTone } from '../services/alert-tone'
+import { getLibraryTone } from '../services/alert-tone-library'
+import {
+  DEFAULT_ALERT_MARKERS,
+  type AlertMarkerPreset,
+} from '../types/countdown'
+import type { AlertPresetKey } from '../services/alert-tone'
+
+/** AudioElement de um tom da biblioteca (cacheado pelo data-URL). */
+const libraryAudioCache = new Map<string, HTMLAudioElement>()
+
+function getCustomAudioById(toneId: string): HTMLAudioElement | undefined {
+  const tone = getLibraryTone(toneId)
+  if (!tone) return undefined
+  let audio = libraryAudioCache.get(tone.dataUrl)
+  if (!audio) {
+    audio = new Audio(tone.dataUrl)
+    audio.preload = 'auto'
+    libraryAudioCache.set(tone.dataUrl, audio)
+  }
+  return audio
+}
 
 export function useCountdownTick(active: MaybeRefOrGetter<boolean> = true) {
   const now = ref(Date.now())
@@ -109,29 +130,48 @@ export function useCountdownDisplay(
           runtime.value.accumulatedMs > 0),
     )
 
-    // ── Disparo de alertas nos marcos ────────────────────────────────────
-    // Observa o tempo restante "caindo" e dispara o preset quando cruza o marco.
-    // 'start' dispara na transição idle/running; os demais quando cruzam o valor.
+    // ── Disparo de alertas nos marcos (v2: marcos dinâmicos) ─────────────
+    // Marcos vêm da config (alertMarkers); fallback = seeds padrão.
+    // offset 0 ("start") dispara na transição pra running; demais por
+    // cruzamento decrescente. preset 'custom:{id}' toca da biblioteca local.
     const firedMarkers = new Set<string>()
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
+    const activeMarkers = computed(() => config.value.alertMarkers ?? DEFAULT_ALERT_MARKERS)
+
+    function playMarkerPreset(preset: string, markerId: string): void {
+      if (preset.startsWith('custom:')) {
+        const audio = getCustomAudioById(preset.slice('custom:'.length))
+        if (!audio) return
+        void audio.play().catch(() => {
+          // autoplay bloqueado — silencioso
+        })
+        return
+      }
+      void playAlertTone(preset as AlertPresetKey, undefined, undefined)
+    }
+
     watch(remainingRawMs, (raw, prevRaw) => {
       if (runtime.value.status !== 'running') return
-      const presets = config.value.alertTonePresets ?? DEFAULT_ALERT_TONE_PRESETS
-      // start: primeira observação com status running
-      if (prevStatus !== 'running' && !firedMarkers.has('start') && presets.start && presets.start !== 'none') {
-        firedMarkers.add('start')
-        void playAlertTone(presets.start, undefined, getCustomAudio('start'))
+      // start: primeira observação com status running (offset 0)
+      const startMarker = activeMarkers.value.find((m) => m.offsetMs === 0)
+      if (
+        startMarker &&
+        prevStatus !== 'running' &&
+        !firedMarkers.has(startMarker.id) &&
+        startMarker.preset !== 'none'
+      ) {
+        firedMarkers.add(startMarker.id)
+        playMarkerPreset(startMarker.preset, startMarker.id)
       }
       prevStatus = runtime.value.status
       // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
-      for (const key of ['5min', '1min'] as const) {
-        const markerMs = ALERT_MARKERS_MS[key]
-        const preset = presets[key]
-        if (firedMarkers.has(key) || !preset || preset === 'none') continue
-        if ((prevRaw ?? Infinity) >= markerMs && raw < markerMs) {
-          firedMarkers.add(key)
-          void playAlertTone(preset, undefined, getCustomAudio(key))
+      for (const marker of activeMarkers.value) {
+        if (marker.offsetMs === 0) continue
+        if (firedMarkers.has(marker.id) || marker.preset === 'none') continue
+        if ((prevRaw ?? Infinity) >= marker.offsetMs && raw < marker.offsetMs) {
+          firedMarkers.add(marker.id)
+          playMarkerPreset(marker.preset, marker.id)
         }
       }
     })

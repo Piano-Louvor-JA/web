@@ -96,12 +96,23 @@ function asAlertTonePresets(
   value: unknown,
 ): CountdownDisplayConfig['alertTonePresets'] {
   if (!value || typeof value !== 'object') return undefined
+  const allowed: readonly string[] = [
+    'none',
+    'beep',
+    'chime',
+    'gong',
+    'abertura_es',
+    '5min_es',
+    '1min_es',
+  ]
   const out: Partial<Record<'start' | '5min' | '1min', string>> = {}
   for (const key of ['start', '5min', '1min'] as const) {
     const entry = (value as Record<string, unknown>)[key]
-    if (typeof entry === 'string' && entry.length > 0) out[key] = entry
+    if (typeof entry === 'string' && allowed.includes(entry)) out[key] = entry
   }
-  return Object.keys(out).length > 0 ? out : undefined
+  return Object.keys(out).length > 0
+    ? (out as CountdownDisplayConfig['alertTonePresets'])
+    : undefined
 }
 
 export function loadCountdownDisplayConfig(): CountdownDisplayConfig {
