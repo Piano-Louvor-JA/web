@@ -55,13 +55,13 @@ describe('biblioteca de sons custom (toneLibrary)', () => {
   })
 
   it('rejeita quando quota total da biblioteca estoura (sem corromper as existentes)', () => {
-    // 3 tons de 2MB = 6MB; o 6º estouraria 10MB — usa 5 tons pra cruzar a quota
+    // payload com folga pro prefixo da data-URL (limite mede a string inteira)
+    const payload = TONE_LIBRARY_PER_TONE_MAX_BYTES - 64
+    // 5 tons ≈ 10MB: o 6º cruza a quota total
     for (const name of ['A', 'B', 'C', 'D', 'E']) {
-      addLibraryTone(name, makeDataUrl(TONE_LIBRARY_PER_TONE_MAX_BYTES))
+      addLibraryTone(name, makeDataUrl(payload))
     }
-    expect(() =>
-      addLibraryTone('F', makeDataUrl(TONE_LIBRARY_PER_TONE_MAX_BYTES)),
-    ).toThrow('TOO_LARGE')
+    expect(() => addLibraryTone('F', makeDataUrl(payload))).toThrow('TOO_LARGE')
     expect(listLibraryTones()).toHaveLength(5)
   })
 
