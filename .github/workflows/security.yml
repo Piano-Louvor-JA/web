@@ -23,9 +23,9 @@ jobs:
       - name: Scan
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            "$RUNNER_TEMP/gitleaks" detect --source . --redact --log-opts="${{ github.event.pull_request.base.sha }}..HEAD"
+            "$RUNNER_TEMP/gitleaks" detect --source . --redact --config .gitleaks.toml --log-opts="${{ github.event.pull_request.base.sha }}..HEAD"
           else
-            "$RUNNER_TEMP/gitleaks" detect --source . --redact
+            "$RUNNER_TEMP/gitleaks" detect --source . --redact --config .gitleaks.toml
           fi
 
   dependencies:
