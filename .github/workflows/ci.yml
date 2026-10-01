@@ -81,13 +81,16 @@ jobs:
       - run: npm ci
       - name: Baseline (staging)
         run: |
-          git stash -u || true
-          git checkout staging
-          npm run test:regression -- --baseline
-          git checkout ${{ github.head_ref }}
-          git stash pop || true
+          # O script ainda não existe na staging. Guarda a cópia da PR
+          # e mede o código da staging com ele.
+          cp scripts/test-regression.mjs /tmp/test-regression.mjs
+          echo "PR_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git checkout origin/staging
+          node /tmp/test-regression.mjs --baseline
       - name: Compare (PR branch)
-        run: npm run test:regression -- --compare
+        run: |
+          git checkout "$PR_SHA"
+          node /tmp/test-regression.mjs --compare
 
   quality-gate:
     name: Quality Gate

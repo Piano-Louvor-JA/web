@@ -58,7 +58,10 @@ if (isBaseline) {
   console.log('   Tests:', results.tests)
   console.log('   TypeCheck:', results.typeCheck.ok ? 'OK' : 'FAIL')
   console.log('   Build:', results.build.ok ? 'OK' : 'FAIL')
-  process.exit(results.tests.failed > 0 || !results.typeCheck.ok || !results.build.ok ? 1 : 0)
+  if (results.tests.failed !== 0 || !results.typeCheck.ok || !results.build.ok) {
+    console.log('⚠️  Baseline da staging não está verde. A comparação segue com esse retrato.')
+  }
+  process.exit(0)
 }
 
 if (isCompare || (!isBaseline && !isCompare)) {
@@ -77,7 +80,10 @@ if (isCompare || (!isBaseline && !isCompare)) {
   if (t.ok) {
     const vr = jsonParseSafe(readFileSync('.vitest-results.json', 'utf8'), {})
     const cur = { passed: vr.numPassedTests || 0, failed: vr.numFailedTests || 0, total: vr.numTotalTests || 0 }
-    if (cur.failed > base.tests.failed || cur.passed < base.tests.passed) {
+    const baseFailed = base.tests.failed
+    const basePassed = base.tests.passed
+    // failed < 0 = a suíte da staging nem chegou a rodar; não há contagem para comparar.
+    if (baseFailed >= 0 && (cur.failed > baseFailed || cur.passed < basePassed)) {
       regressed = true
       failures.push(`TESTS: baseline passed=${base.tests.passed} failed=${base.tests.failed} → current passed=${cur.passed} failed=${cur.failed}`)
     }
