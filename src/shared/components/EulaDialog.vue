@@ -107,9 +107,10 @@ function onConfirmCancel() {
         </VBtn>
 
         <VBtn
-          variant="tonal"
+          :variant="hasScrolledToBottom ? 'flat' : 'tonal'"
           size="large"
           class="eula-dialog__btn-accept"
+          :class="{ 'eula-dialog__btn-accept--ready': hasScrolledToBottom }"
           :disabled="!hasScrolledToBottom"
           @click="onAccept"
         >
@@ -300,6 +301,13 @@ function onConfirmCancel() {
 .eula-dialog__btn-accept {
   flex: 1;
   min-width: 0;
+}
+
+/* web#175-adjacente: botão "aceitar" ganha destaque (bg primary) quando a
+   barra rola até o fim e o aceite é liberado */
+.eula-dialog__btn-accept--ready {
+  background: var(--ds-color-primary) !important;
+  color: var(--ds-color-on-primary, #131313) !important;
 }
 
 /* Confirmacao dupla */
