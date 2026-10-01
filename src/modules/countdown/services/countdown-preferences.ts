@@ -7,6 +7,9 @@ import {
 import {
   COUNTDOWN_TIME_FORMATS,
   DEFAULT_COUNTDOWN_DISPLAY_CONFIG,
+  DEFAULT_ALERT_MARKERS,
+  type AlertMarker,
+  type AlertMarkerPreset,
   type CountdownDisplayConfig,
   type CountdownTimeFormat,
   type SabbathModeConfig,
@@ -26,12 +29,11 @@ function asTimeFormat(value: unknown): CountdownTimeFormat {
 
 export function normalizeCountdownDisplayConfig(raw: unknown): CountdownDisplayConfig {
   if (!raw || typeof raw !== 'object') {
-    return { ...DEFAULT_COUNTDOWN_DISPLAY_CONFIG }
+    return { ...DEFAULT_COUNTDOWN_DISPLAY_CONFIG, configVersion: 2, alertMarkers: DEFAULT_ALERT_MARKERS.map((m) => ({ ...m })) }
   }
 
   const source = raw as Record<string, unknown>
-
-  return {
+  const normalized: CountdownDisplayConfig = {
     timeFormat: asTimeFormat(source.timeFormat),
     bgColor: asString(source.bgColor, DEFAULT_COUNTDOWN_DISPLAY_CONFIG.bgColor),
     textColor: asString(source.textColor, DEFAULT_COUNTDOWN_DISPLAY_CONFIG.textColor),
@@ -40,6 +42,41 @@ export function normalizeCountdownDisplayConfig(raw: unknown): CountdownDisplayC
     sabbathConfig: asSabbathConfig(source.sabbathConfig),
     alertTonePresets: asAlertTonePresets(source.alertTonePresets),
   }
+
+  // ── Migração v1 → v2 (idempotente) ──────────────────────────────────────
+  // v2 presente e válida: usa (e re-normaliza entradas inválidas).
+  if (source.configVersion === 2) {
+    normalized.configVersion = 2
+    normalized.alertMarkers = asAlertMarkers(source.alertMarkers) ?? defaultsMarkers()
+    return normalized
+  }
+  // v1 (sem configVersion): converte alertTonePresets nos offsets padrão.
+  normalized.configVersion = 2
+  const legacy = normalized.alertTonePresets ?? {}
+  normalized.alertMarkers = DEFAULT_ALERT_MARKERS.map((marker) => ({
+    ...marker,
+    preset: legacy[marker.id as 'start' | '5min' | '1min'] ?? marker.preset,
+  }))
+  return normalized
+}
+
+function defaultsMarkers(): AlertMarker[] {
+  return DEFAULT_ALERT_MARKERS.map((m) => ({ ...m }))
+}
+
+/** Valida entradas de alertMarkers: id string, offset >= 0 finito, preset string. */
+function asAlertMarkers(value: unknown): AlertMarker[] | null {
+  if (!Array.isArray(value)) return null
+  const out: AlertMarker[] = []
+  for (const entry of value) {
+    if (!entry || typeof entry !== 'object') continue
+    const m = entry as Record<string, unknown>
+    if (typeof m.id !== 'string' || m.id.length === 0) continue
+    if (typeof m.offsetMs !== 'number' || !Number.isFinite(m.offsetMs) || m.offsetMs < 0) continue
+    if (typeof m.preset !== 'string' || m.preset.length === 0) continue
+    out.push({ id: m.id, offsetMs: m.offsetMs, preset: m.preset as AlertMarkerPreset })
+  }
+  return out.length > 0 ? out : null
 }
 
 function asSabbathConfig(value: unknown): SabbathModeConfig | undefined {

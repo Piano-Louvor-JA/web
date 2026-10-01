@@ -19,6 +19,25 @@ export interface SabbathModeConfig {
   startTime?: string
 }
 
+export type AlertMarkerPreset = AlertPresetKey | 'none' | `custom:${string}`
+
+/** Marco de alerta do cronômetro (v2): dispara quando faltam `offsetMs`. */
+export interface AlertMarker {
+  /** ID estável entre reloads. Padrões: 'start', '5min', '1min'. */
+  id: string
+  /** Tempo restante (ms) em que o alerta dispara. 'start' = 0. */
+  offsetMs: number
+  /** Som tocado: preset fixo, 'none' ou 'custom:{libraryId}'. */
+  preset: AlertMarkerPreset
+}
+
+/** Marcos padrão — paridade exata com o comportamento atual (start/5min/1min). */
+export const DEFAULT_ALERT_MARKERS: AlertMarker[] = [
+  { id: 'start', offsetMs: 0, preset: 'abertura_es' },
+  { id: '5min', offsetMs: 300_000, preset: '5min_es' },
+  { id: '1min', offsetMs: 60_000, preset: '1min_es' },
+]
+
 export interface CountdownDisplayConfig {
   timeFormat: CountdownTimeFormat
   bgColor: string
@@ -27,8 +46,13 @@ export interface CountdownDisplayConfig {
    *  Se false (padrão), trava em zero e pausa automaticamente. */
   allowNegative?: boolean
   /** Mapeia marco → preset de áudio. Chaves: 'start', '5min', '1min'.
-   *  Valor: key de ALERT_PRESETS, 'none' (desabilitado) ou 'custom' (áudio do usuário). */
+   *  Valor: key de ALERT_PRESETS, 'none' (desabilitado) ou 'custom' (áudio do usuário).
+   *  @deprecated v1 — migrado para `alertMarkers` no boot; mantido só para ler configs antigas. */
   alertTonePresets?: Partial<Record<'start' | '5min' | '1min', AlertPresetKey | 'none'>>
+  /** Versão do formato da config. Ausente = v1 (legado) → migrado no load. */
+  configVersion?: 2
+  /** v2: marcos dinâmicos de alerta — fonte única de verdade. */
+  alertMarkers?: AlertMarker[]
   /** Modo de operação. 'sabbath' carrega todas as funcionalidades da Escola Sabatina. */
   mode?: CountdownMode
   /** Configuração extra quando mode === 'sabbath'. */
