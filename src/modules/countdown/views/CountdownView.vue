@@ -308,8 +308,8 @@ const effectiveConfig = computed(() => {
                                   type="radio"
                                   name="sabbath-schedule-mode"
                                   value="endOnly"
-                                  :checked="effectiveConfig.sabbathConfig.scheduleMode === 'endOnly'"
-                                  @change="patchSabbathConfig({ ...effectiveConfig.sabbathConfig, scheduleMode: 'endOnly' })"
+                                  :checked="scheduleMode === 'endOnly'"
+                                  @change="scheduleMode = 'endOnly'"
                                 >
                                 <span>{{ t('countdown.scheduleEndOnly') }}</span>
                               </label>
@@ -318,8 +318,8 @@ const effectiveConfig = computed(() => {
                                   type="radio"
                                   name="sabbath-schedule-mode"
                                   value="start"
-                                  :checked="effectiveConfig.sabbathConfig.scheduleMode === 'start'"
-                                  @change="patchSabbathConfig({ ...effectiveConfig.sabbathConfig, scheduleMode: 'start' })"
+                                  :checked="scheduleMode === 'start'"
+                                  @change="scheduleMode = 'start'"
                                 >
                                 <span>{{ t('countdown.scheduleStartEnd') }}</span>
                               </label>

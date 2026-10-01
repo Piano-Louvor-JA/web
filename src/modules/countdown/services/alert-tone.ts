@@ -55,30 +55,28 @@ export async function playAlertTone(
   ctx?: AudioContext,
   customAudio?: HTMLAudioElement,
 ): Promise<void> {
-  // Presets sintéticos usam WebAudio
-  const syntheticKeys = ['beep', 'chime', 'gong'] as const
-  if (syntheticKeys.includes(preset as 'beep' | 'chime' | 'gong')) {
+  // Presets sintéticos usam WebAudio. 'custom' e os MP3 seguem no ramo de arquivo.
+  if (preset === 'beep' || preset === 'chime' || preset === 'gong') {
     if (!ctx) return
     const p = ALERT_PRESETS[preset]
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = p.type
-    if (Array.isArray(p.freq)) {
-      // chime: dois osciladores em sequência
+    if (preset === 'chime') {
+      const [first, second] = ALERT_PRESETS.chime.freq
       const osc2 = ctx.createOscillator()
       const gain2 = ctx.createGain()
       osc2.type = p.type
-      osc2.frequency.setValueAtTime(p.freq[0], ctx.currentTime)
+      osc2.frequency.setValueAtTime(first, ctx.currentTime)
       osc2.connect(gain2)
       gain2.connect(ctx.destination)
       gain2.gain.setValueAtTime(0.3, ctx.currentTime)
       gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + p.duration)
       osc2.start(ctx.currentTime)
       osc2.stop(ctx.currentTime + p.duration)
-      // segundo tom
-      osc.frequency.setValueAtTime(p.freq[1], ctx.currentTime + p.duration)
+      osc.frequency.setValueAtTime(second, ctx.currentTime + p.duration)
     } else {
-      osc.frequency.setValueAtTime(p.freq, ctx.currentTime)
+      osc.frequency.setValueAtTime(ALERT_PRESETS[preset].freq, ctx.currentTime)
     }
     osc.connect(gain)
     gain.connect(ctx.destination)

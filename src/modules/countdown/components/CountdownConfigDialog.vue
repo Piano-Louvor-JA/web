@@ -9,6 +9,7 @@ import {
   type CountdownDisplayConfig,
   type CountdownMode,
   type CountdownTimeFormat,
+  type SabbathModeConfig,
 } from '../types/countdown'
 import {
   getAvailablePresets,
