@@ -108,6 +108,10 @@ export const useCountdownStore = defineStore('countdown', () => {
 
   function setAudioPaused(paused: boolean) {
     audioPaused.value = paused
+    // Operador pausou/retomou na tela principal: aplica localmente e
+    // sincroniza com a janela de projeção via canal.
+    if (paused) pauseAllAlerts()
+    else resumeAllAlerts()
     publishAudio()
   }
 
@@ -645,6 +649,8 @@ export const useCountdownStore = defineStore('countdown', () => {
             audioStopTick,
             setAudioMuted,
             setAudioVolume,
+            audioPaused,
+            setAudioPaused,
             stopAudio,
             setMode,
         setSabbathConfig,

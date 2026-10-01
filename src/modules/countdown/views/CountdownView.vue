@@ -45,6 +45,8 @@ const {
   audioVolume,
   setAudioMuted,
   setAudioVolume,
+  audioPaused,
+  setAudioPaused,
   stopAudio,
   setMode,
   setSabbathConfig,
@@ -580,13 +582,14 @@ const effectiveConfig = computed(() => {
             >
             <button
               type="button"
-              class="countdown-view__audio-btn countdown-view__audio-btn--stop"
-              :aria-label="t('countdown.stopAudio')"
-              :title="t('countdown.stopAudio')"
-              @click="stopAudio()"
+              class="countdown-view__audio-btn"
+              :class="{ 'countdown-view__audio-btn--playing': !audioPaused }"
+              :aria-label="audioPaused ? t('countdown.playAudio') : t('countdown.pauseAudio')"
+              :title="audioPaused ? t('countdown.playAudio') : t('countdown.pauseAudio')"
+              @click="setAudioPaused(!audioPaused)"
             >
               <i
-                class="ti ti-player-stop"
+                :class="audioPaused ? 'ti ti-player-play' : 'ti ti-player-pause'"
                 aria-hidden="true"
               />
             </button>
@@ -782,9 +785,8 @@ const effectiveConfig = computed(() => {
     color: var(--ds-color-primary);
   }
 
-  &--stop:hover {
-    background: color-mix(in srgb, var(--ds-color-error, #ff5252) 25%, transparent);
-    color: var(--ds-color-error, #ff5252);
+  &--playing {
+    background: color-mix(in srgb, var(--ds-color-primary) 25%, transparent);
   }
 }
 
