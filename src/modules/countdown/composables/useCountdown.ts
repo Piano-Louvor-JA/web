@@ -20,7 +20,7 @@ import type {
   CountdownRuntimeState,
 } from '../types/countdown'
 import { useCountdownStore } from '../stores/useCountdownStore'
-import { playAlertTone, stopAllAlerts } from '../services/alert-tone'
+import { playAlertTone, setLiveVolume, stopAllAlerts } from '../services/alert-tone'
 import { getLibraryTone } from '../services/alert-tone-library'
 import {
   DEFAULT_ALERT_MARKERS,
@@ -172,6 +172,11 @@ export function useCountdownDisplay(
     // F2: Stop do operador corta na hora o que estiver tocando
     watch(() => store.audioStopTick, () => {
       stopAllAlerts()
+    })
+
+    // F2: volume do operador aplica AO VIVO no que estiver tocando
+    watch(() => store.audioVolume, (volume) => {
+      setLiveVolume(volume)
     })
 
     if (isProjectionWindow) {

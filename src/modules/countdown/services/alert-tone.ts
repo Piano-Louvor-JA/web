@@ -159,6 +159,14 @@ export function resumeAllAlerts(): void {
   }
 }
 
+/** F2: aplica volume AO VIVO em tudo que está tocando agora. */
+export function setLiveVolume(volume: number): void {
+  const clamped = Math.min(1, Math.max(0, volume))
+  for (const audio of [...activeAudios]) {
+    if (typeof audio.volume === 'number') audio.volume = clamped
+  }
+}
+
 // Exporta lista de presets para UI (sintéticos + oficiais + desabilitado)
 export function getAvailablePresets(): Array<{ key: string; label: string }> {
   return [
