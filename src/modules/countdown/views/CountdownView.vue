@@ -731,12 +731,13 @@ const effectiveConfig = computed(() => {
   flex-direction: column;
 }
 
-/* web#175: no modo ES o bloco de agendamento (Término/Início) ocupa altura
-   extra no topo — card mantém proporção próxima e controles compactos
-   devolvem altura ao preview (display centrado, print 241e82 vs add078) */
+/* web#175 (960×906 do Ezequias): no modo ES o conteúdo (agendamento +
+   preview + 2 fileiras de controles + áudio + badge) passa do que o
+   aspect-ratio 21/9 dá. Card com altura por CONTEÚDO (sem aspect-ratio,
+   sem max-height rígido): o preview cede via flex e NADA some.
+   O display escala sozinho (container queries). */
 .countdown-view__widget--sabbath {
-  aspect-ratio: 21 / 9;
-  max-height: min(100%, 30rem);
+  aspect-ratio: auto;
   min-height: 20rem;
 }
 
@@ -1171,11 +1172,12 @@ const effectiveConfig = computed(() => {
     max-height: min(100%, 24rem);
   }
 
-  /* web#175: no modo ES o conteúdo (2 fileiras de controles + áudio + badge)
-     passa do max-height rígido e o overflow:hidden cortava os CONTROLES.
-     Modo ES deixa o card crescer até 30rem também aqui. */
+  /* web#175: no modo ES o conteúdo passa do max-height rígido (24rem) e o
+     overflow:hidden cortava os CONTROLES (print 960×906). Modo ES: altura
+     por conteúdo — preview cede via flex e nada some. */
   .countdown-view__widget--sabbath {
-    max-height: min(100%, 30rem);
+    aspect-ratio: auto;
+    max-height: none;
   }
 
   .countdown-view__preview {
