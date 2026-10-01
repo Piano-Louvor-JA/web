@@ -21,6 +21,8 @@ import { publishToStageRelay } from '@shared/services/palco-cloud-bridge'
 import {
   getPresetDurationMs,
   loadCustomTones,
+  pauseAllAlerts,
+  resumeAllAlerts,
   stopAllAlerts,
   LEGACY_CUSTOM_TONES_KEY,
   type AlertPresetKey,
@@ -63,14 +65,26 @@ export const useCountdownStore = defineStore('countdown', () => {
   const audioMuted = ref(false)
   const audioVolume = ref(1)
   const audioStopTick = ref(0)
+  const audioPaused = ref(false)
   let audioUnsubscribe: (() => void) | null = null
 
-  function applyAudioControl(control: { muted: boolean; volume: number; stopTick: number }) {
+  function applyAudioControl(control: {
+    muted: boolean
+    volume: number
+    stopTick: number
+    paused: boolean
+  }) {
     const stopChanged = control.stopTick !== audioStopTick.value
+    const pauseChanged = control.paused !== audioPaused.value
     audioMuted.value = control.muted
     audioVolume.value = control.volume
     audioStopTick.value = control.stopTick
+    audioPaused.value = control.paused
     if (stopChanged) stopAllAlerts()
+    if (pauseChanged) {
+      if (control.paused) pauseAllAlerts()
+      else resumeAllAlerts()
+    }
   }
 
   function startAudioControlSync() {
@@ -79,6 +93,7 @@ export const useCountdownStore = defineStore('countdown', () => {
     audioMuted.value = current.muted
     audioVolume.value = current.volume
     audioStopTick.value = current.stopTick
+    audioPaused.value = current.paused
     audioUnsubscribe = subscribeAudioControl(applyAudioControl)
   }
 
@@ -87,7 +102,13 @@ export const useCountdownStore = defineStore('countdown', () => {
       muted: audioMuted.value,
       volume: audioVolume.value,
       stopTick: audioStopTick.value,
+      paused: audioPaused.value,
     })
+  }
+
+  function setAudioPaused(paused: boolean) {
+    audioPaused.value = paused
+    publishAudio()
   }
 
   const runtime = ref<CountdownRuntimeState>({
@@ -485,6 +506,10 @@ export const useCountdownStore = defineStore('countdown', () => {
     }
     syncRuntime()
     startFinishWatch()
+    // F2 (web#175): retomar de pausa RESUME o alerta de onde parou
+    // (em start do zero, nada há pra retomar — resume é no-op)
+    setAudioPaused(false)
+    resumeAllAlerts()
   }
 
   function pause() {
@@ -507,8 +532,10 @@ export const useCountdownStore = defineStore('countdown', () => {
     }
     syncRuntime()
     stopFinishWatch()
-    // F2 (web#175): pausar o cronômetro corta o alerta em execução
-    stopAllAlerts()
+    // F2 (web#175): pausar o cronômetro PAUSA o alerta em execução
+    // (retomável — o start resume de onde parou, sem reiniciar do zero)
+    setAudioPaused(true)
+    pauseAllAlerts()
   }
 
   function reset() {
@@ -612,6 +639,7 @@ export const useCountdownStore = defineStore('countdown', () => {
             removeAlertMarker,
             isOffsetTaken,
             firedMarkers,
+            startAudioControlSync,
             audioMuted,
             audioVolume,
             audioStopTick,

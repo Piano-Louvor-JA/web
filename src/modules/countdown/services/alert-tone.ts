@@ -130,14 +130,33 @@ export function registerStopHook(hook: () => void): () => void {
   return () => activeStopHooks.delete(hook)
 }
 
-/** Corta TUDO que está tocando agora (mute do operador / Stop). */
+/** Pausa (sem perder posição) todos os áudios ativos — retomável. */
+export function pauseAllAlerts(): void {
+  for (const audio of [...activeAudios]) {
+    if (typeof audio.pause === 'function') audio.pause()
+  }
+  for (const hook of [...activeStopHooks]) hook()
+}
+
+/** Corta TUDO que está tocando agora (mute do operador / Stop) e
+ *  rebobina pro início. */
 export function stopAllAlerts(): void {
   for (const audio of [...activeAudios]) {
     if (typeof audio.pause === 'function') audio.pause()
+    try { audio.currentTime = 0 } catch { /* some browsers */ }
     activeAudios.delete(audio)
   }
   for (const hook of [...activeStopHooks]) hook()
   activeStopHooks.clear()
+}
+
+/** Retoma áudios pausados pelo pauseAllAlerts (de onde pararam). */
+export function resumeAllAlerts(): void {
+  for (const audio of [...activeAudios]) {
+    void audio.play().catch(() => {
+      // autoplay bloqueado — silencioso
+    })
+  }
 }
 
 // Exporta lista de presets para UI (sintéticos + oficiais + desabilitado)

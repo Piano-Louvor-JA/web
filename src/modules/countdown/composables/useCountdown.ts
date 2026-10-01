@@ -136,12 +136,16 @@ export function useCountdownDisplay(
     // cruzamento decrescente. preset 'custom:{id}' toca da biblioteca local.
     // F3 (web#175): firedMarkers vive NO STORE — reabrir a janela de projeção
     // remonta o composable e NÃO repete alertas da mesma execução.
-    // web#175 F2-v3: o disparo acontece SÓ quando este composable roda na
-    // janela principal (sem configSource externo). O popup de projeção
-    // renderiza o tempo via props mas NUNCA instala os watches de áudio —
-    // senão o alerta toca 2x (um por janela) e mute/volume do operador não
-    // afeta o toque do popup (Pinias separadas).
-    const isOperatorWindow = configSource == null && runtimeSource == null
+    // web#175 F2-v5: o disparo acontece SÓ na janela de PROJEÇÃO (popup).
+    // Critério tem que ser DA PRÓPRIA JANELA: popup de projeção tem
+    // window.opener (aberta via window.open pela principal). getPopupModule()
+    // lê storage COMPARTILHADO — a principal se auto-declararia popup com o
+    // popup aberto e dispararia 2 áudios com firedMarkers separados
+    // (Pinias separadas), fazendo o retomar reiniciar do zero.
+    const isProjectionWindow = typeof window !== 'undefined' && window.opener != null
+    // O popup não roda hydrate() — inicia a escuta do canal de controle aqui
+    // (idempotente no store) pra receber mute/volume/stop do operador.
+    if (isProjectionWindow) store.startAudioControlSync()
     const firedMarkers = store.firedMarkers
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
@@ -168,7 +172,7 @@ export function useCountdownDisplay(
       stopAllAlerts()
     })
 
-    if (isOperatorWindow) {
+    if (isProjectionWindow) {
       watch(remainingRawMs, (raw, prevRaw) => {
         if (runtime.value.status !== 'running') return
         // start: primeira observação com status running (offset 0)

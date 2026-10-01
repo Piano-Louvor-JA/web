@@ -11,6 +11,8 @@ export interface CountdownAudioControl {
   volume: number
   /** Incrementa a cada Stop — oyente corta o que estiver tocando. */
   stopTick: number
+  /** true = cronômetro pausado: áudio pausa (retomável); false = rodando. */
+  paused: boolean
 }
 
 export const COUNTDOWN_AUDIO_CHANNEL = 'louvorja-countdown-audio'
@@ -41,12 +43,13 @@ export function readAudioControl(): CountdownAudioControl {
         muted: raw.muted === true,
         volume: typeof raw.volume === 'number' ? Math.min(1, Math.max(0, raw.volume)) : 1,
         stopTick: typeof raw.stopTick === 'number' ? raw.stopTick : 0,
+        paused: raw.paused === true,
       }
     }
   } catch {
     // storage corrompido — defaults
   }
-  return { muted: false, volume: 1, stopTick: 0 }
+  return { muted: false, volume: 1, stopTick: 0, paused: false }
 }
 
 /** Assina mudanças de controle de áudio. Retorna unsubscribe. */
