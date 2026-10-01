@@ -9,6 +9,7 @@ import {
   DEFAULT_COUNTDOWN_DISPLAY_CONFIG,
   type CountdownDisplayConfig,
   type CountdownTimeFormat,
+  type SabbathModeConfig,
 } from '../types/countdown'
 
 export const COUNTDOWN_CONFIG_CHANNEL = 'louvorja-countdown-config'
@@ -34,7 +35,36 @@ export function normalizeCountdownDisplayConfig(raw: unknown): CountdownDisplayC
     timeFormat: asTimeFormat(source.timeFormat),
     bgColor: asString(source.bgColor, DEFAULT_COUNTDOWN_DISPLAY_CONFIG.bgColor),
     textColor: asString(source.textColor, DEFAULT_COUNTDOWN_DISPLAY_CONFIG.textColor),
+    allowNegative: source.allowNegative === true,
+    mode: source.mode === 'sabbath' ? 'sabbath' : 'standard',
+    sabbathConfig: asSabbathConfig(source.sabbathConfig),
+    alertTonePresets: asAlertTonePresets(source.alertTonePresets),
   }
+}
+
+function asSabbathConfig(value: unknown): SabbathModeConfig | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const source = value as Record<string, unknown>
+  const scheduleMode = source.scheduleMode === 'start' ? 'start' : 'endOnly'
+  const endTime = asString(source.endTime, '')
+  if (!/^\d{2}:\d{2}$/.test(endTime)) return undefined
+  const startTime =
+    typeof source.startTime === 'string' && /^\d{2}:\d{2}$/.test(source.startTime)
+      ? source.startTime
+      : undefined
+  return { scheduleMode, endTime, startTime }
+}
+
+function asAlertTonePresets(
+  value: unknown,
+): CountdownDisplayConfig['alertTonePresets'] {
+  if (!value || typeof value !== 'object') return undefined
+  const out: Partial<Record<'start' | '5min' | '1min', string>> = {}
+  for (const key of ['start', '5min', '1min'] as const) {
+    const entry = (value as Record<string, unknown>)[key]
+    if (typeof entry === 'string' && entry.length > 0) out[key] = entry
+  }
+  return Object.keys(out).length > 0 ? out : undefined
 }
 
 export function loadCountdownDisplayConfig(): CountdownDisplayConfig {
