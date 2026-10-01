@@ -31,6 +31,9 @@ import {
   DEFAULT_COUNTDOWN_DISPLAY_CONFIG,
   DEFAULT_COUNTDOWN_DURATION_MS,
   DEFAULT_COUNTDOWN_RUNTIME,
+  DEFAULT_ALERT_MARKERS,
+  type AlertMarker,
+  type AlertMarkerPreset,
   type CountdownDisplayConfig,
   type CountdownMode,
   type CountdownRuntimeState,
@@ -186,6 +189,48 @@ export const useCountdownStore = defineStore('countdown', () => {
       persistConfig()
     }
 
+    // ── v2: marcos dinâmicos ──────────────────────────────────────────────
+    function setAlertMarkers(markers: AlertMarker[]) {
+      config.value = { ...config.value, configVersion: 2, alertMarkers: markers }
+      persistConfig()
+    }
+
+    /** Offset já usado por outro marco? (UI bloqueia colisão de disparo duplo) */
+    function isOffsetTaken(offsetMs: number, exceptId?: string): boolean {
+      return (config.value.alertMarkers ?? DEFAULT_ALERT_MARKERS).some(
+        (m) => m.offsetMs === offsetMs && m.id !== exceptId,
+      )
+    }
+
+    function addAlertMarker(offsetMs: number, preset: AlertMarkerPreset = 'beep'): AlertMarker | null {
+      const current = config.value.alertMarkers ?? DEFAULT_ALERT_MARKERS.map((m) => ({ ...m }))
+      if (offsetMs < 0 || isOffsetTaken(offsetMs)) return null
+      const marker: AlertMarker = {
+        id: `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        offsetMs,
+        preset,
+      }
+      setAlertMarkers([...current, marker])
+      return marker
+    }
+
+    function updateAlertMarker(id: string, patch: Partial<Omit<AlertMarker, 'id'>>): boolean {
+      const current = config.value.alertMarkers ?? []
+      if (!current.some((m) => m.id === id)) return false
+      if (patch.offsetMs != null && (patch.offsetMs < 0 || isOffsetTaken(patch.offsetMs, id))) {
+        return false
+      }
+      setAlertMarkers(current.map((m) => (m.id === id ? { ...m, ...patch } : m)))
+      return true
+    }
+
+    function removeAlertMarker(id: string): boolean {
+      const current = config.value.alertMarkers ?? []
+      if (!current.some((m) => m.id === id)) return false
+      setAlertMarkers(current.filter((m) => m.id !== id))
+      return true
+    }
+
     function setMode(mode: CountdownMode) {
       if (mode === config.value.mode) return
       if (mode === 'sabbath') {
@@ -239,11 +284,14 @@ export const useCountdownStore = defineStore('countdown', () => {
    *  Só se aplica em modo Escola Sabatina. */
   function minDurationMs(): number {
     if (config.value.mode !== 'sabbath') return 0
-    const presets = config.value.alertTonePresets ?? {}
-    return (['start', '5min', '1min'] as const).reduce((total, marker) => {
-      const preset = presets[marker] ?? DEFAULT_COUNTDOWN_DISPLAY_CONFIG.alertTonePresets?.[marker]
-      if (!preset || preset === 'none') return total
-      return total + getPresetDurationMs(preset)
+    const markers = config.value.alertMarkers ?? DEFAULT_ALERT_MARKERS
+    return markers.reduce((total, marker) => {
+      if (marker.preset === 'none') return total
+      if (marker.preset.startsWith('custom:')) {
+        // data-URL custom: duração desconhecida sem carregar — estimativa conservadora
+        return total + 60_000
+      }
+      return total + getPresetDurationMs(marker.preset as AlertPresetKey)
     }, 0)
   }
 
@@ -438,7 +486,11 @@ export const useCountdownStore = defineStore('countdown', () => {
     setTextColor,
     setAllowNegative,
     setAlertTonePreset,
-        setMode,
+            setAlertMarkers,
+            addAlertMarker,
+            updateAlertMarker,
+            removeAlertMarker,
+            setMode,
         setSabbathConfig,
         resetDisplayToDefault,
     openConfig,
@@ -447,6 +499,7 @@ export const useCountdownStore = defineStore('countdown', () => {
     openDisplayConfig,
     closeDisplayConfig,
     setDurationMs,
+        minDurationMs,
     adjustTime,
     start,
     pause,
