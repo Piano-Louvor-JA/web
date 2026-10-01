@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { CountdownDisplayConfig, CountdownRuntimeState } from '../types/countdown'
@@ -17,22 +17,15 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
-const containerRef = useTemplateRef<HTMLElement>('container')
-let resizeObserver: ResizeObserver | null = null
-const sizeWidth = ref(0)
-const sizeHeight = ref(0)
 
 const { formattedTime, formattedTimeWithSign, isUrgent, isFinished, isNegative } = useCountdownDisplay(
   () => props.config,
   () => props.runtime,
 )
 
-const digitalFontSize = computed(() => {
-  const v = Math.min(sizeWidth.value, sizeHeight.value)
-  const hasMs = props.config.timeFormat.includes('ms')
-  const ratio = hasMs ? 0.28 : 0.36
-  return Math.max(v * ratio, 20)
-})
+// web#175: a fonte agora é 100% CSS (container queries cqh/cqi) — o cálculo
+// JS por ResizeObserver criava loop de medição e dígitos presos no tamanho
+// antigo quando o preview caía no min-height.
 
 const surfaceStyle = computed(() => ({
   background: 'transparent',
@@ -53,30 +46,6 @@ const surfaceStyle = computed(() => ({
           : props.config.textColor,
 }))
 
-function measure() {
-  const el = containerRef.value
-  if (!el) return
-  sizeWidth.value = el.offsetWidth
-  sizeHeight.value = el.offsetHeight
-
-  if (sizeWidth.value <= 0 || sizeHeight.value <= 0) {
-    window.setTimeout(measure, 100)
-  }
-}
-
-onMounted(() => {
-  measure()
-  window.addEventListener('resize', measure)
-  // F4 (web#175): remount/mudança de layout (ex.: card de inputs entrou no
-  // fluxo e mudou a altura do preview) sem evento de window resize
-  resizeObserver = new ResizeObserver(measure)
-  if (containerRef.value) resizeObserver.observe(containerRef.value)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', measure)
-  resizeObserver?.disconnect()
-})
 </script>
 
 <template>
@@ -93,7 +62,6 @@ onUnmounted(() => {
       <div
         class="countdown-preview__digital"
         :style="{
-          fontSize: `${digitalFontSize}px`,
           textShadow: preview ? 'none' : '0 4px 30px rgba(0, 0, 0, 0.35)',
         }"
       >
@@ -109,7 +77,12 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
+/* web#175: fonte do display via container query — escala com o PRÓPRIO
+   container, sem loop de medicação JS (a versão anterior calculava a fonte
+   pela altura antiga e ficava presa quando o preview caía no min-height,
+   cortando os dígitos — prints 961×906 do Ezequias). */
 .countdown-preview {
+  container-type: size;
   position: relative;
   display: flex;
   width: 100%;
@@ -128,6 +101,8 @@ onUnmounted(() => {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   text-align: center;
+  /* 12% da altura do container, limitado a 28% da largura e entre 2rem e 24rem */
+  font-size: clamp(2rem, min(24cqh, 28cqi), 24rem);
   /* web#175: line-height 1 deixava o descender do dígito colado/cortado na
      base do painel — o counter "alinha no footer" visualmente */
   line-height: 1.15;
