@@ -136,6 +136,12 @@ export function useCountdownDisplay(
     // cruzamento decrescente. preset 'custom:{id}' toca da biblioteca local.
     // F3 (web#175): firedMarkers vive NO STORE — reabrir a janela de projeção
     // remonta o composable e NÃO repete alertas da mesma execução.
+    // web#175 F2-v3: o disparo acontece SÓ quando este composable roda na
+    // janela principal (sem configSource externo). O popup de projeção
+    // renderiza o tempo via props mas NUNCA instala os watches de áudio —
+    // senão o alerta toca 2x (um por janela) e mute/volume do operador não
+    // afeta o toque do popup (Pinias separadas).
+    const isOperatorWindow = configSource == null && runtimeSource == null
     const firedMarkers = store.firedMarkers
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
@@ -162,35 +168,37 @@ export function useCountdownDisplay(
       stopAllAlerts()
     })
 
-    watch(remainingRawMs, (raw, prevRaw) => {
-      if (runtime.value.status !== 'running') return
-      // start: primeira observação com status running (offset 0)
-      const startMarker = activeMarkers.value.find((m) => m.offsetMs === 0)
-      if (
-        startMarker &&
-        prevStatus !== 'running' &&
-        !firedMarkers.has(startMarker.id) &&
-        startMarker.preset !== 'none'
-      ) {
-        firedMarkers.add(startMarker.id)
-        playMarkerPreset(startMarker.preset, startMarker.id)
-      }
-      prevStatus = runtime.value.status
-      // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
-      for (const marker of activeMarkers.value) {
-        if (marker.offsetMs === 0) continue
-        if (firedMarkers.has(marker.id) || marker.preset === 'none') continue
-        if ((prevRaw ?? Infinity) >= marker.offsetMs && raw < marker.offsetMs) {
-          firedMarkers.add(marker.id)
-          playMarkerPreset(marker.preset, marker.id)
+    if (isOperatorWindow) {
+      watch(remainingRawMs, (raw, prevRaw) => {
+        if (runtime.value.status !== 'running') return
+        // start: primeira observação com status running (offset 0)
+        const startMarker = activeMarkers.value.find((m) => m.offsetMs === 0)
+        if (
+          startMarker &&
+          prevStatus !== 'running' &&
+          !firedMarkers.has(startMarker.id) &&
+          startMarker.preset !== 'none'
+        ) {
+          firedMarkers.add(startMarker.id)
+          playMarkerPreset(startMarker.preset, startMarker.id)
         }
-      }
-    })
+        prevStatus = runtime.value.status
+        // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
+        for (const marker of activeMarkers.value) {
+          if (marker.offsetMs === 0) continue
+          if (firedMarkers.has(marker.id) || marker.preset === 'none') continue
+          if ((prevRaw ?? Infinity) >= marker.offsetMs && raw < marker.offsetMs) {
+            firedMarkers.add(marker.id)
+            playMarkerPreset(marker.preset, marker.id)
+          }
+        }
+      })
 
-    // Reset dos marcos quando o countdown volta pro idle (reset)
-    watch(() => runtime.value.status, (status) => {
-      if (status === 'idle') firedMarkers.clear()
-    })
+      // Reset dos marcos quando o countdown volta pro idle (reset)
+      watch(() => runtime.value.status, (status) => {
+        if (status === 'idle') firedMarkers.clear()
+      })
+    }
 
     return {
       now,

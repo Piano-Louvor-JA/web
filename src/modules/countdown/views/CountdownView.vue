@@ -1113,6 +1113,13 @@ const effectiveConfig = computed(() => {
     max-height: min(100%, 24rem);
   }
 
+  /* web#175: no modo ES o conteúdo (2 fileiras de controles + áudio + badge)
+     passa do max-height rígido e o overflow:hidden cortava os CONTROLES.
+     Modo ES deixa o card crescer até 30rem também aqui. */
+  .countdown-view__widget--sabbath {
+    max-height: min(100%, 30rem);
+  }
+
   .countdown-view__preview {
     padding: 0.65rem 1rem 0.5rem;
   }
