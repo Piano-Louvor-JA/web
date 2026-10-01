@@ -17,7 +17,6 @@ import CountdownSavedList from '../components/CountdownSavedList.vue'
 import { useCountdownFeature } from '../composables/useCountdown'
 import { useCountdownStore } from '../stores/useCountdownStore'
 import { DEFAULT_COUNTDOWN_DISPLAY_CONFIG, type CountdownDisplayConfig, type CountdownTimeFormat, type SabbathModeConfig } from '../types/countdown'
-import type { AlertPresetKey } from '../services/alert-tone'
 import PopupRouteSelect from '../../settings/components/PopupRouteSelect.vue'
 
 const { t } = useI18n()
@@ -41,7 +40,7 @@ const {
   closeDisplayConfig,
   setDurationMs,
   setAllowNegative,
-  setAlertTonePreset,
+  setAlertTonePreset: _setAlertTonePreset,
   setMode,
   setSabbathConfig,
   adjustTime,
@@ -66,13 +65,6 @@ function patchMode(mode: 'standard' | 'sabbath') {
 
 function patchSabbathConfig(sabbathConfig: SabbathModeConfig) {
   setSabbathConfig(sabbathConfig)
-}
-
-function patchAlertTonePreset({ marker, preset }: { marker: string; preset: string }) {
-  void setAlertTonePreset(
-    marker as 'start' | '5min' | '1min',
-    preset as AlertPresetKey | 'none',
-  )
 }
 
 const sabbathEndTime = computed({
@@ -516,7 +508,6 @@ const effectiveConfig = computed(() => {
           @close="closeDisplayConfig"
           @update:time-format="setTimeFormat"
           @update:allow-negative="setAllowNegative"
-          @update:alert-tone-preset="patchAlertTonePreset"
           @update:mode="patchMode"
           @update:sabbath-config="patchSabbathConfig"
           @reset="resetDisplayToDefault"

@@ -490,6 +490,7 @@ export const useCountdownStore = defineStore('countdown', () => {
             addAlertMarker,
             updateAlertMarker,
             removeAlertMarker,
+            isOffsetTaken,
             setMode,
         setSabbathConfig,
         resetDisplayToDefault,

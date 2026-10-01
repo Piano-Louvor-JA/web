@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { GlassCard } from '@design-system/index'
@@ -13,23 +13,17 @@ import {
 } from '../types/countdown'
 import {
   getAvailablePresets,
-  getCustomAudio,
   getPresetDurationMs,
-  saveCustomTone,
   type AlertPresetKey,
 } from '../services/alert-tone'
-import { DEFAULT_ALERT_TONE_PRESETS } from '../composables/useCountdown'
+import {
+  addLibraryTone,
+  listLibraryTones,
+  removeLibraryTone,
+  renameLibraryTone,
+  type CustomTone,
+} from '../services/alert-tone-library'
 import { useCountdownStore } from '../stores/useCountdownStore'
-
-type ToneMarkerKey = keyof NonNullable<CountdownDisplayConfig['alertTonePresets']>
-
-const ALERT_MARKERS: Array<{ key: 'start' | '5min' | '1min'; labelKey: string }> = [
-  { key: 'start', labelKey: 'countdown.toneMarkerStart' },
-  { key: '5min', labelKey: 'countdown.toneMarker5min' },
-  { key: '1min', labelKey: 'countdown.toneMarker1min' },
-]
-
-const DEFAULT_TONE_PRESETS = DEFAULT_ALERT_TONE_PRESETS
 
 const props = defineProps<{
   open: boolean
@@ -40,60 +34,154 @@ const emit = defineEmits<{
   close: []
   'update:timeFormat': [value: CountdownTimeFormat]
   'update:allowNegative': [value: boolean]
-  'update:alertTonePreset': [value: { marker: ToneMarkerKey; preset: string }]
   'update:mode': [value: CountdownMode]
   'update:sabbathConfig': [value: SabbathModeConfig]
   reset: []
 }>()
 
 const { t } = useI18n()
+const store = useCountdownStore()
 
-/** Duração legível (ex.: 30s) do preset selecionado em cada marco. */
-function presetDurationLabel(marker: 'start' | '5min' | '1min', config: CountdownDisplayConfig): string {
-  const preset = config.alertTonePresets?.[marker] ?? DEFAULT_TONE_PRESETS[marker]
-  if (!preset || preset === 'none') return ''
-  const ms = getPresetDurationMs(preset, getCustomAudio(marker))
+const toneLibrary = ref<CustomTone[]>([])
+const toneError = ref('')
+const expandedToneId = ref<string | null>(null)
+
+function refreshLibrary(): void {
+  toneLibrary.value = listLibraryTones()
+}
+
+/** Marcos efetivos: config v2 ou seeds (paridade). */
+const markers = computed(() => props.config.alertMarkers ?? [])
+
+function markerPresetValue(preset: string): string {
+  // 'custom:{id}' → o select usa option-group library com value custom:{id}
+  return preset
+}
+
+function libraryOptions(): Array<{ value: string; label: string }> {
+  return toneLibrary.value.map((tone) => ({
+    value: `custom:${tone.id}`,
+    label: tone.name,
+  }))
+}
+
+function fixedOptions(): Array<{ key: string; label: string }> {
+  return getAvailablePresets().filter((p) => p.key !== 'custom')
+}
+
+function onMarkerPresetChange(markerId: string, event: Event): void {
+  const preset = (event.target as HTMLSelectElement).value
+  store.updateAlertMarker(markerId, { preset: preset as AlertMarkerPresetCast })
+}
+
+function onMarkerOffsetChange(markerId: string, event: Event): void {
+  const minutes = Number.parseFloat((event.target as HTMLInputElement).value)
+  if (Number.isNaN(minutes) || minutes < 0) {
+    toneError.value = t('countdown.markerInvalidOffset')
+    return
+  }
+  const offsetMs = Math.round(minutes * 60_000)
+  if (!store.updateAlertMarker(markerId, { offsetMs })) {
+    toneError.value = t('countdown.markerOffsetTaken')
+  }
+}
+
+function onAddMarker(): void {
+  // default: 3min — colisão cai no offset livre seguinte
+  let minutes = 3
+  while (minutes < 60 && store.isOffsetTaken(minutes * 60_000)) minutes += 1
+  if (minutes >= 60) {
+    toneError.value = t('countdown.markerOffsetTaken')
+    return
+  }
+  store.addAlertMarker(minutes * 60_000, 'beep')
+}
+
+function onRemoveMarker(markerId: string): void {
+  store.removeAlertMarker(markerId)
+}
+
+type AlertMarkerPresetCast = Parameters<
+  typeof store.updateAlertMarker
+>[1] extends { preset?: infer P } ? (P extends string ? P : never) : never
+
+/** Duração legível do preset efetivo do marco. */
+function markerDurationLabel(preset: string): string {
+  if (preset === 'none') return ''
+  if (preset.startsWith('custom:')) {
+    const tone = toneLibrary.value.find((tone) => `custom:${tone.id}` === preset)
+    return tone ? t('countdown.toneDuration', { dur: tone.name }) : ''
+  }
+  const ms = getPresetDurationMs(preset as AlertPresetKey)
   const s = Math.round(ms / 1000)
   return s >= 60 ? `${Math.floor(s / 60)}min${s % 60 ? ` ${s % 60}s` : ''}` : `${s}s`
 }
 
-/** Soma das durações dos áudios habilitados — tempo mínimo recomendado. */
-function totalTonesMs(config: CountdownDisplayConfig): number {
-  return (['start', '5min', '1min'] as const).reduce((total, marker) => {
-    const preset = config.alertTonePresets?.[marker] ?? DEFAULT_TONE_PRESETS[marker]
-    if (!preset || preset === 'none') return total
-    return total + getPresetDurationMs(preset, getCustomAudio(marker))
-  }, 0)
-}
+/** Soma das durações dos áudios habilitados — aviso de tempo mínimo. */
+const totalTonesMs = computed(() =>
+  markers.value.reduce((total, marker) => {
+    if (marker.preset === 'none') return total
+    if (marker.preset.startsWith('custom:')) return total + 60_000
+    return total + getPresetDurationMs(marker.preset as AlertPresetKey)
+  }, 0),
+)
 
-const runtime = computed(() => useCountdownStore().runtime)
 const tooShortWarning = computed(() => {
-  const total = totalTonesMs(props.config)
+  const total = totalTonesMs.value
   if (total <= 0) return ''
-  if (runtime.value.durationMs >= total) return ''
+  if (store.runtime.durationMs >= total) return ''
   const s = Math.round(total / 1000)
   const label = s >= 60 ? `${Math.floor(s / 60)}min${s % 60 ? ` ${s % 60}s` : ''}` : `${s}s`
   return t('countdown.toneMinDurationWarning', { min: label })
 })
 
-function onCustomAudioFile(marker: 'start' | '5min' | '1min', event: Event) {
+function previewPreset(preset: string): void {
+  if (preset === 'none') return
+  if (preset.startsWith('custom:')) return // preview da library no próprio player do navegador
+  void import('../services/alert-tone').then(({ playAlertTone }) =>
+    playAlertTone(preset as AlertPresetKey),
+  )
+}
+
+function previewLibraryTone(tone: CustomTone): void {
+  void new Audio(tone.dataUrl).play().catch(() => {
+    // autoplay bloqueado — silencioso
+  })
+}
+
+function onLibraryFile(event: Event): void {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
   const reader = new FileReader()
   reader.onload = () => {
     try {
-      saveCustomTone(marker, String(reader.result))
-      // seleciona 'custom' automaticamente no select
-      emit('update:alertTonePreset', { marker, preset: 'custom' })
+      addLibraryTone(file.name.replace(/\.[^.]+$/, ''), String(reader.result))
+      refreshLibrary()
+      toneError.value = ''
     } catch {
-      alert(t('countdown.customToneTooLarge'))
+      toneError.value = t('countdown.customToneTooLarge')
     }
+    input.value = ''
   }
   reader.readAsDataURL(file)
 }
 
+function onRenameTone(tone: CustomTone, event: Event): void {
+  renameLibraryTone(tone.id, (event.target as HTMLInputElement).value)
+  refreshLibrary()
+}
 
+function onRemoveTone(tone: CustomTone): void {
+  // RF-3: marcos que usavam o som voltam pro default (beep)
+  for (const marker of markers.value) {
+    if (marker.preset === `custom:${tone.id}`) {
+      store.updateAlertMarker(marker.id, { preset: 'beep' })
+    }
+  }
+  removeLibraryTone(tone.id)
+  refreshLibrary()
+}
 </script>
 
 <template>
@@ -195,7 +283,11 @@ function onCustomAudioFile(marker: 'start' | '5min' | '1min', event: Event) {
                           </label>
                         </section>
 
-                        <section class="countdown-config__section">
+                        <section
+              v-if="open"
+              class="countdown-config__section"
+              data-testid="alert-markers-section"
+            >
               <div class="countdown-config__section-head">
                 <i
                   class="ti ti-bell"
@@ -207,38 +299,153 @@ function onCustomAudioFile(marker: 'start' | '5min' | '1min', event: Event) {
                 </div>
               </div>
               <div
-                v-for="marker in ALERT_MARKERS"
-                :key="marker.key"
+                v-for="marker in markers"
+                :key="marker.id"
                 class="countdown-config__tone-block"
               >
                 <div class="countdown-config__tone-row">
-                  <span class="countdown-config__tone-marker">{{ t(marker.labelKey) }}</span>
+                  <label class="countdown-config__tone-offset">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      class="countdown-config__offset-input"
+                      :value="marker.offsetMs / 60_000"
+                      :aria-label="t('countdown.markerOffsetLabel')"
+                      @change="onMarkerOffsetChange(marker.id, $event)"
+                    >
+                    <span>min</span>
+                  </label>
                   <select
                     class="countdown-config__tone-select"
-                    :value="config.alertTonePresets?.[marker.key] ?? DEFAULT_TONE_PRESETS[marker.key]"
-                    :aria-label="t(marker.labelKey)"
-                    @change="emit('update:alertTonePreset', { marker: marker.key, preset: ($event.target as HTMLSelectElement).value })"
+                    :value="markerPresetValue(marker.preset)"
+                    :aria-label="t('countdown.markerPresetLabel')"
+                    @change="onMarkerPresetChange(marker.id, $event)"
                   >
-                    <option
-                      v-for="p in getAvailablePresets()"
-                      :key="p.key"
-                      :value="p.key"
+                    <optgroup :label="t('countdown.markerGroupPresets')">
+                      <option
+                        v-for="p in fixedOptions()"
+                        :key="p.key"
+                        :value="p.key"
+                      >
+                        {{ p.label }}
+                      </option>
+                    </optgroup>
+                    <optgroup
+                      v-if="libraryOptions().length > 0"
+                      :label="t('countdown.markerGroupLibrary')"
                     >
-                      {{ p.label }}
-                    </option>
+                      <option
+                        v-for="opt in libraryOptions()"
+                        :key="opt.value"
+                        :value="opt.value"
+                      >
+                        {{ opt.label }}
+                      </option>
+                    </optgroup>
                   </select>
+                  <button
+                    type="button"
+                    class="countdown-config__icon-btn"
+                    :aria-label="t('countdown.markerPreview')"
+                    @click="previewPreset(marker.preset)"
+                  >
+                    <i
+                      class="ti ti-player-play"
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    class="countdown-config__icon-btn countdown-config__icon-btn--danger"
+                    :aria-label="t('countdown.markerRemove')"
+                    @click="onRemoveMarker(marker.id)"
+                  >
+                    <i
+                      class="ti ti-trash"
+                      aria-hidden="true"
+                    />
+                  </button>
                 </div>
                 <span
-                    v-if="presetDurationLabel(marker.key, config)"
-                    class="countdown-config__tone-duration"
-                  >{{ t('countdown.toneDuration', { dur: presetDurationLabel(marker.key, config) }) }}</span>
+                  v-if="markerDurationLabel(marker.preset)"
+                  class="countdown-config__tone-duration"
+                >{{ markerDurationLabel(marker.preset) }}</span>
+              </div>
+              <button
+                type="button"
+                class="countdown-config__btn countdown-config__btn--add"
+                data-testid="add-marker"
+                @click="onAddMarker"
+              >
+                <i
+                  class="ti ti-plus"
+                  aria-hidden="true"
+                />
+                {{ t('countdown.markerAdd') }}
+              </button>
+
+              <div class="countdown-config__library">
+                <h4>{{ t('countdown.libraryTitle') }}</h4>
+                <p class="countdown-config__library-hint">
+                  {{ t('countdown.libraryHint') }}
+                </p>
                 <label class="countdown-config__tone-file">
                   <input
                     type="file"
                     accept="audio/*"
-                    @change="onCustomAudioFile(marker.key, $event)"
+                    data-testid="library-upload"
+                    @change="onLibraryFile"
                   >
+                  <span>{{ t('countdown.libraryUpload') }}</span>
                 </label>
+                <ul
+                  v-if="toneLibrary.length > 0"
+                  class="countdown-config__library-list"
+                >
+                  <li
+                    v-for="tone in toneLibrary"
+                    :key="tone.id"
+                    class="countdown-config__library-item"
+                  >
+                    <button
+                      type="button"
+                      class="countdown-config__icon-btn"
+                      :aria-label="t('countdown.markerPreview')"
+                      @click="previewLibraryTone(tone)"
+                    >
+                      <i
+                        class="ti ti-player-play"
+                        aria-hidden="true"
+                      />
+                    </button>
+                    <input
+                      type="text"
+                      class="countdown-config__library-name"
+                      :value="tone.name"
+                      :aria-label="t('countdown.libraryRename')"
+                      @change="onRenameTone(tone, $event)"
+                    >
+                    <button
+                      type="button"
+                      class="countdown-config__icon-btn countdown-config__icon-btn--danger"
+                      :aria-label="t('countdown.libraryRemove')"
+                      @click="onRemoveTone(tone)"
+                    >
+                      <i
+                        class="ti ti-trash"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </li>
+                </ul>
+                <p
+                  v-if="toneError"
+                  class="countdown-config__tone-warning"
+                  role="alert"
+                >
+                  {{ toneError }}
+                </p>
               </div>
             </section>
           </div>
