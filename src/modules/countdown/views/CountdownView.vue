@@ -233,6 +233,7 @@ const effectiveConfig = computed(() => {
       <div class="countdown-view__stage">
         <GlassCard
           class="countdown-view__widget"
+          :class="{ 'countdown-view__widget--sabbath': effectiveConfig.mode === 'sabbath' }"
           :padding="false"
         >
           <div class="countdown-view__toolbar">
@@ -625,6 +626,15 @@ const effectiveConfig = computed(() => {
   max-height: min(100%, 28rem);
   overflow: hidden;
   flex-direction: column;
+}
+
+/* web#175: no modo ES o bloco de agendamento (Término/Início) ocupa altura
+   extra no topo — sem isso o preview espreme e o display desce colar no
+   Pausar (print 241e82). Card cresce em vez de espremer o display. */
+.countdown-view__widget--sabbath {
+  aspect-ratio: auto;
+  max-height: min(100%, 34rem);
+  min-height: 22rem;
 }
 
 .countdown-view__toolbar {
