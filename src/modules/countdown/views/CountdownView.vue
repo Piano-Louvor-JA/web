@@ -629,12 +629,27 @@ const effectiveConfig = computed(() => {
 }
 
 /* web#175: no modo ES o bloco de agendamento (Término/Início) ocupa altura
-   extra no topo — sem isso o preview espreme e o display desce colar no
-   Pausar (print 241e82). Card cresce em vez de espremer o display. */
+   extra no topo — card mantém proporção próxima e controles compactos
+   devolvem altura ao preview (display centrado, print 241e82 vs add078) */
 .countdown-view__widget--sabbath {
-  aspect-ratio: auto;
-  max-height: min(100%, 34rem);
-  min-height: 22rem;
+  aspect-ratio: 21 / 9;
+  max-height: min(100%, 30rem);
+  min-height: 20rem;
+}
+
+/* web#175: no modo ES a área de controles tem 2 fileiras (ações + ajustes);
+   compacta pra devolver altura ao preview e manter o display centrado */
+.countdown-view__widget--sabbath .countdown-view__controls {
+  padding: 0.4rem 1.25rem 0.6rem;
+  gap: 0.4rem;
+}
+
+.countdown-view__widget--sabbath .countdown-view__adjust {
+  margin-top: 0;
+}
+
+.countdown-view__widget--sabbath .countdown-view__ctrl {
+  height: 2rem;
 }
 
 .countdown-view__toolbar {
