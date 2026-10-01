@@ -28,7 +28,6 @@ import {
 } from '../services/playlist-io'
 import { useMediaStore } from '../../media/stores/useMediaStore'
 import PopupRouteSelect from '../../settings/components/PopupRouteSelect.vue'
-import { VBtn } from 'vuetify/components'
 
 const mediaStore = useMediaStore()
 const playlists = ref<Playlist[]>(listPlaylists())

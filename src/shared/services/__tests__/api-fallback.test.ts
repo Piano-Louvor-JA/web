@@ -18,12 +18,24 @@ function setEnv(key: string, value: string | undefined) {
 
 const fetchMock = vi.fn()
 
+const PRIMARY_DB = 'https://api.pianolouvorja.com.br/json_db'
+const PRIMARY_FILES = 'https://api.pianolouvorja.com.br/file'
+const HOST_LOUVORJA = 'https://api.louvorja.com.br'
+const HOST_WORKERS = 'https://api.louvorja.workers.dev'
+const FALLBACK_HOSTS = `${HOST_LOUVORJA},${HOST_WORKERS}`
+
+function setCascadeEnv() {
+  setEnv('VITE_URL_DATABASE', PRIMARY_DB)
+  setEnv('VITE_API_FALLBACK_URLS', FALLBACK_HOSTS)
+}
+
 beforeEach(() => {
-  vi.clearAllMocks()
+  fetchMock.mockReset()
   vi.stubGlobal('fetch', fetchMock)
   setEnv('VITE_URL_DATABASE', undefined)
   setEnv('VITE_URL_FILES', undefined)
   setEnv('VITE_API_TOKEN', undefined)
+  setEnv('VITE_API_FALLBACK_URLS', undefined)
 })
 
 afterEach(() => {
@@ -31,41 +43,42 @@ afterEach(() => {
 })
 
 describe('apiCandidateBases', () => {
-  it('default sem env: primária pianolouvorja + fallbacks louvorja/workers', () => {
-    const bases = apiCandidateBases('database')
-    expect(bases).toEqual([
-      'https://api.pianolouvorja.com.br/json_db',
-      'https://api.louvorja.com.br/json_db',
-      'https://api.louvorja.workers.dev/json_db',
-    ])
+  it('sem env: lista vazia (sem primária e sem fallback hardcoded)', () => {
+    expect(apiCandidateBases('database')).toEqual([])
   })
 
   it('env apontando pra primária não duplica host no fallback', () => {
-    setEnv('VITE_URL_FILES', 'https://api.pianolouvorja.com.br/file')
+    setEnv('VITE_URL_FILES', PRIMARY_FILES)
+    setEnv('VITE_API_FALLBACK_URLS', `https://api.pianolouvorja.com.br,${HOST_LOUVORJA}`)
     const bases = apiCandidateBases('files')
-    expect(bases[0]).toBe('https://api.pianolouvorja.com.br/file')
-    expect(bases.filter((b) => b.includes('pianolouvorja'))).toHaveLength(1)
+    expect(bases).toEqual([PRIMARY_FILES, `${HOST_LOUVORJA}/file`])
   })
 
-  it('env apontando pra API dos caras: primária ela, fallbacks fixos sem duplicar', () => {
-    setEnv('VITE_URL_DATABASE', 'https://api.louvorja.com.br/json_db')
-    const bases = apiCandidateBases('database')
-    expect(bases[0]).toBe('https://api.louvorja.com.br/json_db')
-    expect(bases).not.toContain('https://api.louvorja.com.br/json_db' + 'x')
-    // sem duplicar a primária nos fallbacks
-    expect(bases.filter((b) => b === 'https://api.louvorja.com.br/json_db')).toHaveLength(1)
-    expect(bases).toContain('https://api.louvorja.workers.dev/json_db')
+  it('primária igual a um fallback: entra uma vez e mantém os outros hosts', () => {
+    setEnv('VITE_URL_DATABASE', `${HOST_LOUVORJA}/json_db`)
+    setEnv('VITE_API_FALLBACK_URLS', FALLBACK_HOSTS)
+    expect(apiCandidateBases('database')).toEqual([
+      `${HOST_LOUVORJA}/json_db`,
+      `${HOST_WORKERS}/json_db`,
+    ])
   })
 
-  it('env de dev local (127.0.0.1) mantém fallbacks de produção', () => {
+  it('env de dev local mantém os fallbacks configurados', () => {
     setEnv('VITE_URL_DATABASE', 'http://127.0.0.1:3100/json_db')
-    const bases = apiCandidateBases('database')
-    expect(bases[0]).toBe('http://127.0.0.1:3100/json_db')
-    expect(bases).toHaveLength(3)
+    setEnv('VITE_API_FALLBACK_URLS', FALLBACK_HOSTS)
+    expect(apiCandidateBases('database')).toEqual([
+      'http://127.0.0.1:3100/json_db',
+      `${HOST_LOUVORJA}/json_db`,
+      `${HOST_WORKERS}/json_db`,
+    ])
   })
 })
 
 describe('fetchWithApiFallback', () => {
+  beforeEach(() => {
+    setCascadeEnv()
+  })
+
   it('primária ok: nem tenta fallback', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ ok: 1 }), { status: 200 }))
     const { data, base } = await fetchWithApiFallback('database', 'pt_categories')
