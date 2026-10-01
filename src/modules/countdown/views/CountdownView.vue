@@ -875,7 +875,7 @@ const effectiveConfig = computed(() => {
   position: relative;
   flex: 1;
   min-height: 8rem;
-  padding: 0.75rem 1.5rem 0.5rem;
+  padding: 0.75rem 1.5rem 1rem;
 }
 
 .countdown-view__controls {

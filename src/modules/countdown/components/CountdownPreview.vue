@@ -128,7 +128,10 @@ onUnmounted(() => {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   text-align: center;
-  line-height: 1;
+  /* web#175: line-height 1 deixava o descender do dígito colado/cortado na
+     base do painel — o counter "alinha no footer" visualmente */
+  line-height: 1.15;
+  padding-bottom: 0.06em;
 }
 
 .countdown-preview__finished {
