@@ -731,11 +731,12 @@ const effectiveConfig = computed(() => {
   flex-direction: column;
 }
 
-/* web#175: modo ES por breakpoint (a web PODE usar media queries; o app é
-   que não). Largo (>1280, tela do Rafael): mantém a proporção 21/9 bonita
-   com teto 30rem. Estreito (≤1280, 960×906 do Ezequias): altura por
-   CONTEÚDO (sem aspect-ratio, sem max-height) — o preview cede via flex,
-   o display escala pelas container queries e NADA é cortado. */
+/* web#175: modo ES — TODOS os elementos visíveis em qualquer breakpoint,
+   com folga vertical (o preview nunca pode colapsar). Largo (>1280):
+   proporção 21/9 com teto 30rem. Estreito (≤1280): altura por conteúdo,
+   sem aspect-ratio/max-height e SEM overflow:hidden (era ele que cortava
+   o display e os controles nos prints do Ezequias). O display escala
+   pelas container queries; a view tem scroll natural se precisar. */
 .countdown-view__widget--sabbath {
   aspect-ratio: 21 / 9;
   max-height: min(100%, 30rem);
@@ -1173,12 +1174,19 @@ const effectiveConfig = computed(() => {
     max-height: min(100%, 24rem);
   }
 
-  /* web#175: no modo ES o conteúdo passa do max-height rígido (24rem) e o
-     overflow:hidden cortava os CONTROLES (print 960×906). Modo ES: altura
-     por conteúdo — preview cede via flex e nada some. */
+  /* web#175: modo ES estreito — todos os elementos visíveis com folga:
+     sem aspect-ratio, sem max-height, e o preview ganha altura MÍNIMA
+     real (não colapsa) com o display escalando por container query. */
   .countdown-view__widget--sabbath {
     aspect-ratio: auto;
     max-height: none;
+    overflow: visible;
+  }
+
+  .countdown-view__widget--sabbath .countdown-view__preview {
+    overflow: visible;
+    min-height: 11rem;
+    flex-shrink: 0;
   }
 
   .countdown-view__preview {
