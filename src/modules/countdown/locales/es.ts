@@ -45,6 +45,7 @@ export default {
     unmuteAudio: 'Activar alertas',
     audioVolume: 'Volumen de las alertas',
     stopAudio: 'Parar audio ahora',
+    audioAppliesToProjection: 'El audio suena en la proyección',
     allowNegativeHint: 'El cronómetro se vuelve negativo parpadeando en rojo (estilo Escuela Sabática)',
     bgColor: 'Color de Fondo',
     bgColorHint: 'Color base de fondo de la pantalla de visualización',

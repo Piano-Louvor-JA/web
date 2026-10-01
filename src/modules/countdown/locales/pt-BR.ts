@@ -46,6 +46,7 @@ export default {
     unmuteAudio: 'Ativar alertas',
     audioVolume: 'Volume dos alertas',
     stopAudio: 'Parar áudio agora',
+    audioAppliesToProjection: 'Áudio toca na projeção',
     bgColor: 'Cor de Fundo',
     bgColorHint: 'Cor base de fundo da tela de exibição',
     textColor: 'Cor do Texto',

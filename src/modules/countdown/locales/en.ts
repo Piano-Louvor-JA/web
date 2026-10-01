@@ -45,6 +45,7 @@ export default {
     unmuteAudio: 'Unmute alerts',
     audioVolume: 'Alert volume',
     stopAudio: 'Stop audio now',
+    audioAppliesToProjection: 'Audio plays on the projection',
     allowNegativeHint: 'The timer goes negative blinking in red (Sabbath School style)',
     bgColor: 'Background Color',
     bgColorHint: 'Base background color of the display screen',

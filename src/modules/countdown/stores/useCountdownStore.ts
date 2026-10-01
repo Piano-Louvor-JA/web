@@ -27,6 +27,11 @@ import {
 } from '../services/alert-tone'
 import { migrateLegacyCustomTones } from '../services/alert-tone-library'
 import {
+  publishAudioControl,
+  readAudioControl,
+  subscribeAudioControl,
+} from '../services/audio-control'
+import {
   loadCountdownDisplayConfig,
   saveCountdownDisplayConfig,
 } from '../services/countdown-preferences'
@@ -53,10 +58,38 @@ export const useCountdownStore = defineStore('countdown', () => {
   // F3 (web#175): disparos da execução ATUAL vivem no store — a janela de
   // projeção remonta o composable a cada open e NÃO pode repetir alerta.
   const firedMarkers = new Set<string>()
-  // F2 (web#175): controles de áudio do operador na projeção.
+  // F2 (web#175): controles de áudio do OPERADOR sincronizados com a janela
+  // de projeção via BroadcastChannel (janelas têm Pinias separadas).
   const audioMuted = ref(false)
   const audioVolume = ref(1)
   const audioStopTick = ref(0)
+  let audioUnsubscribe: (() => void) | null = null
+
+  function applyAudioControl(control: { muted: boolean; volume: number; stopTick: number }) {
+    const stopChanged = control.stopTick !== audioStopTick.value
+    audioMuted.value = control.muted
+    audioVolume.value = control.volume
+    audioStopTick.value = control.stopTick
+    if (stopChanged) stopAllAlerts()
+  }
+
+  function startAudioControlSync() {
+    if (audioUnsubscribe) return
+    const current = readAudioControl()
+    audioMuted.value = current.muted
+    audioVolume.value = current.volume
+    audioStopTick.value = current.stopTick
+    audioUnsubscribe = subscribeAudioControl(applyAudioControl)
+  }
+
+  function publishAudio() {
+    publishAudioControl({
+      muted: audioMuted.value,
+      volume: audioVolume.value,
+      stopTick: audioStopTick.value,
+    })
+  }
+
   const runtime = ref<CountdownRuntimeState>({
     ...DEFAULT_COUNTDOWN_RUNTIME,
     savedTimesMs: [],
@@ -162,6 +195,7 @@ export const useCountdownStore = defineStore('countdown', () => {
     if (hydrated.value) return
     config.value = loadCountdownDisplayConfig()
     migrateLegacyOnHydrate()
+    startAudioControlSync()
     runtime.value = readCountdownRuntimeFromStorage()
     isProjecting.value = isPopupModuleOpen('countdown')
     if (isProjecting.value) startProjectionWatch()
@@ -298,10 +332,12 @@ export const useCountdownStore = defineStore('countdown', () => {
     // ── F2 (web#175): controles de áudio do operador ─────────────────────
     function setAudioMuted(muted: boolean) {
       audioMuted.value = muted
+      publishAudio()
     }
 
     function setAudioVolume(volume: number) {
       audioVolume.value = Math.min(1, Math.max(0, volume))
+      publishAudio()
     }
 
     /** Stop: corta o áudio em execução E arma os marcadores de novo
@@ -309,6 +345,8 @@ export const useCountdownStore = defineStore('countdown', () => {
     function stopAudio() {
       audioStopTick.value += 1
       firedMarkers.clear()
+      stopAllAlerts()
+      publishAudio()
     }
 
     function setMode(mode: CountdownMode) {

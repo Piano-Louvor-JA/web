@@ -41,6 +41,11 @@ const {
   setDurationMs,
   setAllowNegative,
   setAlertTonePreset: _setAlertTonePreset,
+  audioMuted,
+  audioVolume,
+  setAudioMuted,
+  setAudioVolume,
+  stopAudio,
   setMode,
   setSabbathConfig,
   adjustTime,
@@ -492,6 +497,51 @@ const effectiveConfig = computed(() => {
             />
             {{ t('countdown.projecting') }}
           </div>
+
+          <!-- F2 (web#175): controles de áudio do operador (o áudio toca na
+               janela de projeção; estes controles sincronizam via canal) -->
+          <div
+            v-if="effectiveConfig.mode === 'sabbath'"
+            class="countdown-view__audio-controls"
+            data-testid="operator-audio-controls"
+          >
+            <button
+              type="button"
+              class="countdown-view__audio-btn"
+              :class="{ 'countdown-view__audio-btn--muted': audioMuted }"
+              :aria-label="audioMuted ? t('countdown.unmuteAudio') : t('countdown.muteAudio')"
+              :title="audioMuted ? t('countdown.unmuteAudio') : t('countdown.muteAudio')"
+              @click="setAudioMuted(!audioMuted)"
+            >
+              <i
+                :class="audioMuted ? 'ti ti-volume-off' : 'ti ti-volume'"
+                aria-hidden="true"
+              />
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              class="countdown-view__audio-volume"
+              :value="audioVolume"
+              :aria-label="t('countdown.audioVolume')"
+              @input="setAudioVolume(Number(($event.target as HTMLInputElement).value))"
+            >
+            <button
+              type="button"
+              class="countdown-view__audio-btn countdown-view__audio-btn--stop"
+              :aria-label="t('countdown.stopAudio')"
+              :title="t('countdown.stopAudio')"
+              @click="stopAudio()"
+            >
+              <i
+                class="ti ti-player-stop"
+                aria-hidden="true"
+              />
+            </button>
+            <span class="countdown-view__audio-hint">{{ t('countdown.audioAppliesToProjection') }}</span>
+          </div>
         </GlassCard>
       </div>
 
@@ -650,6 +700,53 @@ const effectiveConfig = computed(() => {
 
 .countdown-view__widget--sabbath .countdown-view__ctrl {
   height: 2rem;
+}
+
+/* F2 (web#175): controles de áudio do operador (sincronizam com a projeção) */
+.countdown-view__audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.countdown-view__audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-color-on-surface) 8%, transparent);
+  color: var(--ds-color-on-surface);
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--ds-color-on-surface) 15%, transparent);
+  }
+
+  &--muted {
+    color: var(--ds-color-primary);
+  }
+
+  &--stop:hover {
+    background: color-mix(in srgb, var(--ds-color-error, #ff5252) 25%, transparent);
+    color: var(--ds-color-error, #ff5252);
+  }
+}
+
+.countdown-view__audio-volume {
+  width: 5.5rem;
+  accent-color: var(--ds-color-primary);
+}
+
+.countdown-view__audio-hint {
+  font-size: 0.68rem;
+  color: var(--ds-color-on-surface-variant);
+  user-select: none;
 }
 
 .countdown-view__toolbar {
