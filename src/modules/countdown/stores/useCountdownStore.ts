@@ -18,7 +18,13 @@ import {
   formatElapsedMs,
 } from '../services/countdown-format'
 import { publishToStageRelay } from '@shared/services/palco-cloud-bridge'
-import { getPresetDurationMs, type AlertPresetKey } from '../services/alert-tone'
+import {
+  getPresetDurationMs,
+  loadCustomTones,
+  LEGACY_CUSTOM_TONES_KEY,
+  type AlertPresetKey,
+} from '../services/alert-tone'
+import { migrateLegacyCustomTones } from '../services/alert-tone-library'
 import {
   loadCountdownDisplayConfig,
   saveCountdownDisplayConfig,
@@ -147,11 +153,61 @@ export const useCountdownStore = defineStore('countdown', () => {
   function hydrate() {
     if (hydrated.value) return
     config.value = loadCountdownDisplayConfig()
+    migrateLegacyOnHydrate()
     runtime.value = readCountdownRuntimeFromStorage()
     isProjecting.value = isPopupModuleOpen('countdown')
     if (isProjecting.value) startProjectionWatch()
     if (runtime.value.status === 'running') startFinishWatch()
     hydrated.value = true
+  }
+
+  /**
+   * Migração 1x de dados legados (roda no hydrate, depois de load):
+   * - 'legacy-custom' nos markers → importa customTones v1 pra library e
+   *   aponta o marker pro 'custom:{id}' real.
+   * Idempotente: sem 'legacy-custom' e sem customTones, não faz nada.
+   */
+  function migrateLegacyOnHydrate() {
+    let changed = false
+    const markers = config.value.alertMarkers
+    const hasLegacyPreset = markers?.some((m) => m.preset === 'legacy-custom') ?? false
+    const legacyTones = loadCustomTones()
+    const hasLegacyTones = Object.keys(legacyTones).length > 0
+
+    if (hasLegacyPreset && hasLegacyTones) {
+      const ids = migrateLegacyCustomTones(legacyTones)
+      config.value = {
+        ...config.value,
+        alertMarkers: (markers ?? []).map((m) => {
+          if (m.preset !== 'legacy-custom') return m
+          const markerKey = m.id as 'start' | '5min' | '1min'
+          const toneId = ids[markerKey]
+          return toneId ? { ...m, preset: `custom:${toneId}` } : { ...m, preset: 'beep' }
+        }),
+      }
+      changed = true
+    } else if (hasLegacyPreset) {
+      // sem áudio legado no device: volta pro default
+      config.value = {
+        ...config.value,
+        alertMarkers: (markers ?? []).map((m) =>
+          m.preset === 'legacy-custom' ? { ...m, preset: 'beep' } : m,
+        ),
+      }
+      changed = true
+    }
+
+    if (hasLegacyTones) {
+      // limpa a chave legada (conteúdo já vive na library)
+      try {
+        localStorage.removeItem(LEGACY_CUSTOM_TONES_KEY)
+      } catch {
+        // storage indisponível — segue com a chave legada (re-migra inócuo)
+      }
+      changed = true
+    }
+
+    if (changed) persistConfig()
   }
 
   function persistConfig() {

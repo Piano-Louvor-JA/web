@@ -44,19 +44,40 @@ export function normalizeCountdownDisplayConfig(raw: unknown): CountdownDisplayC
   }
 
   // ── Migração v1 → v2 (idempotente) ──────────────────────────────────────
-  // v2 presente e válida: usa (e re-normaliza entradas inválidas).
+  // v2 presente: array [] é estado VÁLIDO (zero alertas) — só objeto ausente
+  // ou 100% inválido cai pros defaults.
   if (source.configVersion === 2) {
     normalized.configVersion = 2
-    normalized.alertMarkers = asAlertMarkers(source.alertMarkers) ?? defaultsMarkers()
+    const markers = source.alertMarkers
+    if (Array.isArray(markers)) {
+      const valid = asAlertMarkers(markers)
+      if (valid != null) {
+        // ≥1 entrada válida: usa (inválidas individuais descartadas)
+        normalized.alertMarkers = valid
+      } else if (markers.length === 0) {
+        // [] explícito: zero alertas é estado válido — NÃO ressuscita defaults
+        normalized.alertMarkers = []
+      } else {
+        normalized.alertMarkers = defaultsMarkers()
+      }
+    } else {
+      normalized.alertMarkers = defaultsMarkers()
+    }
     return normalized
   }
   // v1 (sem configVersion): converte alertTonePresets nos offsets padrão.
   normalized.configVersion = 2
   const legacy = normalized.alertTonePresets ?? {}
-  normalized.alertMarkers = DEFAULT_ALERT_MARKERS.map((marker) => ({
-    ...marker,
-    preset: legacy[marker.id as 'start' | '5min' | '1min'] ?? marker.preset,
-  }))
+  normalized.alertMarkers = DEFAULT_ALERT_MARKERS.map((marker): AlertMarker => {
+    const legacyPreset: string | undefined = legacy[marker.id as 'start' | '5min' | '1min']
+    return {
+      ...marker,
+      preset:
+        legacyPreset === 'custom'
+          ? ('legacy-custom' as const)
+          : (legacyPreset as AlertMarkerPreset | undefined) ?? marker.preset,
+    }
+  })
   return normalized
 }
 
@@ -104,6 +125,7 @@ function asAlertTonePresets(
     'abertura_es',
     '5min_es',
     '1min_es',
+    'custom', // legado v1: vira 'legacy-custom' na migração pra markers
   ]
   const out: Partial<Record<'start' | '5min' | '1min', string>> = {}
   for (const key of ['start', '5min', '1min'] as const) {

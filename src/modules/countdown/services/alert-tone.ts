@@ -126,6 +126,8 @@ export function getAvailablePresets(): Array<{ key: string; label: string }> {
 // ── Áudio personalizado do usuário (por marco) ─────────────────────────
 // Persistido em localStorage como data-URL (arquivos de alerta são pequenos, <2MB razoável).
 const CUSTOM_TONES_KEY = 'pianolouvorja:countdown:customTones'
+/** Chave legada exposta pra migração (store limpa após importar). */
+export const LEGACY_CUSTOM_TONES_KEY = CUSTOM_TONES_KEY
 
 export type CustomToneMap = Partial<Record<'start' | '5min' | '1min', string>> // data-URLs
 

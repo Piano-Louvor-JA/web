@@ -92,4 +92,37 @@ describe('migração v1 → v2 (alertTonePresets → alertMarkers)', () => {
     })
     expect(config.alertMarkers).toHaveLength(2)
   })
+
+  it('v2 com ZERO marcos é estado válido: persiste vazio (não ressuscita defaults) [crítico cego]', () => {
+    const config = normalizeCountdownDisplayConfig({
+      configVersion: 2,
+      alertMarkers: [],
+    })
+    expect(config.alertMarkers).toEqual([])
+  })
+
+  it('v2 SEM o campo alertMarkers (objeto antigo) usa defaults', () => {
+    const config = normalizeCountdownDisplayConfig({
+      configVersion: 2,
+    })
+    expect(config.alertMarkers).toEqual(DEFAULT_ALERT_MARKERS)
+  })
+
+  it('v2 com todas as ENTRADAS inválidas → defaults (diferente de [] explícito)', () => {
+    const config = normalizeCountdownDisplayConfig({
+      configVersion: 2,
+      alertMarkers: [{ id: 'bad', offsetMs: -1, preset: 'beep' }],
+    })
+    expect(config.alertMarkers).toEqual(DEFAULT_ALERT_MARKERS)
+  })
+
+  it("v1 com preset 'custom' vira 'legacy-custom' (resolvido no hydrate pela library)", () => {
+    const config = normalizeCountdownDisplayConfig({
+      alertTonePresets: { start: 'custom', '1min': 'gong' },
+    })
+    const start = config.alertMarkers?.find((m) => m.id === 'start')
+    expect(start?.preset).toBe('legacy-custom')
+    const one = config.alertMarkers?.find((m) => m.id === '1min')
+    expect(one?.preset).toBe('gong')
+  })
 })

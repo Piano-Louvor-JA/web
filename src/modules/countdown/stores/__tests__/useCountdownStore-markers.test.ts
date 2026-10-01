@@ -5,6 +5,7 @@ vi.stubGlobal('localStorage', {
   clear: () => values.clear(),
   getItem: (key: string) => values.get(key) ?? null,
   setItem: (key: string, value: string) => values.set(key, value),
+  removeItem: (key: string) => values.delete(key),
 })
 
 import { createPinia, setActivePinia } from 'pinia'
@@ -91,6 +92,44 @@ describe('store — marcos dinâmicos v2 (RF-1/RF-2/B3)', () => {
     expect(one?.preset).toBe('1min_es') // não configurado → default
     // persistiu a v2 (reload não re-migra: idempotente)
     expect(store.config.alertTonePresets).toEqual({ start: 'gong', '5min': 'chime' })
+  })
+
+  it('remove TODOS os marcos → re-hydrate mantém zero alertas (crítico cego: bug do reload)', () => {
+    const store = useCountdownStore()
+    store.hydrate()
+    for (const id of (store.config.alertMarkers ?? []).map((m) => m.id)) {
+      store.removeAlertMarker(id)
+    }
+    expect(store.config.alertMarkers).toEqual([])
+
+    // simula reload: nova instância do store lendo o storage
+    const store2 = useCountdownStore()
+    store2.hydrate()
+    expect(store2.config.alertMarkers).toEqual([])
+  })
+
+  it("legado 'custom' + customTones no device: hydrate importa pra library e aponta o marker", () => {
+    values.set('pianolouvorja:countdown:customTones', JSON.stringify({ start: 'data:audio/mpeg;base64,AAA' }))
+    const store = useCountdownStore()
+    // seed direto do storage ANTES do hydrate: config v1 com preset custom
+    const prefs = JSON.parse(values.get('user_data') ?? '{}')
+    prefs['countdown.config'] = {
+      timeFormat: 'hh:mm:ss',
+      bgColor: '#000',
+      textColor: '#FFF',
+      alertTonePresets: { start: 'custom' },
+    }
+    values.set('user_data', JSON.stringify(prefs))
+
+    store.hydrate()
+    const start = store.config.alertMarkers?.find((m) => m.id === 'start')
+    expect(start?.preset).toMatch(/^custom:tone-/)
+    // chave legada limpa (idempotente)
+    expect(values.has('pianolouvorja:countdown:customTones')).toBe(false)
+    // library tem o tom importado
+    const library = JSON.parse(values.get('pianolouvorja:countdown:toneLibrary') ?? '[]')
+    expect(library).toHaveLength(1)
+    expect(library[0].dataUrl).toBe('data:audio/mpeg;base64,AAA')
   })
 
   it('minDurationMs soma presets habilitados dos markers no modo sabbath', () => {

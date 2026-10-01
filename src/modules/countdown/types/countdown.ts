@@ -19,7 +19,7 @@ export interface SabbathModeConfig {
   startTime?: string
 }
 
-export type AlertMarkerPreset = AlertPresetKey | 'none' | `custom:${string}`
+export type AlertMarkerPreset = AlertPresetKey | 'none' | 'legacy-custom' | `custom:${string}`
 
 /** Marco de alerta do cronômetro (v2): dispara quando faltam `offsetMs`. */
 export interface AlertMarker {
