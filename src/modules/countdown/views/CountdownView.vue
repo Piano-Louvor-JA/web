@@ -124,6 +124,33 @@ function timeToMs(val: string): number {
   return (h * 3600 + m * 60) * 1000
 }
 
+// web#175: no modo ES com cronômetro idle, o preview tem que mostrar a
+// duração DERIVADA do agendamento (fim − início|agora), igual o start()
+// calcula — não o 00:05:00 do cronômetro normal ("fica fixo, não atualiza").
+const sabbathIdlePreviewRuntime = computed(() => {
+  if (effectiveConfig.value.mode !== 'sabbath') return null
+  if (runtime.value.status !== 'idle') return null
+  const sc = effectiveConfig.value.sabbathConfig
+  if (!sc || !/^\d{2}:\d{2}$/.test(sc.endTime)) return null
+  const now = new Date()
+  const nowMs = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) * 1000
+  const endMs = timeToMs(sc.endTime)
+  const durationMs = endMs > nowMs ? endMs - nowMs : endMs - nowMs + 24 * 3600 * 1000
+  let startAtMs = nowMs
+  if (sc.scheduleMode === 'start' && /^\d{2}:\d{2}$/.test(sc.startTime ?? '')) {
+    startAtMs = timeToMs(sc.startTime ?? '')
+  }
+  const accumulatedMs = Math.max(0, Math.min(nowMs - startAtMs, durationMs))
+  return {
+    ...runtime.value,
+    durationMs,
+    accumulatedMs,
+    segmentStartedAt: null,
+    status: 'idle' as const,
+    finished: false,
+  }
+})
+
 /** Converte ms → HH:MM */
 function msToTime(ms: number): string {
   const totalSec = Math.round(ms / 1000)
@@ -385,7 +412,7 @@ const effectiveConfig = computed(() => {
                         </div>
             <CountdownPreview
               :config="effectiveConfig"
-              :runtime="runtime"
+              :runtime="sabbathIdlePreviewRuntime ?? runtime"
               preview
             />
           </div>
