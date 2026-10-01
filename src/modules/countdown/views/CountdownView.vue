@@ -731,12 +731,12 @@ const effectiveConfig = computed(() => {
 
     /* Popover de agendamento */
     .countdown-view__sabbath-popover {
-              position: absolute;
-              top: 3.5rem;
-          right: 20.5rem;
-          z-index: 10;
-          min-width: 20rem;
-          max-width: 90vw;
+                  position: absolute;
+                  top: 3.5rem;
+              right: 1rem;
+              z-index: 10;
+              min-width: min(20rem, calc(100vw - 2rem));
+              max-width: calc(100vw - 2rem);
       padding: 1rem;
       border-radius: 1rem;
       background: var(--ds-color-surface-elevated, var(--ds-color-surface));
@@ -943,10 +943,9 @@ const effectiveConfig = computed(() => {
 }
 
 .countdown-view__projecting {
-  position: absolute;
-  bottom: 4.25rem;
-  left: 50%;
-  z-index: 2;
+  /* web#175: fluxo, não overlay — absolute aqui encostava no botão Pausar
+     quando a altura do card varia (janela estreita / card de inputs no fluxo) */
+  position: static;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -956,7 +955,7 @@ const effectiveConfig = computed(() => {
   color: var(--ds-color-primary);
   font-size: 0.75rem;
   font-weight: 600;
-  transform: translateX(-50%);
+  margin: 0.35rem auto 0;
 
   .ti {
     font-size: 0.95rem;
