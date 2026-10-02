@@ -535,6 +535,13 @@ export function reconcileMusicItemTitles(
       nextItem = { ...nextItem, notes: undefined }
     }
 
+    // web#174: itens musicais sem duração herdam a duração do catálogo
+    // (importações .slja locais passam a ter durationMs estimada).
+    if (nextItem.durationMs <= 0 && (music.durationMs ?? 0) > 0) {
+      changed = true
+      nextItem = { ...nextItem, durationMs: clampMomentDurationMs(music.durationMs!) }
+    }
+
     return nextItem
   })
 
