@@ -67,13 +67,16 @@ async function onImportSljaFile(event: Event): Promise<void> {
   sljaError.value = false
   try {
     const imported = await importSljaAsCustomMusic(file)
-    // seleciona a música importada no draft — id local (900M+) ou custom
-    // (1M+), ambos resolvidos pelo resolveMediaTrack no player
-    emit('pick-music', imported.musicId)
-    // título do item = nome da música importada (se o operador não digitou)
-    if (!props.draft.name.trim()) {
-      patch({ name: imported.name })
-    }
+    // web#174: recarrega o catálogo ANTES do pick — sem isso o id novo
+    // (900M+ local / 1M+ custom) não existe em musicList, selectedMusic
+    // fica null e o submit é bloqueado (música "não toca").
+    emit('slja-imported', imported.musicId)
+    // seleção + título num ÚNICO patch: props.draft aqui ainda é stale —
+    // um segundo patch sobrescreveria o musicId do pick-music (race).
+    patch({
+      musicId: imported.musicId,
+      ...(props.draft.name.trim() ? {} : { name: imported.name }),
+    })
     sljaMessage.value = imported.local
       ? t('liturgy.slja.importedLocal', {
           name: imported.name,
