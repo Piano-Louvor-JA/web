@@ -125,11 +125,21 @@ export function useCountdownDisplay(
       }
       prevStatus = runtime.value.status
       // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
+      // Feedback Ezequias: "5min toca faltando 4" — no primeiro tick de running
+      // prevRaw é undefined (Infinity): se o cronômetro já iniciou com remaining
+      // abaixo do marco (ex.: start faltando 4:30), o cruzamento "Infinity >= 5min
+      // > raw" disparava o alerta FORA DE HORA. Primeiro tick só arma; marcos já
+      // vencidos são pulados (alerta que perdeu a hora não toca atrasado).
+      const firstTick = prevRaw == null
       for (const key of ['5min', '1min'] as const) {
         const markerMs = ALERT_MARKERS_MS[key]
         const preset = presets[key]
         if (firedMarkers.has(key) || !preset || preset === 'none') continue
-        if ((prevRaw ?? Infinity) >= markerMs && raw < markerMs) {
+        if (firstTick) {
+          if (raw < markerMs) firedMarkers.add(key) // já vencido no start — pula sem tocar
+          continue
+        }
+        if (prevRaw >= markerMs && raw < markerMs) {
           firedMarkers.add(key)
           void playAlertTone(preset, undefined, getCustomAudio(key))
         }
