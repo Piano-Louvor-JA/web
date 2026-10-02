@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { toCustomMusicId } from '@modules/media/services/custom-catalog'
 import { importSljaAsCustomMusic } from '../services/import-slja'
 
 import {
@@ -68,19 +67,21 @@ async function onImportSljaFile(event: Event): Promise<void> {
   sljaError.value = false
   try {
     const imported = await importSljaAsCustomMusic(file)
-    // seleciona a música importada no draft (id com offset 1M+ já resolvido
-    // pelo player via namespace custom)
-    emit('pick-music', toCustomMusicId(imported.musicId))
-    sljaMessage.value = t('liturgy.slja.imported', {
-      name: imported.name,
-      slides: imported.slides,
-    })
-  } catch (e) {
+    // seleciona a música importada no draft — id local (900M+) ou custom
+    // (1M+), ambos resolvidos pelo resolveMediaTrack no player
+    emit('pick-music', imported.musicId)
+    sljaMessage.value = imported.local
+      ? t('liturgy.slja.importedLocal', {
+          name: imported.name,
+          slides: imported.slides,
+        })
+      : t('liturgy.slja.imported', {
+          name: imported.name,
+          slides: imported.slides,
+        })
+  } catch {
     sljaError.value = true
-    sljaMessage.value =
-      e instanceof Error && e.message === 'SLJA_IMPORT_AUTH_REQUIRED'
-        ? t('liturgy.slja.authRequired')
-        : t('liturgy.slja.importFailed')
+    sljaMessage.value = t('liturgy.slja.importFailed')
   } finally {
     sljaImporting.value = false
   }

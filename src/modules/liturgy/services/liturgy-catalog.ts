@@ -310,6 +310,27 @@ async function mergeCustomMusicOptions(
   } catch {
     // offline/sem API: customs simplesmente não aparecem nesta carga
   }
+
+  // web#174: importações .slja LOCAIS (sem login, IndexedDB, ids 900M+)
+  // entram sempre — offline-first: são as úlicas garantidas sem rede.
+  try {
+    const { listLocalMusics } = await import('./local-slja-store')
+    const locals = await listLocalMusics()
+    for (const local of locals) {
+      if (byId.has(local.id)) continue
+      byId.set(local.id, {
+        id: local.id,
+        name: local.name,
+        hymnalTrack: null,
+        albumNames: 'Importações .slja',
+        displayLabel: `${local.name} — Importações .slja (local)`,
+        durationMs: null,
+        hasInstrumental: false,
+      })
+    }
+  } catch {
+    // IndexedDB indisponível (raro) — segue sem locais
+  }
 }
 
 export async function loadLiturgyMusicOptions(): Promise<LiturgyMusicOption[]> {

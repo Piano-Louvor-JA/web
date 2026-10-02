@@ -5,6 +5,7 @@ import type {
 
 import { loadMediaTrack } from './media-catalog'
 import { resolveRemoteFileUrl } from './media-audio'
+import { isLocalSljaMusicId } from '@modules/liturgy/services/local-slja-store'
 
 /**
  * Catálogo de músicas customizadas (Minhas Coletâneas) via API /v1/custom
@@ -658,6 +659,14 @@ export async function resolveMediaTrack(
 ): Promise<MediaTrackRecord | null> {
   if (isCustomMusicId(musicId)) {
     return loadCustomMusicTrack(fromCustomMusicId(musicId))
+  }
+  // web#174: músicas .slja importadas SEM login vivem no IndexedDB local
+  // (namespace 900M+) — o player toca via blob: URL gerada na leitura.
+  if (isLocalSljaMusicId(musicId)) {
+    const { loadLocalSljaTrack } = await import(
+      '@modules/liturgy/services/local-slja-track'
+    )
+    return loadLocalSljaTrack(musicId)
   }
   return loadMediaTrack(musicId)
 }

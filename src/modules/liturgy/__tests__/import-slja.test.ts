@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import 'fake-indexeddb/auto'
 
 // web#174 RF-1/B1: parser→item. .slja importado vira música custom com
 // lyrics (timing preservado) e o chamador recebe id pronto pro offset 1M+.
@@ -81,11 +82,15 @@ describe('importSljaAsCustomMusic (RF-1/B1)', () => {
     mockParse.mockClear()
   })
 
-  it('sem login: falha CEDO com SLJA_IMPORT_AUTH_REQUIRED (não 401 silencioso)', async () => {
+  it('sem login: grava 100% LOCAL (IndexedDB) com id 900M+ e local=true', async () => {
     mockGetAuthSession.mockReturnValueOnce(null)
-    await expect(importSljaAsCustomMusic(makeFile())).rejects.toThrow(
-      'SLJA_IMPORT_AUTH_REQUIRED',
-    )
+    const result = await importSljaAsCustomMusic(makeFile())
+    expect(result.local).toBe(true)
+    expect(result.musicId).toBeGreaterThanOrEqual(900_000_001)
+    expect(result.hasAudio).toBe(true)
+    expect(result.slides).toBe(2)
+    // nenhuma chamada de API de escrita aconteceu (coletânea nem criada)
+    expect(mocks.createdMusics).toHaveLength(0)
   })
 
   it('.slja vira música custom com lyrics preservando o timing', async () => {

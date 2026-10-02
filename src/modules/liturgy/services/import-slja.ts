@@ -8,7 +8,7 @@
  * Falha de upload de mídia NÃO aborta o import (segue só com texto) —
  * mesma semântica do media editor.
  */
-import { parseSlja } from '@shared/services/slja'
+import { parseSlja, type SljaArchive } from '@shared/services/slja'
 import {
   createCustomCollection,
   createCustomMusic,
@@ -18,15 +18,22 @@ import {
   updateCustomMusic,
 } from '@modules/media/services/custom-catalog'
 import { getAuthSession } from '@modules/auth/services/auth-client'
+import {
+  putLocalAsset,
+  putLocalMusic,
+  type LocalSljaMusic,
+} from './local-slja-store'
 
 export interface ImportedSljaMusic {
-  /** id REAL da música custom (sem offset). Use toCustomMusicId() no item. */
+  /** id REAL da música custom (sem offset) OU id local (900M+). */
   musicId: number
   name: string
   collectionId: number
   slides: number
   hasAudio: boolean
   uploadedImages: number
+  /** true = gravado só no IndexedDB local (sem login); sync pra conta é v2. */
+  local: boolean
 }
 
 const IMPORT_COLLECTION_NAME = 'Importações .slja'
@@ -48,12 +55,6 @@ async function ensureImportCollectionId(): Promise<number | null> {
 export async function importSljaAsCustomMusic(
   file: File,
 ): Promise<ImportedSljaMusic> {
-  // web#174: escrita na API exige identidade (api#82 hardening) — sem
-  // sessão Firebase a criação falha 401 silenciosa. Falha CEDO e CLARO.
-  if (!getAuthSession()) {
-    throw new Error('SLJA_IMPORT_AUTH_REQUIRED')
-  }
-
   const buffer = await file.arrayBuffer()
   const archive = await parseSlja(buffer)
 
@@ -62,6 +63,17 @@ export async function importSljaAsCustomMusic(
   const name = genericTitle
     ? file.name.replace(/\.slja$/i, '')
     : archive.title.trim()
+
+  const slides = [...archive.slides]
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .filter((slide) => slide.lyric.trim().length > 0)
+
+  // ── Sem sessão: grava 100% LOCAL (IndexedDB) — uso local/offline-first. ──
+  // A API exige identidade pra escrita e quota (api#82), então sem login
+  // nada sobe; o import continua funcionando e nada se perde com reload.
+  if (!getAuthSession()) {
+    return importSljaLocal({ name, archive, slides })
+  }
 
   const collectionId = await ensureImportCollectionId()
   if (collectionId == null) {
@@ -100,7 +112,6 @@ export async function importSljaAsCustomMusic(
 
   const imageIdByUrl = new Map(uploadedAssets.map((a) => [a.url, a.idFile]))
 
-  const slides = [...archive.slides].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
   let slideCount = 0
   for (const slide of slides) {
     const text = slide.lyric.trim()
@@ -129,6 +140,63 @@ export async function importSljaAsCustomMusic(
     slides: slideCount,
     hasAudio,
     uploadedImages,
+    local: false,
+  }
+}
+
+
+
+/**
+ * Import 100% local (sem login): áudio/imagem como Blob no IndexedDB,
+ * música com id 900M+ (namespace local). Nada sobe pra API — sync é v2.
+ */
+async function importSljaLocal({
+  name,
+  archive,
+  slides,
+}: {
+  name: string
+  archive: SljaArchive
+  slides: SljaArchive['slides']
+}): Promise<ImportedSljaMusic> {
+  let audioAssetId: number | null = null
+  if (archive.audio) {
+    audioAssetId = await putLocalAsset(
+      new Blob([archive.audio.bytes as BlobPart], { type: 'audio/mpeg' }),
+    )
+  }
+
+  // Imagem de fundo (compartilhada entre slides): primeiro asset.
+  let coverAssetId: number | null = null
+  if (archive.assets?.length) {
+    coverAssetId = await putLocalAsset(
+      new Blob([archive.assets[0].bytes as BlobPart], { type: 'image/png' }),
+    )
+  }
+
+  const id = await putLocalMusic({
+    name,
+    createdAt: Date.now(),
+    audioAssetId,
+    slideCount: slides.length,
+    // metadados extras vão junto no objeto (IndexedDB é schemaless)
+    ...(coverAssetId != null ? { coverAssetId } : {}),
+    // slides completos p/ o player local reconstruir a letra com timing
+    slides: slides.map((slide) => ({
+      lyric: slide.lyric.trim(),
+      timeMs: slide.timeMs,
+      imageAssetId: coverAssetId,
+    })),
+  } as Parameters<typeof putLocalMusic>[0] & Record<string, unknown>)
+
+  return {
+    musicId: id,
+    name,
+    collectionId: 0,
+    slides: slides.length,
+    hasAudio: audioAssetId != null,
+    uploadedImages: coverAssetId != null ? 1 : 0,
+    local: true,
   }
 }
 
