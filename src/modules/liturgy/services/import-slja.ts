@@ -17,6 +17,7 @@ import {
   uploadCustomFile,
   updateCustomMusic,
 } from '@modules/media/services/custom-catalog'
+import { getAuthSession } from '@modules/auth/services/auth-client'
 
 export interface ImportedSljaMusic {
   /** id REAL da música custom (sem offset). Use toCustomMusicId() no item. */
@@ -47,6 +48,12 @@ async function ensureImportCollectionId(): Promise<number | null> {
 export async function importSljaAsCustomMusic(
   file: File,
 ): Promise<ImportedSljaMusic> {
+  // web#174: escrita na API exige identidade (api#82 hardening) — sem
+  // sessão Firebase a criação falha 401 silenciosa. Falha CEDO e CLARO.
+  if (!getAuthSession()) {
+    throw new Error('SLJA_IMPORT_AUTH_REQUIRED')
+  }
+
   const buffer = await file.arrayBuffer()
   const archive = await parseSlja(buffer)
 

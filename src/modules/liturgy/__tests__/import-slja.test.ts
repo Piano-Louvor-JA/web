@@ -43,6 +43,13 @@ vi.mock('@modules/media/services/custom-catalog', () => ({
 }))
 
 import { importSljaAsCustomMusic } from '../services/import-slja'
+import { getAuthSession } from '@modules/auth/services/auth-client'
+
+vi.mock('@modules/auth/services/auth-client', () => ({
+  getAuthSession: vi.fn(() => ({ token: 't', user: { id_user: 1, email: 'e', displayName: 'd' } })),
+}))
+
+const mockGetAuthSession = vi.mocked(getAuthSession)
 import { parseSlja } from '@shared/services/slja'
 
 vi.mock('@shared/services/slja', () => ({
@@ -70,7 +77,15 @@ describe('importSljaAsCustomMusic (RF-1/B1)', () => {
     mocks.createdMusics.length = 0
     mocks.createdLyrics.length = 0
     mocks.uploads.length = 0
+    mockGetAuthSession.mockClear()
     mockParse.mockClear()
+  })
+
+  it('sem login: falha CEDO com SLJA_IMPORT_AUTH_REQUIRED (não 401 silencioso)', async () => {
+    mockGetAuthSession.mockReturnValueOnce(null)
+    await expect(importSljaAsCustomMusic(makeFile())).rejects.toThrow(
+      'SLJA_IMPORT_AUTH_REQUIRED',
+    )
   })
 
   it('.slja vira música custom com lyrics preservando o timing', async () => {

@@ -75,9 +75,12 @@ async function onImportSljaFile(event: Event): Promise<void> {
       name: imported.name,
       slides: imported.slides,
     })
-  } catch {
+  } catch (e) {
     sljaError.value = true
-    sljaMessage.value = t('liturgy.slja.importFailed')
+    sljaMessage.value =
+      e instanceof Error && e.message === 'SLJA_IMPORT_AUTH_REQUIRED'
+        ? t('liturgy.slja.authRequired')
+        : t('liturgy.slja.importFailed')
   } finally {
     sljaImporting.value = false
   }

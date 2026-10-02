@@ -12,6 +12,7 @@ export default {
       importing: 'Importando…',
       imported: '"{name}" importada ({slides} estrofes). Ajuste o volume e projete.',
       importFailed: 'Falha ao importar o arquivo .slja. Verifique o arquivo e tente de novo.',
+      authRequired: 'Entre com sua conta (canto superior direito) para importar — a importação salva na SUA conta.',
     },
     ok: 'OK',
     importJaReadError: 'Não foi possível ler o arquivo.',

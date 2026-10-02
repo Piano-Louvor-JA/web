@@ -11,6 +11,7 @@ export default {
       importing: 'Importando…',
       imported: '"{name}" importada ({slides} estrofas). Ajusta el volumen y proyecta.',
       importFailed: 'Error al importar el archivo .slja. Verifica el archivo e inténtalo de nuevo.',
+      authRequired: 'Inicia sesión (arriba a la derecha) para importar: la importación se guarda en TU cuenta.',
     },
     ok: 'OK',
     importJaDesktopOnly: 'Importar archivos .ja solo en el escritorio.',

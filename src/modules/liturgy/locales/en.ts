@@ -11,6 +11,7 @@ export default {
       importing: 'Importing…',
       imported: '"{name}" imported ({slides} stanzas). Adjust volume and project.',
       importFailed: 'Failed to import the .slja file. Check the file and try again.',
+      authRequired: 'Sign in (top right) to import — imports are saved to YOUR account.',
     },
     ok: 'OK',
     importJaDesktopOnly: 'Importing .ja files is desktop-only.',
