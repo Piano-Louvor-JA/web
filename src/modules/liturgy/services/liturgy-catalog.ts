@@ -1,5 +1,10 @@
 import { readOrFetchCatalogJson } from '@shared/services/remote-catalog'
 import { catalogMusicLang } from '@modules/albums/services/album-music-search'
+import {
+  listAllCustomMusics,
+  toCustomMusicId,
+  CUSTOM_MUSIC_ID_OFFSET,
+} from '@modules/media/services/custom-catalog'
 
 import type {
   LiturgyBibleBookOption,
@@ -273,18 +278,54 @@ function sortMusicOptions(options: LiturgyMusicOption[]): LiturgyMusicOption[] {
   })
 }
 
+/**
+ * web#174 RF-2: mescla músicas CUSTOM do operador (Minhas Coletâneas /
+ * importações .slja / comunidade) nas opções da liturgia, com id deslocado
+ * (offset 1M+) — o namespace que `resolveMediaTrack()` já resolve.
+ * Oficiais NUNCA são sobrescritas: custom só entra se o id deslocado for livre.
+ */
+async function mergeCustomMusicOptions(
+  byId: Map<number, LiturgyMusicOption>,
+): Promise<void> {
+  try {
+    const customs = await listAllCustomMusics()
+    for (const custom of customs) {
+      const id = Number(custom.id)
+      if (!Number.isFinite(id) || id <= 0) continue
+      const offsetId = toCustomMusicId(id)
+      if (byId.has(offsetId)) continue
+      const name = String(custom.name ?? '').trim() || `Custom #${id}`
+      const album = String(custom.collectionName ?? '').trim() || 'Minhas coletâneas'
+      byId.set(offsetId, {
+        id: offsetId,
+        name,
+        hymnalTrack: null,
+        albumNames: album,
+        displayLabel: album ? `${name} — ${album}` : name,
+        durationMs:
+          typeof custom.duration === 'number' ? custom.duration : null,
+        hasInstrumental: false,
+      })
+    }
+  } catch {
+    // offline/sem API: customs simplesmente não aparecem nesta carga
+  }
+}
+
 export async function loadLiturgyMusicOptions(): Promise<LiturgyMusicOption[]> {
   const fromIndex = await loadFromMusicIndex()
   if (fromIndex && fromIndex.length > 0) {
     const byId = new Map(fromIndex.map((entry) => [entry.id, entry]))
     // Índice pode omitir flags de instrumental; hinário completa o dado.
     await loadHymnalOptions(byId)
+    await mergeCustomMusicOptions(byId)
     return sortMusicOptions([...byId.values()])
   }
 
   const byId = new Map<number, LiturgyMusicOption>()
   await loadHymnalOptions(byId)
   await loadCollectionOptions(byId)
+  await mergeCustomMusicOptions(byId)
   return sortMusicOptions([...byId.values()])
 }
 
