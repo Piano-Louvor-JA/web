@@ -431,7 +431,10 @@ function resolveFilePathsFromItem(item: LiturgyItem): string[] {
 /** Resolve nome de exibição a partir do tipo do item. */
 function resolveDraftName(item: LiturgyItem): string {
   return item.type === 'music'
-    ? (item.complementaryTitle ?? '').trim()
+    ? // Cascata: título complementar → nome do item (import .slja grava o
+      // título em item.name). Sem isso itens importados abriam o editor com
+      // o campo obrigatório vazio (feedback Ezequias/Rafael 02/10).
+      (item.complementaryTitle ?? '').trim() || item.name.trim()
     : item.name
 }
 
