@@ -657,16 +657,16 @@ export async function deleteCustomLyric(lyricId: number): Promise<boolean> {
 export async function resolveMediaTrack(
   musicId: number,
 ): Promise<MediaTrackRecord | null> {
-  if (isCustomMusicId(musicId)) {
-    return loadCustomMusicTrack(fromCustomMusicId(musicId))
-  }
-  // web#174: músicas .slja importadas SEM login vivem no IndexedDB local
-  // (namespace 900M+) — o player toca via blob: URL gerada na leitura.
+  // web#174: ORDEM IMPORTA — local (900M+) checa ANTES de custom (1M+),
+  // pois todo id >= 1M também satisfaz o guard de custom.
   if (isLocalSljaMusicId(musicId)) {
     const { loadLocalSljaTrack } = await import(
       '@modules/liturgy/services/local-slja-track'
     )
     return loadLocalSljaTrack(musicId)
+  }
+  if (isCustomMusicId(musicId)) {
+    return loadCustomMusicTrack(fromCustomMusicId(musicId))
   }
   return loadMediaTrack(musicId)
 }
