@@ -324,7 +324,10 @@ async function mergeCustomMusicOptions(
         hymnalTrack: null,
         albumNames: 'Importações .slja',
         displayLabel: `${local.name} — Importações .slja (local)`,
-        durationMs: null,
+        durationMs:
+          typeof (local as { durationMs?: unknown }).durationMs === 'number'
+            ? ((local as { durationMs: number }).durationMs)
+            : null,
         hasInstrumental: false,
       })
     }

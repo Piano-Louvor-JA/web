@@ -46,6 +46,8 @@ export async function resolveSlideImageUrl(
   catalogPath: string | null,
 ): Promise<string | null> {
   if (!catalogPath?.trim()) return null
+  // web#174: capa local do .slja importado é blob: URL — usar na íntegra.
+  if (/^blob:/i.test(catalogPath)) return catalogPath
   return resolveRemoteFileUrl(catalogPath)
 }
 

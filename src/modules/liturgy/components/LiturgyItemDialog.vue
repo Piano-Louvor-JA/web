@@ -71,10 +71,11 @@ async function onImportSljaFile(event: Event): Promise<void> {
     // (900M+ local / 1M+ custom) não existe em musicList, selectedMusic
     // fica null e o submit é bloqueado (música "não toca").
     emit('slja-imported', imported.musicId)
-    // seleção + título num ÚNICO patch: props.draft aqui ainda é stale —
-    // um segundo patch sobrescreveria o musicId do pick-music (race).
+    // seleção + título + duração num ÚNICO patch: props.draft aqui ainda é
+    // stale — um segundo patch sobrescreveria o musicId do pick-music (race).
     patch({
       musicId: imported.musicId,
+      durationMs: imported.durationMs > 0 ? imported.durationMs : props.draft.durationMs,
       ...(props.draft.name.trim() ? {} : { name: imported.name }),
     })
     sljaMessage.value = imported.local

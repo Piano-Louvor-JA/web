@@ -32,6 +32,8 @@ export interface ImportedSljaMusic {
   slides: number
   hasAudio: boolean
   uploadedImages: number
+  /** Duração estimada (ms): último tempo_hms + margem. 0 = desconhecida. */
+  durationMs: number
   /** true = gravado só no IndexedDB local (sem login); sync pra conta é v2. */
   local: boolean
 }
@@ -174,6 +176,11 @@ async function importSljaLocal({
     )
   }
 
+  // web#174: duração estimada p/ o campo "Duração" do item — último
+  // tempo_hms + margem de 30s (o MP3 real pode esticar além do último slide).
+  const lastTimeMs = slides.reduce((max, s) => Math.max(max, s.timeMs), 0)
+  const durationMs = lastTimeMs > 0 ? lastTimeMs + 30_000 : 0
+
   const id = await putLocalMusic({
     name,
     createdAt: Date.now(),
@@ -181,6 +188,7 @@ async function importSljaLocal({
     slideCount: slides.length,
     // metadados extras vão junto no objeto (IndexedDB é schemaless)
     ...(coverAssetId != null ? { coverAssetId } : {}),
+    ...(durationMs > 0 ? { durationMs } : {}),
     // slides completos p/ o player local reconstruir a letra com timing
     slides: slides.map((slide) => ({
       lyric: slide.lyric.trim(),
@@ -196,6 +204,7 @@ async function importSljaLocal({
     slides: slides.length,
     hasAudio: audioAssetId != null,
     uploadedImages: coverAssetId != null ? 1 : 0,
+    durationMs,
     local: true,
   }
 }
