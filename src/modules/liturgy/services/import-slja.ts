@@ -9,6 +9,7 @@
  * mesma semântica do media editor.
  */
 import { parseSlja, type SljaArchive } from '@shared/services/slja'
+import { sha256Hex, sha256ToUuid } from '@shared/services/content-hash'
 import {
   createCustomCollection,
   createCustomMusic,
@@ -82,9 +83,30 @@ export async function importSljaAsCustomMusic(
     throw new Error('SLJA_IMPORT_COLLECTION_FAILED')
   }
 
-  const createdMusic = await createCustomMusic(collectionId, { name })
+  // Dedup (web#187, paridade app a60ddfd): client_uuid determinístico do
+  // hash do arquivo — re-import do MESMO .slja vira no-op na API (a rota
+  // retorna o registro existente) em vez de duplicar no banco.
+  const sljaHash = await sha256Hex(new Uint8Array(buffer))
+  const clientUuid = sha256ToUuid(sljaHash)
+  const createdMusic = await createCustomMusic(collectionId, {
+    name,
+    client_uuid: clientUuid,
+  })
   if (!createdMusic) {
     throw new Error('SLJA_IMPORT_MUSIC_FAILED')
+  }
+  if (createdMusic.existed) {
+    // Já existia (re-import): mídias já estão vinculadas — pular uploads.
+    return {
+      musicId: createdMusic.id,
+      name,
+      collectionId,
+      slides: 0,
+      hasAudio: false,
+      uploadedImages: 0,
+      durationMs: 0,
+      local: false,
+    }
   }
 
   let hasAudio = false
