@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { installClientPlatformHeader } from './shared/lib/client-platform'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import '@styles/tailwind.css'
@@ -16,6 +17,7 @@ useThemeManager()
 initUiZoom()
 installPopupOpenerBridge()
 
+installClientPlatformHeader()
 const app = createApp(App)
 
 app.use(createPinia())
