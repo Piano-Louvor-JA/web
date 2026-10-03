@@ -20,7 +20,7 @@ import type {
   CountdownRuntimeState,
 } from '../types/countdown'
 import { useCountdownStore } from '../stores/useCountdownStore'
-import { playAlertTone, getCustomAudio } from '../services/alert-tone'
+import { clearAlertQueue, enqueueAlert, getCustomAudio, pauseAllAlerts, playAlertTone, resumeAllAlerts, stopAllAlerts } from '../services/alert-tone'
 
 export function useCountdownTick(active: MaybeRefOrGetter<boolean> = true) {
   const now = ref(Date.now())
@@ -113,6 +113,16 @@ export function useCountdownDisplay(
     // Observa o tempo restante "caindo" e dispara o preset quando cruza o marco.
     // 'start' dispara na transição idle/running; os demais quando cruzam o valor.
     const firedMarkers = new Set<string>()
+    // Feedback Ezequias: toggle play/pause do áudio — pausa retoma de onde
+    // parou (pauseAllAlerts/resumeAllAlerts), Stop corta tudo.
+    const audioPaused = ref(false)
+
+    function setAudioPaused(paused: boolean) {
+      audioPaused.value = paused
+      if (paused) pauseAllAlerts()
+      else resumeAllAlerts()
+    }
+
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
     watch(remainingRawMs, (raw, prevRaw) => {
@@ -121,7 +131,7 @@ export function useCountdownDisplay(
       // start: primeira observação com status running
       if (prevStatus !== 'running' && !firedMarkers.has('start') && presets.start && presets.start !== 'none') {
         firedMarkers.add('start')
-        void playAlertTone(presets.start, undefined, getCustomAudio('start'))
+        enqueueAlert(() => playAlertTone(presets.start, undefined, getCustomAudio('start')))
       }
       prevStatus = runtime.value.status
       // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
@@ -141,14 +151,17 @@ export function useCountdownDisplay(
         }
         if (prevRaw >= markerMs && raw < markerMs) {
           firedMarkers.add(key)
-          void playAlertTone(preset, undefined, getCustomAudio(key))
+          enqueueAlert(() => playAlertTone(preset, undefined, getCustomAudio(key)))
         }
       }
     })
 
     // Reset dos marcos quando o countdown volta pro idle (reset)
     watch(() => runtime.value.status, (status) => {
-      if (status === 'idle') firedMarkers.clear()
+      if (status === 'idle') {
+        firedMarkers.clear()
+        clearAlertQueue()
+      }
     })
 
     return {
@@ -172,6 +185,8 @@ export function useCountdownFeature() {
   const durationParts = computed(() => durationPartsFromMs(store.runtime.durationMs))
 
   return {
+    audioPaused,
+    setAudioPaused,
     config: computed(() => store.config),
     runtime: computed(() => store.runtime),
     durationParts,

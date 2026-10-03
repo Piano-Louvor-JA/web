@@ -54,7 +54,9 @@ export async function playAlertTone(
   preset: AlertPresetKey | 'custom',
   ctx?: AudioContext,
   customAudio?: HTMLAudioElement,
+  control?: { volume?: number },
 ): Promise<void> {
+  const volume = control?.volume ?? 1
   // Presets sintéticos usam WebAudio. 'custom' e os MP3 seguem no ramo de arquivo.
   if (preset === 'beep' || preset === 'chime' || preset === 'gong') {
     if (!ctx) return
@@ -98,11 +100,71 @@ export async function playAlertTone(
   }
   if (!audio) return
   try {
+    audio.volume = volume ?? 1
     audio.currentTime = 0
+    registerActiveAudio(audio)
     await audio.play()
   } catch {
     // autoplay bloqueado — silencioso
   }
+}
+
+// ── app#338/#339 paridade: fila + pause/resume + volume ao vivo ─────────
+const activeAudios = new Set<HTMLAudioElement>()
+
+function registerActiveAudio(audio: HTMLAudioElement): void {
+  activeAudios.add(audio)
+  // alguns fakes/elementos não implementam addEventListener — tolerar
+  try {
+    audio.addEventListener('ended', () => activeAudios.delete(audio), { once: true })
+  } catch {
+    /* sem listener de fim — item sai no stop */
+  }
+}
+
+export function pauseAllAlerts(): void {
+  for (const audio of [...activeAudios]) audio.pause()
+}
+
+export function resumeAllAlerts(): void {
+  for (const audio of [...activeAudios]) void audio.play().catch(() => {})
+}
+
+export function stopAllAlerts(): void {
+  for (const audio of [...activeAudios]) {
+    audio.pause()
+    try { audio.currentTime = 0 } catch { /* some browsers */ }
+    activeAudios.delete(audio)
+  }
+}
+
+export function setLiveVolume(volume: number): void {
+  const clamped = Math.min(1, Math.max(0, volume))
+  for (const audio of [...activeAudios]) audio.volume = clamped
+}
+
+// ── Fila serial (app#338 paridade): marcos que cruzam juntos tocam em sequência ──
+let queueChain: Promise<void> = Promise.resolve()
+let pendingCount = 0
+let queueDropped = 0
+
+export function enqueueAlert(play: () => Promise<void>, opts: { maxPending?: number } = {}): void {
+  const maxPending = opts.maxPending ?? 2
+  if (pendingCount >= maxPending) {
+    queueDropped += 1
+    return
+  }
+  pendingCount += 1
+  queueChain = queueChain.then(play).catch(() => {}).finally(() => { pendingCount -= 1 })
+}
+
+export function pendingAlertCount(): number {
+  return pendingCount
+}
+
+export function clearAlertQueue(): void {
+  queueChain = Promise.resolve()
+  pendingCount = 0
 }
 
 // Exporta lista de presets para UI (sintéticos + oficiais + desabilitado)
