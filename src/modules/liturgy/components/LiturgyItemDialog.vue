@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { importSljaAsCustomMusic } from '../services/import-slja'
+import { getAuthSession } from '@modules/auth/services/auth-client'
+import { appConfirm } from '@shared/composables/useAppConfirm'
 
 import {
   DEFAULT_MOMENT_DURATION_MS,
@@ -41,6 +44,7 @@ const emit = defineEmits<{
   'update:musicQuery': [query: string]
   'pick-music': [musicId: number]
   'clear-music': []
+  'slja-imported': [musicId: number]
 }>()
 
 const { t } = useI18n()
@@ -48,6 +52,66 @@ const showValidation = ref(false)
 const filePickerBusy = ref(false)
 const filePickerError = ref<string | null>(null)
 const fileInputEl = ref<HTMLInputElement | null>(null)
+
+// web#174 RF-1: importar .slja direto no item de música
+const sljaInputEl = ref<HTMLInputElement | null>(null)
+const sljaImporting = ref(false)
+const sljaMessage = ref('')
+const sljaError = ref(false)
+
+async function onImportSljaFile(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || sljaImporting.value) return
+  sljaImporting.value = true
+  sljaMessage.value = ''
+  sljaError.value = false
+  try {
+    // web#187 (paridade app): logado, pergunta ANTES de subir pro banco —
+    // recusou = grava só local, sem erro. Deslogado nunca pergunta.
+    const wantsUpload = !!getAuthSession()
+    if (wantsUpload) {
+      const ok = await appConfirm({
+        title: t('liturgy.slja.uploadTitle', { name: file.name.replace(/\.slja$/i, '') }),
+        message: t('liturgy.slja.uploadMessage'),
+        confirmLabel: t('liturgy.slja.uploadConfirm'),
+        cancelLabel: t('liturgy.slja.uploadCancel'),
+      })
+      if (!ok) {
+        sljaMessage.value = t('liturgy.slja.keptLocal', { name: file.name })
+        sljaImporting.value = false
+        return
+      }
+    }
+    const imported = await importSljaAsCustomMusic(file)
+    // web#174: recarrega o catálogo ANTES do pick — sem isso o id novo
+    // (900M+ local / 1M+ custom) não existe em musicList, selectedMusic
+    // fica null e o submit é bloqueado (música "não toca").
+    emit('slja-imported', imported.musicId)
+    // seleção + título + duração num ÚNICO patch: props.draft aqui ainda é
+    // stale — um segundo patch sobrescreveria o musicId do pick-music (race).
+    patch({
+      musicId: imported.musicId,
+      durationMs: imported.durationMs > 0 ? imported.durationMs : props.draft.durationMs,
+      ...(props.draft.name.trim() ? {} : { name: imported.name }),
+    })
+    sljaMessage.value = imported.local
+      ? t('liturgy.slja.importedLocal', {
+          name: imported.name,
+          slides: imported.slides,
+        })
+      : t('liturgy.slja.imported', {
+          name: imported.name,
+          slides: imported.slides,
+        })
+  } catch {
+    sljaError.value = true
+    sljaMessage.value = t('liturgy.slja.importFailed')
+  } finally {
+    sljaImporting.value = false
+  }
+}
 
 const hasTypeSelection = computed(() => props.draft.type != null)
 const isCategory = computed(() => props.draft.type === 'category')
@@ -608,6 +672,43 @@ function isLightDot(hex: string): boolean {
                     aria-hidden="true"
                   />
                 </button>
+              </div>
+
+              <!-- web#174 RF-1: importar .slja direto no item de música -->
+              <div class="moment-dialog__music-import">
+                <input
+                  ref="sljaInputEl"
+                  type="file"
+                  accept=".slja"
+                  class="moment-dialog__slja-input"
+                  data-testid="slja-file-input"
+                  @change="onImportSljaFile"
+                >
+                <button
+                  type="button"
+                  class="moment-dialog__slja-btn"
+                  data-testid="slja-import-btn"
+                  :disabled="sljaImporting"
+                  @click="sljaInputEl?.click()"
+                >
+                  <i
+                    class="ti ti-file-zip"
+                    aria-hidden="true"
+                  />
+                  {{ sljaImporting
+                    ? t('liturgy.slja.importing')
+                    : t('liturgy.slja.importButton') }}
+                </button>
+                <p
+                  v-if="sljaMessage"
+                  class="moment-dialog__slja-message"
+                  :class="{
+                    'moment-dialog__slja-message--error': sljaError,
+                  }"
+                  role="status"
+                >
+                  {{ sljaMessage }}
+                </p>
               </div>
             </div>
           </div>
@@ -1504,6 +1605,52 @@ function isLightDot(hex: string): boolean {
   font-size: 0.68rem;
   color: var(--ds-color-on-surface-variant, var(--ds-color-on-surface));
   opacity: 0.8;
+}
+
+/* web#174 RF-1: importar .slja direto no item */
+.moment-dialog__music-import {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.moment-dialog__slja-input {
+  display: none;
+}
+
+.moment-dialog__slja-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--ds-color-on-surface) 30%, transparent);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ds-color-on-surface-variant);
+  font-size: 0.82rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--ds-color-primary);
+    color: var(--ds-color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+}
+
+.moment-dialog__slja-message {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--ds-color-on-surface-variant);
+
+  &--error {
+    color: var(--ds-color-error, #ff5252);
+  }
 }
 
 .moment-dialog__music-selected {
