@@ -6,6 +6,13 @@ export default {
     addItem: 'Añadir Categoría/Separador',
     addItemToLiturgy: 'Añadir categoría/separador a la liturgia',
     importJa: 'Importar .ja',
+    slja: {
+      importButton: 'Importar .slja',
+      importing: 'Importando…',
+      imported: '"{name}" importada ({slides} estrofas). Ajusta el volumen y proyecta.',
+      importedLocal: '"{name}" importada ({slides} estrofas) y guardada en ESTE dispositivo (sin cuenta). Inicia sesión y las nuevas importaciones subirán a tu cuenta.',
+      importFailed: 'Error al importar el archivo .slja. Verifica el archivo e inténtalo de nuevo.',
+    },
     ok: 'OK',
     importJaDesktopOnly: 'Importar archivos .ja solo en el escritorio.',
     importJaReadError: 'No se pudo leer el archivo.',
