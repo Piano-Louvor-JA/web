@@ -135,6 +135,11 @@ export async function importSljaAsCustomMusic(
     slideCount += 1
   }
 
+  // web#174: duração estimada p/ o campo "Duração" do item (mesma regra
+  // do caminho local): último tempo_hms + margem de 30s.
+  const apiLastTimeMs = slides.reduce((max, s2) => Math.max(max, s2.timeMs), 0)
+  const apiDurationMs = apiLastTimeMs > 0 ? apiLastTimeMs + 30_000 : 0
+
   return {
     musicId: createdMusic.id,
     name,
@@ -142,6 +147,7 @@ export async function importSljaAsCustomMusic(
     slides: slideCount,
     hasAudio,
     uploadedImages,
+    durationMs: apiDurationMs,
     local: false,
   }
 }

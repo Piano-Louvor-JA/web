@@ -109,19 +109,10 @@ export function useCountdownDisplay(
           runtime.value.accumulatedMs > 0),
     )
 
-    // ── Disparo de alertas nos marcos ────────────────────────────────────
-    // Observa o tempo restante "caindo" e dispara o preset quando cruza o marco.
-    // 'start' dispara na transição idle/running; os demais quando cruzam o valor.
-    const firedMarkers = new Set<string>()
-    // Feedback Ezequias: toggle play/pause do áudio — pausa retoma de onde
-    // parou (pauseAllAlerts/resumeAllAlerts), Stop corta tudo.
-    const audioPaused = ref(false)
-
-    function setAudioPaused(paused: boolean) {
-      audioPaused.value = paused
-      if (paused) pauseAllAlerts()
-      else resumeAllAlerts()
-    }
+  // ── Disparo de alertas nos marcos ────────────────────────────────────
+  // Observa o tempo restante "caindo" e dispara o preset quando cruza o marco.
+  // 'start' dispara na transição idle/running; os demais quando cruzam o valor.
+  const firedMarkers = new Set<string>()
 
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
@@ -129,9 +120,11 @@ export function useCountdownDisplay(
       if (runtime.value.status !== 'running') return
       const presets = config.value.alertTonePresets ?? DEFAULT_ALERT_TONE_PRESETS
       // start: primeira observação com status running
-      if (prevStatus !== 'running' && !firedMarkers.has('start') && presets.start && presets.start !== 'none') {
+      // (const local preserva a narrowing do preset dentro do closure)
+      const startPreset = presets.start
+      if (prevStatus !== 'running' && !firedMarkers.has('start') && startPreset && startPreset !== 'none') {
         firedMarkers.add('start')
-        enqueueAlert(() => playAlertTone(presets.start, undefined, getCustomAudio('start')))
+        enqueueAlert(() => playAlertTone(startPreset, undefined, getCustomAudio('start')))
       }
       prevStatus = runtime.value.status
       // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
@@ -181,6 +174,15 @@ export function useCountdownFeature() {
   const store = useCountdownStore()
 
   store.hydrate()
+
+  // Toggle play/pause do áudio (feedback Ezequias) — vive no módulo,
+  // compartilhado entre a view e a feature (arquitetura web: composable).
+  const audioPaused = ref(false)
+  function setAudioPaused(paused: boolean) {
+    audioPaused.value = paused
+    if (paused) pauseAllAlerts()
+    else resumeAllAlerts()
+  }
 
   const durationParts = computed(() => durationPartsFromMs(store.runtime.durationMs))
 
