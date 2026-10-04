@@ -5,6 +5,8 @@ import { RouterView, useRoute } from 'vue-router'
 import EulaDialog from '@shared/components/EulaDialog.vue'
 import { useEula } from '@shared/composables/useEula'
 import { handleRedirectResult } from '@modules/auth/services/firebase-client'
+// sync v2 (web#183): flush quando a rede volta + pull no boot
+import { startOutboxTriggers } from '@modules/sync/services/sync-outbox-service'
 
 const { isAccepted } = useEula()
 
@@ -22,6 +24,8 @@ const showEula = computed(() => !isAccepted.value && !isPopupWindow.value)
 const showApp = computed(() => isAccepted.value || isPopupWindow.value)
 
 onMounted(async () => {
+  // sync v2 (web#183): popup de projeção não sincroniza estado do operador
+  if (!isPopupWindow.value) startOutboxTriggers()
   const result = await handleRedirectResult()
   if (result) {
     // Atualiza o estado reativo (localStorage sozinho não dispara reatividade)
