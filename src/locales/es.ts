@@ -85,4 +85,14 @@ export default {
         scheduleEndOnly: 'Solo término',
         scheduleStartEnd: 'Inicio y término',
       },
-    }
+  media: {
+    slja: {
+      uploadTitle: '¿Subir "{name}" a tu cuenta?',
+      uploadMessage: 'El archivo se sube a tu cuenta una sola vez (nunca se duplica). Si prefieres, queda guardado solo en este dispositivo.',
+      uploadConfirm: 'Subir a la cuenta',
+      uploadCancel: 'Solo en este dispositivo',
+      uploadDeclined: '"{name}" no se subió — nada se guardó en la cuenta.',
+      importedExisting: 'Importado: {name} (ya existía en tu cuenta — sin duplicar)',
+    },
+  },
+}

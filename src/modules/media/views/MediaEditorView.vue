@@ -30,6 +30,9 @@ import {
 } from '../services/custom-catalog'
 import type { CustomCollectionSummary, CustomMusicSummary } from '../services/custom-catalog'
 import { buildSlja, parseSlja } from '../../../shared/services/slja'
+import { sha256Hex, sha256ToUuid } from '../../../shared/services/content-hash'
+import { appConfirm } from '@shared/composables/useAppConfirm'
+import { useI18n } from 'vue-i18n'
 
 /**
  * Editor de letras v1 (web)
@@ -56,6 +59,7 @@ const router = useRouter()
 const route = useRoute()
 
 const collections = ref<CustomCollectionSummary[]>([])
+const { t } = useI18n()
 const selectedCollectionId = ref<number | null>(null)
 const musics = ref<CustomMusicSummary[]>([])
 const selectedMusicId = ref<number | null>(null)
@@ -427,6 +431,11 @@ async function onImportFile(event: Event): Promise<void> {
     const buffer = await file.arrayBuffer()
     const archive = await parseSlja(buffer)
 
+    // Identidade de conteúdo (web#187 / app#336 fase 3): re-import do mesmo
+    // arquivo atualiza em vez de duplicar (client_uuid determinístico do
+    // sha-256 — a API dedupeia por owner+client_uuid).
+    const sljaHash = await sha256Hex(new Uint8Array(buffer))
+
     // Nome da música: título do arquivo .slja, mas ignora fallbacks genéricos do
     // parser (v<versao> / "Sem título") — nesses casos usa o nome do arquivo.
     const genericTitle = /^v[\d.]+$/.test(archive.title?.trim() ?? '') || !archive.title?.trim()
@@ -453,9 +462,36 @@ async function onImportFile(event: Event): Promise<void> {
       selectedCollectionId.value = collectionId
     }
 
-    const createdMusic = await createCustomMusic(collectionId, { name })
+    // Regra de produto (Rafael, web#187 / app#336 fase 3): pro banco o
+    // arquivo sobe UM (dedup por client_uuid) e SÓ com consentimento.
+    // Recusou = import não sobe (mensagem clara, sem erro) — sem fricção.
+    const clientUuid = sha256ToUuid(sljaHash)
+    const approved = await appConfirm({
+      title: t('media.slja.uploadTitle', { name: file.name }),
+      message: t('media.slja.uploadMessage'),
+      confirmLabel: t('media.slja.uploadConfirm'),
+      cancelLabel: t('media.slja.uploadCancel'),
+    })
+    if (!approved) {
+      notify(t('media.slja.uploadDeclined', { name: file.name }))
+      return
+    }
+
+    const createdMusic = await createCustomMusic(collectionId, {
+      name,
+      client_uuid: clientUuid,
+    })
     if (!createdMusic) {
       notify('Falha ao criar música a partir do .slja')
+      return
+    }
+
+    // Já existia (re-import do mesmo .slja): mídias já estão vinculadas —
+    // pular uploads e selecionar a música existente (no-op na API).
+    if (createdMusic.existed) {
+      selectedMusicId.value = createdMusic.id
+      await onSelectMusic(createdMusic.id)
+      notify(t('media.slja.importedExisting', { name: file.name }))
       return
     }
     selectedMusicId.value = createdMusic.id
@@ -489,6 +525,25 @@ async function onImportFile(event: Event): Promise<void> {
 
     /** imageUrl → id_file, pro createCustomLyric (API espera id, não url) */
     const imageIdByUrl = new Map(uploadedAssets.value.map((a) => [a.url, a.idFile]))
+
+    // Background da MÚSICA (app 5d2737b): o .slja clássico põe a imagem de
+    // fundo na CAPA (Slide:1) e as estrofes herdam — mas a capa não vira
+    // estrofe no import, então o bg precisa ser vinculado à custom_musics
+    // (é o que o editor de letras usa como bg). Fallback: primeira imagem
+    // de estrofe.
+    const coverImageName =
+      archive.slides.find((sl) => sl.type === 'CAPA')?.image?.name?.toLowerCase() ??
+      archive.slides.find((sl) => sl.image?.name)?.image?.name?.toLowerCase()
+    if (coverImageName && uploadedAssets.value.length) {
+      const coverMatch = uploadedAssets.value.find(
+        (a) =>
+          coverImageName.includes(a.path.toLowerCase()) ||
+          a.path.toLowerCase().includes(coverImageName),
+      )
+      if (coverMatch) {
+        await updateCustomMusic(createdMusic.id, { id_file_image: coverMatch.idFile })
+      }
+    }
 
     // CAPA vira estrofe 1 (se tiver texto), demais slides na ordem
     const slides = [...archive.slides].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
