@@ -5,6 +5,7 @@ import { RouterView, useRoute } from 'vue-router'
 import EulaDialog from '@shared/components/EulaDialog.vue'
 import { useEula } from '@shared/composables/useEula'
 import { handleRedirectResult } from '@modules/auth/services/firebase-client'
+import { startOutboxTriggers } from '@modules/sync/services/sync-outbox-service'
 
 const { isAccepted } = useEula()
 
@@ -28,6 +29,8 @@ onMounted(async () => {
     const { authSession } = await import('@modules/auth/composables/useAuth')
     authSession.value = result
   }
+  // sync v2 (web#188): flush on-online + hook de prefs + pull no boot
+  startOutboxTriggers()
 })
 </script>
 

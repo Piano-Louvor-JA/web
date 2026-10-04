@@ -3,6 +3,17 @@ import { getBrowserItem, setBrowserItem } from '@shared/services/browser-storage
 
 export type UserPreferences = Record<string, unknown>
 
+/**
+ * Hook de sync (web#188): registrado no boot pelo módulo de sync — é
+ * chamado a CADA setUserPreference de key sincronizável. Mantém shared
+ * sem dependência de modules (inversão).
+ */
+let prefsChangedHook: ((key: string) => void) | null = null
+
+export function registerPrefsChangedHook(fn: (key: string) => void): void {
+  prefsChangedHook = fn
+}
+
 export function loadUserPreferences(): UserPreferences {
   return getBrowserItem<UserPreferences>(BROWSER_STORAGE_KEYS.userPreferences, {}) ?? {}
 }
@@ -15,6 +26,11 @@ export function setUserPreference(key: string, value: unknown): UserPreferences 
   const current = loadUserPreferences()
   const next = { ...current, [key]: value }
   saveUserPreferences(next)
+  try {
+    prefsChangedHook?.(key)
+  } catch {
+    // hook de sync nunca bloqueia o fluxo local
+  }
   return next
 }
 
