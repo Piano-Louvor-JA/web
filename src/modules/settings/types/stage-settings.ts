@@ -68,6 +68,16 @@ export type StageSettings = {
   bibleTextColor: string
   /** Capitalização do versículo na projeção (paridade APK F3.3o-bible). */
   bibleTextTransform: 'none' | 'uppercase' | 'capitalize'
+  /**
+   * Estrofes (slides de letra): personalização própria. `null`/`undefined`
+   * = usa o estilo geral (que JÁ É o das estrofes) — espelha title*, paridade
+   * com o app (chaves lSize/lWeight/lFg/lUpper/tsOnL no JSON do APK).
+   */
+  lyricFontSize: number | null // px @1920 (60–160); null = herda fontSize
+  lyricFontWeight: StageFontWeight | null
+  lyricTextColor: string | null
+  lyricUpperCase: boolean
+  lyricTextShadow: boolean | null
   /** Data URL da imagem de fundo do escopo (1 ativa por escopo). */
   backgroundImage: string | null
   /**
@@ -146,6 +156,11 @@ export const DEFAULT_STAGE_SETTINGS: StageSettings = {
   bibleFontWeight: 500,
   bibleTextColor: '#FFFFFF',
   bibleTextTransform: 'none',
+  lyricFontSize: null,
+  lyricFontWeight: null,
+  lyricTextColor: null,
+  lyricUpperCase: false,
+  lyricTextShadow: null,
   backgroundImage: null,
 }
 
@@ -269,6 +284,12 @@ export function parseStageSettings(raw: unknown): StageSettings {
     )
       ? (s['bTransform'] as StageSettings['bibleTextTransform'])
       : 'none',
+    lyricFontSize:
+      s['lSize'] == null ? null : clamp(asNumber(s['lSize'], 84), 60, 160),
+    lyricFontWeight: s['lWeight'] == null ? null : (WEIGHTS.includes(asNumber(s['lWeight'], 600) as StageFontWeight) ? (asNumber(s['lWeight'], 600) as StageFontWeight) : null),
+    lyricTextColor: s['lFg'] == null ? null : asColor(s['lFg'], DEFAULT_STAGE_SETTINGS.textColor),
+    lyricUpperCase: typeof s['lUpper'] === 'boolean' ? s['lUpper'] : false,
+    lyricTextShadow: typeof s['tsOnL'] === 'boolean' ? s['tsOnL'] : null,
     backgroundImage:
       typeof s['bgImg'] === 'string' &&
       (s['bgImg'].startsWith('data:') || s['bgImg'].startsWith(OFFICIAL_BG_PREFIX))
@@ -354,6 +375,11 @@ export function serializeStageSettings(s: StageSettings): Record<string, unknown
     bWeight: s.bibleFontWeight,
     bFg: s.bibleTextColor,
     bTransform: s.bibleTextTransform,
+    ...(s.lyricFontSize != null ? { lSize: s.lyricFontSize } : {}),
+    ...(s.lyricFontWeight != null ? { lWeight: s.lyricFontWeight } : {}),
+    ...(s.lyricTextColor != null ? { lFg: s.lyricTextColor } : {}),
+    ...(s.lyricUpperCase ? { lUpper: true } : {}),
+    ...(s.lyricTextShadow != null ? { tsOnL: s.lyricTextShadow } : {}),
     bgImg: s.backgroundImage,
     ...(s.clock ? { clock: s.clock } : {}),
     ...(s.timer ? { timer: s.timer } : {}),
