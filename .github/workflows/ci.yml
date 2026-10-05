@@ -65,6 +65,22 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  paridade:
+    name: Paridade app↔web (anti-deriva S1)
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check paridade
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-paridade.mjs
+
   regression-gate:
     name: Regression Gate (anti-regressão)
     runs-on: ubuntu-latest
@@ -95,7 +111,7 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, build, regression-gate]
+    needs: [lint, typecheck, test, build, regression-gate, paridade]
     if: always()
     steps:
       - name: Verifica se todos os gates passaram
@@ -105,7 +121,8 @@ jobs:
           echo "test: ${{ needs.test.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "regression-gate: ${{ needs.regression-gate.result }}"
-          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.typecheck.result }}" != "success" || "${{ needs.test.result }}" != "success" || "${{ needs.build.result }}" != "success" ]]; then
+          echo "paridade: ${{ needs.paridade.result }}"
+          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.typecheck.result }}" != "success" || "${{ needs.test.result }}" != "success" || "${{ needs.build.result }}" != "success" || "${{ needs.paridade.result }}" != "success" ]]; then
             echo "::error::Quality Gate FALHOU — corrija os erros antes do merge"
             exit 1
           fi
