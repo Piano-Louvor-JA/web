@@ -719,6 +719,8 @@ describe('popup-windows — cobertura definitiva de branches', () => {
   })
 
   it('closeScreensBridge: BroadcastChannel lançando (528/538) → flag volta false', async () => {
+    vi.resetModules()
+    const fresh2 = await import('./popup-windows')
     const origBC = globalThis.BroadcastChannel
     class Boom {
       constructor() {
@@ -727,8 +729,8 @@ describe('popup-windows — cobertura definitiva de branches', () => {
     }
     ;(globalThis as unknown as { BroadcastChannel: unknown }).BroadcastChannel = Boom
     try {
-      expect(() => fresh.installPopupOpenerBridge()).not.toThrow()
-      expect(() => fresh.installPopupOpenerBridge()).not.toThrow() // 2ª vez: flag false de novo
+      expect(() => fresh2.installPopupOpenerBridge()).not.toThrow()
+      expect(() => fresh2.installPopupOpenerBridge()).not.toThrow() // 2ª vez: flag false de novo
     } finally {
       ;(globalThis as unknown as { BroadcastChannel: unknown }).BroadcastChannel = origBC
     }
@@ -805,11 +807,13 @@ describe('popup-windows — cobertura definitiva de branches', () => {
   })
 
   it('primeElectronDisplays: displays.list rejeita → catch silencioso (F53)', async () => {
+    vi.resetModules()
+    const fresh2 = await import('./popup-windows')
     ;(window as unknown as { louvorja?: unknown }).louvorja = {
       isElectron: true,
       displays: { list: vi.fn().mockRejectedValue(new Error('bridge caiu')) },
     }
-    expect(() => fresh.installPopupOpenerBridge()).not.toThrow()
+    expect(() => fresh2.installPopupOpenerBridge()).not.toThrow()
     await new Promise((r) => setTimeout(r, 20))
     expect(mockOpen).not.toHaveBeenCalled()
   })

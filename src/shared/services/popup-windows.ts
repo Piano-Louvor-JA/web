@@ -118,8 +118,10 @@ function buildPopupUrl(
   moduleId?: string,
   role: 'screen' | 'control' = 'screen',
 ): string {
-  const base = /* v8 ignore next -- BASE_URL é constante de build ('/' no vitest); ??/normalização inalcançáveis em teste */ import.meta.env.BASE_URL ?? '/'
-  const normalizedBase = /* v8 ignore next -- idem: base sempre '/' no bundle de teste */ base.endsWith('/') ? base : `${base}/`
+  /* v8 ignore next -- BASE_URL é constante de build ('/' no vitest); ?? inalcançável em teste */
+  const base = import.meta.env.BASE_URL ?? '/'
+  /* v8 ignore next -- idem: base sempre '/' no bundle de teste, endsWith nunca é falso */
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
   const params = new URLSearchParams({
     slot: String(slot),
     role,
@@ -130,8 +132,10 @@ function buildPopupUrl(
 }
 
 function buildControlUrl(moduleId: string): string {
-  const base = /* v8 ignore next -- BASE_URL é constante de build ('/' no vitest); ??/normalização inalcançáveis em teste */ import.meta.env.BASE_URL ?? '/'
-  const normalizedBase = /* v8 ignore next -- idem: base sempre '/' no bundle de teste */ base.endsWith('/') ? base : `${base}/`
+  /* v8 ignore next -- BASE_URL é constante de build ('/' no vitest); ?? inalcançável em teste */
+  const base = import.meta.env.BASE_URL ?? '/'
+  /* v8 ignore next -- idem: base sempre '/' no bundle de teste, endsWith nunca é falso */
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
   const params = new URLSearchParams({
     module: moduleId,
     role: 'control',
@@ -533,6 +537,7 @@ export function installPopupOpenerBridge(): void {
     }
   })
 
+  /* v8 ignore next -- invariante: openerBridgeInstalled (guard externo) impede 2ª entrada com flag true; flag só fica true quando o BC é criado com sucesso */
   if (!closeScreensBridgeInstalled) {
     closeScreensBridgeInstalled = true
     try {
