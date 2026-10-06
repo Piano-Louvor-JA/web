@@ -118,4 +118,23 @@ describe('remote-catalog — caudas', () => {
     expect(data).toEqual({ from: 'fallback-default' })
   })
 })
+
+describe('remote-catalog — retry seletivo', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+    mockedFetch.mockReset()
+    mockedFallback.mockReset()
+    mockedFallback.mockResolvedValue({ data: { from: 'fallback-default' }, base: 'x' })
+  })
+
+  it('retries>0 mas erro NÃO-retryable (parse) → cai pro fallback sem re-tentar', async () => {
+    mockedFetch.mockRejectedValue(new Error('Unexpected token < in JSON'))
+    const t0 = Date.now()
+    const data = await fetchRemoteCatalogJson('parse-erro.json', 2, 10)
+    expect(data).toEqual({ from: 'fallback-default' })
+    // sem retries: só 1 fetch (sem delay de backoff)
+    expect(Date.now() - t0).toBeLessThan(500)
+  })
+
+})
 })

@@ -434,4 +434,47 @@ describe('popup-layout — caudas finais', () => {
     delete (window as { getScreenDetails?: unknown }).getScreenDetails
   })
 })
+
+describe('popup-layout — findSavedScreen real (216)', () => {
+  beforeEach(() => {
+    store.clear()
+  })
+
+  it('applyBounds em outra tela com getScreenDetails: screen casado → clamp nos limites da tela', async () => {
+    const w = {
+      closed: false,
+      screen: { availLeft: 0, availTop: 0, availWidth: 1920, availHeight: 1080, width: 1920, height: 1080 },
+      resizeTo: vi.fn(),
+      moveTo: vi.fn(),
+    } as unknown as Window & Record<string, ReturnType<typeof vi.fn>>
+    ;(window as unknown as { getScreenDetails?: unknown }).getScreenDetails = vi.fn().mockResolvedValue({
+      screens: [
+        { availLeft: 1920, availTop: 0, availWidth: 1920, availHeight: 1080, width: 1920, height: 1080 },
+      ],
+    })
+    // entry salva na tela 1920, janela na tela 0 → isOnSavedScreen false → clamp para dentro da tela 1920
+    await mod.applyBounds(w, { left: 2000, top: 100, width: 800, height: 600, screenLeft: 1920, screenTop: 0 })
+    const lastMove = w.moveTo.mock.calls[w.moveTo.mock.calls.length - 1]
+    expect(lastMove[0]).toBeGreaterThanOrEqual(1920)
+    delete (window as { getScreenDetails?: unknown }).getScreenDetails
+  })
+
+  it('applyBounds em outra tela sem screen casado → null → moveTo original (216 falso→null)', async () => {
+    const w = {
+      closed: false,
+      screen: { availLeft: 0, availTop: 0, availWidth: 1920, availHeight: 1080, width: 1920, height: 1080 },
+      resizeTo: vi.fn(),
+      moveTo: vi.fn(),
+    } as unknown as Window & Record<string, ReturnType<typeof vi.fn>>
+    ;(window as unknown as { getScreenDetails?: unknown }).getScreenDetails = vi.fn().mockResolvedValue({
+      screens: [
+        // callback roda: tela 9999 não casa com entry (screenLeft 1920)
+        { availLeft: 9999, availTop: 5, availWidth: 800, availHeight: 600, width: 800, height: 600 },
+      ],
+    })
+    await mod.applyBounds(w, { left: 500, top: 50, width: 800, height: 600, screenLeft: 1920, screenTop: 0 })
+    expect(w.moveTo).toHaveBeenLastCalledWith(500, 50)
+    delete (window as { getScreenDetails?: unknown }).getScreenDetails
+  })
+})
 })

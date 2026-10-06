@@ -206,4 +206,14 @@ describe('display-service-web — caudas', () => {
     expect(det.screens).toHaveLength(2)
   })
 })
+
+describe('display-service-web — última cauda', () => {
+  it('requestScreenAccess: getScreenDetails retorna undefined → fallback (110)', async () => {
+    setApi(vi.fn().mockResolvedValue(undefined))
+    const det = await mod.requestScreenAccess()
+    expect(det.supported).toBe(true)
+    expect(det.screens).toHaveLength(1)
+    expect(det.limited).toBe(true)
+  })
+})
 })

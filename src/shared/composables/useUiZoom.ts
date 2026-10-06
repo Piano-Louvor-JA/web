@@ -64,10 +64,12 @@ function isProjectionPopupLocation(): boolean {
 }
 
 const mobileMediaQuery =
+/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
   typeof window !== 'undefined'
     ? window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`)
     : null
 
+/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 const isMobileViewport = ref(mobileMediaQuery?.matches ?? false)
 
 function onMobileViewportChange(event: MediaQueryListEvent) {

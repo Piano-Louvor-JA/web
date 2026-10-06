@@ -499,4 +499,10 @@ describe('palco-cloud-bridge — última milha', () => {
     }
   })
 })
+
+  it('bg oficial com hostname localhost (jsdom default) → background undefined (S124)', async () => {
+    stageByScope['hymns'] = { backgroundImage: 'official:bg-10' }
+    const m = await mod.toReceiverMessage('hymns', { active: true, lyric: 'x', title: 'y' })
+    expect(m?.background).toBeUndefined()
+  })
 })

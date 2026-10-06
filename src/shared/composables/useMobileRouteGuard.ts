@@ -20,6 +20,7 @@ function initMobileDetection() {
   }
 }
 
+/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 if (typeof window !== 'undefined') {
   initMobileDetection()
 }

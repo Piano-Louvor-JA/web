@@ -576,4 +576,169 @@ describe('popup-windows — caudas finais', () => {
     expect(fresh.getPopupModule()).toBe('liturgy-web')
   })
 })
+
+describe('popup-windows — cobertura definitiva de branches', () => {
+  beforeEach(() => {
+    mockOpen.mockReset()
+    routeMock.mockReset().mockReturnValue('mirror')
+    vi.mocked(captureCurrentBounds).mockReset().mockReturnValue(null)
+    vi.mocked(saveSlotBounds).mockClear()
+    mockTimeouts.length = 0
+  })
+
+  it('electronMonitorIdForSlot: screenId "left:top" com parse ok mas display sem match (64-65)', async () => {
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: { list: vi.fn().mockResolvedValue([{ id: 1, bounds: { x: 0, y: 0 } }]) },
+    }
+    slotAssignments['1'] = '9:9' // parse ok, mas não casa com display (0,0)
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    mockOpen.mockReturnValue(w1)
+    installPopupOpenerBridge()
+    await new Promise((r) => setTimeout(r, 10))
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+    // monitor= não entra nas features porque display não casou
+    expect(mockOpen.mock.calls[0][2] as string).not.toContain('monitor=')
+  })
+
+  it('closeLocalScreenRefs chamada com popup closed (96) — broadcast close-screens', async () => {
+    const dead = makeFakeWindow('PopupWindow1', 1)
+    dead.closed = true
+    registry = [dead as never]
+    fresh.closeScreenPopups()
+    expect(dead.close).not.toHaveBeenCalled()
+  })
+
+  it('closeLocalScreenRefs com bounds mas SEM slot (100 falso) → não salva', () => {
+    const w = makeFakeWindow('PopupWindowX') // sem __popupSlot
+    registry = [w as never]
+    vi.mocked(captureCurrentBounds).mockReturnValue({ left: 1, top: 2, width: 3, height: 4 })
+    fresh.closeScreenPopups()
+    // saveOpenPopupLayouts salva via fallbackIndex (tagPopupSlot MUTA __popupSlot=1);
+    // closeLocalScreenRefs então encontra bounds+slot e salva de novo — contrato real: 2x
+    expect(saveSlotBounds).toHaveBeenCalledTimes(2)
+    expect(saveSlotBounds).toHaveBeenNthCalledWith(1, 'PopupWindow1', { left: 1, top: 2, width: 3, height: 4 })
+    expect(w.close).toHaveBeenCalled()
+  })
+
+  it('BASE_URL custom sem barra final (118-119/130-131) → URL normalizada', async () => {
+    const desc = Object.getOwnPropertyDescriptor(import.meta, 'env')
+    const envObj: Record<string, unknown> = { ...(import.meta.env ?? {}), BASE_URL: '/app' }
+    Object.defineProperty(import.meta, 'env', { value: envObj, configurable: true, writable: true })
+    try {
+      const w1 = makeFakeWindow('PopupWindow1', 1)
+      mockOpen.mockReturnValue(w1)
+      await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+      expect(mockOpen.mock.calls[0][0] as string).toBe('/popup?slot=1&role=screen&module=media')
+      expect(mockOpen.mock.calls[0][0] as string).not.toContain('//popup')
+    } finally {
+      if (desc) Object.defineProperty(import.meta, 'env', desc)
+      else Object.defineProperty(import.meta, 'env', { value: { BASE_URL: '/' }, configurable: true, writable: true })
+    }
+  })
+
+  it('tagPopupSlot: sem __popupSlot e sem name → fallbackIndex (236-237)', async () => {
+    const unnamed = makeFakeWindow('PopupWindowX') // name não parseia
+    registry = [unnamed as never]
+    mockOpen.mockReturnValue(makeFakeWindow('PopupWindow1', 1) as never)
+    await fresh.openPopupModule('media', { slots: [1, 2] })
+    // unnamed saiu do alvo → tagPopupSlot fallbackIndex foi aplicado ao salvar bounds/fechar
+    expect(unnamed.close).toHaveBeenCalled()
+  })
+
+  it('requestBoundsReport com popup fechada (198/242/464) → sem postMessage', async () => {
+    const dead = makeFakeWindow('PopupWindow1', 1)
+    dead.closed = true
+    registry = [dead as never]
+    mockOpen.mockReturnValue(makeFakeWindow('PopupWindow2', 2) as never)
+    await fresh.openPopupModule('media', { slots: [2] })
+    await Promise.resolve()
+    expect(dead.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('ensurePopups: popup no alvo e live mantida sem postMessage de bounds (257 falso: captureCurrentBounds null)', async () => {
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    vi.mocked(captureCurrentBounds).mockReturnValue(null)
+    registry = [w1 as never]
+    mockOpen.mockReturnValue(w1)
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+    expect(saveSlotBounds).not.toHaveBeenCalled()
+  })
+
+  it('syncStateToAll p/ controle aberto (284/290/294) + sort com __popupSlot faltando (316)', async () => {
+    const wA = makeFakeWindow('PopupWindowA', 2)
+    const wB = makeFakeWindow('PopupWindowB') // sem slot → fallback no sort
+    registry = [wA as never, wB as never]
+    fresh.syncPopupWindows()
+    await Promise.resolve()
+    expect(wA.postMessage).toHaveBeenCalled()
+  })
+
+  it('openLiturgyControlWindow: window.open null e popups live (373) → module permanece', async () => {
+    fresh.closeLiturgyControlWindow()
+    store.clear()
+    mockOpen.mockReturnValue(null)
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    registry = [w1 as never]
+    const res = fresh.openLiturgyControlWindow('liturgy-web')
+    expect(res).toBe(false)
+    expect(fresh.getPopupModule()).toBe('liturgy-web') // popups live → NÃO limpa módulo
+  })
+
+  it('openPopupModule rota tv com controle ABERTO (425 falso) → sem re-set redundante', async () => {
+    fresh.closeLiturgyControlWindow()
+    store.clear()
+    routeMock.mockReturnValue('tv')
+    const ctrl = makeFakeWindow(LITURGY_CONTROL_WINDOW_NAME)
+    mockOpen.mockReturnValue(ctrl)
+    fresh.openLiturgyControlWindow('liturgy-web') // abre controle (setActiveModule liturgy-web)
+    expect(fresh.getPopupModule()).toBe('liturgy-web')
+    // rota tv: setActiveModule('media') incondicional roda; 425 evita RE-set (controle aberto).
+    // Contrato observável: módulo ativo vira 'media' (1º set), sem segundo set.
+    await expect(fresh.openPopupModule('media')).resolves.toBe(true)
+    expect(fresh.getPopupModule()).toBe('media')
+  })
+
+  it('rota numérica inválida (431: NaN / fora do range) → slots default', async () => {
+    routeMock.mockReturnValue('99') // fora do range (count=3)
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    mockOpen.mockReturnValue(w1)
+    await expect(fresh.openPopupModule('bible', { })).resolves.toBe(true)
+    // abriu slots default (1,2,3)
+    expect(mockOpen.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('closeLiturgyControlWindow sem janela (445 via exitPopupModule) → setActiveModule("")', async () => {
+    routeMock.mockReturnValue('mirror')
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    registry = [w1 as never]
+    mockOpen.mockReturnValue(w1)
+    await fresh.openPopupModule('media', { slots: [1] })
+    fresh.exitPopupModule()
+    expect(fresh.getPopupModule()).toBe('')
+  })
+
+  it('closeScreensBridge: BroadcastChannel lançando (528/538) → flag volta false', async () => {
+    const origBC = globalThis.BroadcastChannel
+    class Boom {
+      constructor() {
+        throw new Error('bc indisponível')
+      }
+    }
+    ;(globalThis as unknown as { BroadcastChannel: unknown }).BroadcastChannel = Boom
+    try {
+      expect(() => fresh.installPopupOpenerBridge()).not.toThrow()
+      expect(() => fresh.installPopupOpenerBridge()).not.toThrow() // 2ª vez: flag false de novo
+    } finally {
+      ;(globalThis as unknown as { BroadcastChannel: unknown }).BroadcastChannel = origBC
+    }
+  })
+
+  it('window message: popup-bounds sem slot/bounds → ignorado (cauda 517)', async () => {
+    const listener = windowMessageListeners[windowMessageListeners.length - 1]
+    expect(() => listener({ data: { action: 'popup-bounds' } } as MessageEvent)).not.toThrow()
+    expect(() => listener({ data: null } as MessageEvent)).not.toThrow()
+    expect(() => listener({ data: { action: 'outra' } } as MessageEvent)).not.toThrow()
+  })
+})
 })

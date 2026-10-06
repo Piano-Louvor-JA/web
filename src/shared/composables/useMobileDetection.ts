@@ -7,6 +7,7 @@ const mediaQuery = typeof window !== 'undefined'
   ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
   : null
 
+/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 const isMobileRef = ref(mediaQuery?.matches ?? false)
 
 function onMediaChange(e: MediaQueryListEvent) {
