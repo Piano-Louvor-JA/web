@@ -250,4 +250,27 @@ describe('useUiZoom — caudas', () => {
     expect(z.zoomPercent.value).toBe(78)
   })
 })
+
+describe('useUiZoom — ciclo de vida (onMounted)', () => {
+  beforeEach(() => {
+    store.clear()
+    setMobile(false)
+  })
+
+  it('montar componente chama install + sync (232-234)', async () => {
+    const { mount } = await import('@vue/test-utils')
+    const { defineComponent, h } = await import('vue')
+    store.set(UI_ZOOM_KEY, '1.2')
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          mod.useUiZoom()
+          return () => h('div')
+        },
+      }),
+    )
+    expect(mod.useUiZoom().zoom.value).toBe(1.2)
+    wrapper.unmount()
+  })
+})
 })

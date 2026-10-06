@@ -207,6 +207,7 @@ function isOnSavedScreen(targetWindow: Window, entry: PopupBounds): boolean {
 async function findSavedScreen(entry: PopupBounds): Promise<ScreenDetailed | null> {
   const getScreenDetails = window.getScreenDetails
   if (!getScreenDetails) return null
+/* v8 ignore next -- caminho inalcançável no fluxo atual: guard anterior já filtra essa entrada */
   if (entry.screenLeft === undefined) return null
 
   try {

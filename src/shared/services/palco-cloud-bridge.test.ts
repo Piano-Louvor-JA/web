@@ -439,4 +439,64 @@ describe('palco-cloud-bridge — caudas finais', () => {
     expect(m?.msg).not.toContain('—')
   })
 })
+
+describe('palco-cloud-bridge — última milha', () => {
+  beforeEach(() => {
+    sendMock.mockReset()
+    for (const k of Object.keys(routeMap)) delete routeMap[k]
+    for (const k of Object.keys(stageByScope)) delete stageByScope[k]
+    mod.resetStageRelayModule()
+  })
+
+  it('clock com rota palco:N publica direto (sem guard de exclusividade)', async () => {
+    mod.publishToStageRelay('bible', { reference: 'a', text: 'b' })
+    await vi.waitFor(() => expect(sendMock).toHaveBeenCalledTimes(1))
+    routeMap['clock'] = 'palco:5'
+    mod.publishToStageRelay('clock', { time: '09:00' })
+    await vi.waitFor(() => {
+      const timer = sendMock.mock.calls.find((c) => c[0]?.type === 'timer')
+      expect(timer).toBeDefined()
+      expect(timer![1]).toBe('slot-5')
+    })
+  })
+
+  it('toReceiverMessage null (payload inválido) reseta lastRelayModule (73)', async () => {
+    routeMap['clock'] = 'tv' // clock só publica quando é destino explícito
+    mod.publishToStageRelay('clock', { time: 12345 }) // time não é string → null
+    await new Promise((r) => setTimeout(r, 20))
+    expect(sendMock).not.toHaveBeenCalled()
+    // próximo clock NÃO manda idle (lastRelay era null)
+    mod.publishToStageRelay('clock', { time: '09:00' })
+    await vi.waitFor(() => {
+      expect(sendMock.mock.calls).toHaveLength(1)
+      expect(sendMock.mock.calls[0][0].type).toBe('timer')
+    })
+  })
+
+  it('liturgy-web title não-string (number) → tratado como vazio (275)', async () => {
+    const m = await mod.toReceiverMessage('liturgy-web', {
+      active: true,
+      kind: 'video',
+      url: 'https://x/v.mp4',
+      title: 12345,
+    })
+    expect(m?.title).toBe('')
+  })
+
+  it('bg path relativo com hostname LAN vira absoluto (118-123)', async () => {
+    stageByScope['hymns'] = { backgroundImage: 'official:capa-1' }
+    const loc = window.location as unknown as { hostname: string; protocol: string; host: string }
+    const desc = Object.getOwnPropertyDescriptor(window, 'location')
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...loc, hostname: '10.0.0.5', protocol: 'http:', host: '10.0.0.5:8080' },
+    })
+    try {
+      const m = await mod.toReceiverMessage('media', { active: true, lyric: 'x', title: 'y' })
+      expect(m?.background).toBe('http://10.0.0.5:8080/src/assets/bg/capa-1.png')
+    } finally {
+      if (desc) Object.defineProperty(window, 'location', desc)
+    }
+  })
+})
 })
