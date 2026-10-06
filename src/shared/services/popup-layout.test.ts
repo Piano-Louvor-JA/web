@@ -81,7 +81,7 @@ describe('popup-layout', () => {
     expect(store.size).toBe(0)
     mod.saveSlotBounds('PopupWindow1', { left: 1, top: 1, width: 10, height: 10 })
     expect(store.size).toBe(0)
-    mod.saveSlotBounds('PopupWindow1', { left: 'x', top: 1, width: 800, height: 600 })
+    mod.saveSlotBounds('PopupWindow1', { left: 'x' as unknown as number, top: 1, width: 800, height: 600 })
     expect(store.size).toBe(0)
   })
 
@@ -376,7 +376,7 @@ describe('popup-layout — caudas getScreenDetails', () => {
     const w = makeWin()
     mod.scheduleRestoreOnWindow(w as unknown as Window, { left: 1, top: 1, width: 800, height: 600 })
     await vi.advanceTimersByTimeAsync(100) // 0+50 já rodaram
-    w.closed = true
+    ;(w as { closed: boolean }).closed = true
     await vi.advanceTimersByTimeAsync(2000) // resto dos delays
     const calls = (w.resizeTo as ReturnType<typeof vi.fn>).mock.calls.length
     // depois de fechada não cresce
@@ -454,7 +454,7 @@ describe('popup-layout — findSavedScreen real (216)', () => {
     })
     // entry salva na tela 1920, janela na tela 0 → isOnSavedScreen false → clamp para dentro da tela 1920
     await mod.applyBounds(w, { left: 2000, top: 100, width: 800, height: 600, screenLeft: 1920, screenTop: 0 })
-    const lastMove = w.moveTo.mock.calls[w.moveTo.mock.calls.length - 1]
+    const lastMove = (w.moveTo as ReturnType<typeof vi.fn>).mock.calls[(w.moveTo as ReturnType<typeof vi.fn>).mock.calls.length - 1]
     expect(lastMove[0]).toBeGreaterThanOrEqual(1920)
     delete (window as { getScreenDetails?: unknown }).getScreenDetails
   })

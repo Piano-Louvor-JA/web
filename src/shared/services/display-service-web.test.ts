@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
 
 /**
  * display-service-web: Window Management API (getScreenDetails) com fallback

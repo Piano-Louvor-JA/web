@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
 
 /**
  * api-fallback: cascata primária + fallbacks vindos EXCLUSIVAMENTE da env,

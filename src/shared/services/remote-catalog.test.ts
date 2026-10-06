@@ -60,7 +60,7 @@ describe('remote-catalog', () => {
 
   it('500 com retries → esgota e cai no fallback', async () => {
     mockedFetch.mockResolvedValue(reply(500))
-    mockedFallback.mockResolvedValue({ data: { fallback: true } })
+    mockedFallback.mockResolvedValue({ data: { fallback: true }, base: 'x' })
     const data = await fetchRemoteCatalogJson('erro500.json', 1, 1)
     expect(data).toEqual({ fallback: true })
   })
@@ -73,7 +73,7 @@ describe('remote-catalog', () => {
 
   it('rede fora (Failed to fetch) → retry e cai no fallback', async () => {
     mockedFetch.mockRejectedValue(new TypeError('Failed to fetch'))
-    mockedFallback.mockResolvedValue({ data: { via: 'fallback' } })
+    mockedFallback.mockResolvedValue({ data: { via: 'fallback' }, base: 'x' })
     const data = await fetchRemoteCatalogJson('rede-fora.json', 1, 1)
     expect(data).toEqual({ via: 'fallback' })
   })

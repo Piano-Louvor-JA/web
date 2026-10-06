@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // user-preferences em memória
 const store = new Map<string, unknown>()
@@ -90,8 +90,8 @@ describe('projection-preferences — media toggles', () => {
     ['mediaLazyLoad', 'media_lazy_load', true],
     ['mediaFadeAudio', 'media_fade_audio', true],
   ] as const)('%s: default, set e fallback de lixo', (fn, key, def) => {
-    const get = mod[`get${fn.charAt(0).toUpperCase()}${fn.slice(1)}`] as () => boolean
-    const set = mod[`set${fn.charAt(0).toUpperCase()}${fn.slice(1)}`] as (v: boolean) => void
+    const get = (mod as Record<string, unknown>)[`get${fn.charAt(0).toUpperCase()}${fn.slice(1)}`] as () => boolean
+    const set = (mod as Record<string, unknown>)[`set${fn.charAt(0).toUpperCase()}${fn.slice(1)}`] as (v: boolean) => void
     expect(get()).toBe(def)
     set(!def)
     expect(get()).toBe(!def)

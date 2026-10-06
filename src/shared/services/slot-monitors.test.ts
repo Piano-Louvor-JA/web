@@ -39,8 +39,8 @@ import {
 } from './slot-monitors'
 import { clearSlotBounds, saveSlotBounds } from '@shared/services/popup-layout'
 
-const SCREEN = { id: '1024x768@0,0', left: 0, top: 0, width: 1024, height: 768 }
-const SCREEN2 = { id: '1920x1080@1920,0', left: 1920, top: 0, width: 1920, height: 1080 }
+const SCREEN = { id: '1024x768@0,0', label: 'Tela 1', left: 0, top: 0, width: 1024, height: 768, isPrimary: true, isInternal: false }
+const SCREEN2 = { id: '1920x1080@1920,0', label: 'Tela 2', left: 1920, top: 0, width: 1920, height: 1080, isPrimary: false, isInternal: false }
 
 beforeEach(() => {
   store.clear()
