@@ -199,4 +199,73 @@ describe('slja casos de borda (cobertura extra)', () => {
     // tempo_hms derivado no build (01:01:01) e relido
     expect(parsed.slides[0].timeMs).toBe(3661000)
   })
+
+describe('slja build — todos os campos do slide no INI', () => {
+  it('build escreve cor_letra_aux, cor_fundo (box), imagem_posicao, fundo_letra e tamanhos', async () => {
+    const buffer = await buildSlja({
+      title: 'Completo',
+      slides: [
+        {
+          lyric: 'a',
+          auxiliaryLyric: 'b',
+          type: 'LETRA',
+          timeMs: 1000,
+          textColor: '#111111',
+          auxiliaryTextColor: '#222222',
+          boxColor: '#333333',
+          backgroundColor: '#444444',
+          image: { name: 'f.png', bytes: new Uint8Array([9]) },
+          imagePosition: 7,
+          textBox: false,
+          fontSize: 33,
+          auxiliaryFontSize: 21,
+        },
+      ],
+    })
+    const parsed = await parseSlja(buffer)
+    const s = parsed.slides[0]
+    expect(s.auxiliaryTextColor).toBe('#222222')
+    // boxColor E backgroundColor: build escreve cor_fundo 2x (box vence parse por último: backgroundColor)
+    //.textBox=false → fundo_letra=0 → backgroundColor no parse
+    expect(s.backgroundColor).toBe('#444444')
+    expect(s.image?.name).toBe('f.png')
+    expect(s.imagePosition).toBe(7)
+    expect(s.textBox).toBe(false)
+    expect(s.fontSize).toBe(33)
+    expect(s.auxiliaryFontSize).toBe(21)
+  })
+
+  it('parse: áudio declarado mas arquivo ausente no ZIP → audio undefined', async () => {
+    const ini = [
+      '[Geral]',
+      'slides=1',
+      'audio=1',
+      'url_musica=audio\falta.mp3',
+      '[Slide:1]',
+      'tipo=LETRA',
+      'letra=x',
+    ].join('\r\n')
+    const buffer = await buildSlja({ title: 'sem audio', rawIni: ini, slides: [] })
+    const parsed = await parseSlja(buffer)
+    expect(parsed.audio).toBeUndefined()
+  })
+
+  it('parse: slide sem seção (gap) é pulado; cor_letra_aux vira auxiliaryTextColor', async () => {
+    const ini = [
+      '[Geral]',
+      'slides=2',
+      '[Slide:1]',
+      'tipo=LETRA',
+      'letra=a',
+      'cor_letra_aux=#ABCDEF',
+      '[Slide:2]',
+      'tipo=LETRA',
+      'letra=b',
+    ].join('\r\n')
+    const buffer = await buildSlja({ title: 'aux', rawIni: ini, slides: [] })
+    const parsed = await parseSlja(buffer)
+    expect(parsed.slides[0].auxiliaryTextColor).toBe('#ABCDEF')
+    expect(parsed.slides).toHaveLength(2)
+  })
+})
 })

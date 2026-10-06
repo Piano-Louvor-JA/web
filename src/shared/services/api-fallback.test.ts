@@ -128,4 +128,80 @@ describe('fetchWithApiFallback', () => {
     await mod.fetchWithApiFallback('database', 'v.json', { retries: 0 })
     expect(f.mock.calls[0][1]).toEqual({ headers: undefined })
   })
+
+describe('fetchWithApiFallback — retries e backoff', () => {
+  it('429 respeita retry na MESMA base (rate limit é por host)', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', 'https://b.com')
+    const f = mockFetchSequenced([
+      () => Promise.resolve(new Response('', { status: 429 })),
+      () => ok({ finally: true }),
+    ])
+    const res = await mod.fetchWithApiFallback('database', 'r.json', { retries: 2, delayMs: 1 })
+    expect(res.data).toEqual({ finally: true })
+    expect(f).toHaveBeenCalledTimes(2)
+    // mesma URL nas duas tentativas
+    expect(f.mock.calls[0][0]).toBe(f.mock.calls[1][0])
+  })
+
+  it('429 acima do retry → lança e MIGRA de base', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', 'https://b.com')
+    const f = mockFetchSequenced([
+      () => Promise.resolve(new Response('', { status: 429 })),
+      () => ok({ from: 'b' }),
+    ])
+    const res = await mod.fetchWithApiFallback('database', 'r2.json', { retries: 0, delayMs: 1 })
+    expect(res.data).toEqual({ from: 'b' })
+    expect(String(f.mock.calls[1][0]).startsWith('https://b.com')).toBe(true)
+  })
+
+  it('5xx com retries → tenta a mesma base de novo antes de migrar', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', '')
+    const f = mockFetchSequenced([
+      () => Promise.resolve(new Response('', { status: 502 })),
+      () => ok({ recovered: true }),
+    ])
+    const res = await mod.fetchWithApiFallback('database', 'r3.json', { retries: 1, delayMs: 1 })
+    expect(res.data).toEqual({ recovered: true })
+    expect(f).toHaveBeenCalledTimes(2)
+  })
+
+  it('rede fora com retries → backoff na mesma base, depois lança', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', '')
+    const f = mockFetchSequenced([
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      () => Promise.reject(new TypeError('Failed to fetch')),
+    ])
+    await expect(
+      mod.fetchWithApiFallback('database', 'r4.json', { retries: 1, delayMs: 1 }),
+    ).rejects.toThrow('Failed to fetch')
+    expect(f).toHaveBeenCalledTimes(2)
+  })
+
+  it('NetworkError (webkit) também é tratado como rede', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', '')
+    const f = mockFetchSequenced([
+      () => Promise.reject(new Error('NetworkError: connection lost')),
+      () => ok({ webkit: true }),
+    ])
+    const res = await mod.fetchWithApiFallback('database', 'r5.json', { retries: 1, delayMs: 1 })
+    expect(res.data).toEqual({ webkit: true })
+    expect(f).toHaveBeenCalledTimes(2)
+  })
+
+  it('path sem barra inicial recebe /; com barra fica intacto', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', '')
+    const f = mockFetchSequenced([() => ok({}), () => ok({})])
+    await mod.fetchWithApiFallback('database', 'sem-barra.json', { retries: 0 })
+    await mod.fetchWithApiFallback('database', '/com-barra.json', { retries: 0 })
+    expect(String(f.mock.calls[0][0])).toContain('/sem-barra.json')
+    expect(String(f.mock.calls[1][0])).toContain('/com-barra.json')
+    expect(String(f.mock.calls[1][0])).not.toContain('//com-barra')
+  })
+})
 })
