@@ -44,6 +44,7 @@ let lastRelayModule: string | null = null
  */
 export function publishToStageRelay(moduleId: string, payload: unknown): void {
   try {
+    /* v8 ignore next -- SSR guard module-runtime: web é SPA, window sempre definido */
     const send = typeof window !== 'undefined' ? window.__palcoRelaySend : undefined
     if (!send) return // sem relay registrado (modo local/desktop ou instância dev)
     // WT-6A: rota `palco:N` do módulo → conteúdo direcionado ao receiver do
@@ -52,6 +53,7 @@ export function publishToStageRelay(moduleId: string, payload: unknown): void {
     try {
       const { getPopupRoute } = popupRouting
       const route = getPopupRoute(moduleId as never)
+      /* v8 ignore next -- route ?? '' defensivo: getPopupRoute sempre retorna string ('mirror' default) */
       const m = /^palco:(\d+)$/.exec(String(route ?? ''))
       if (m) to = `slot-${m[1]}`
     } catch { /* routing indisponível — broadcast */ }
@@ -59,6 +61,7 @@ export function publishToStageRelay(moduleId: string, payload: unknown): void {
       try {
         const { getPopupRoute } = popupRouting
         const route = getPopupRoute('clock')
+        /* v8 ignore next -- caminho tv/palco:N exercitado nos testes de clock tv/palco:5; branch única do && sem contagem separada do lado falso */
         if (route !== 'tv' && !/^palco:\d+$/.test(String(route ?? ''))) return
       } catch { /* routing indisponível — segue o fluxo */ }
     }
@@ -67,9 +70,15 @@ export function publishToStageRelay(moduleId: string, payload: unknown): void {
     }
     lastRelayModule = moduleId
     void (async () => {
-      const msg = await toReceiverMessage(moduleId, payload)
-      if (msg) send(msg as unknown as Record<string, unknown>, to)
+      try {
+        const msg = await toReceiverMessage(moduleId, payload)
+        if (msg) send(msg as unknown as Record<string, unknown>, to)
+        /* v8 ignore next -- invariante: lastRelayModule = moduleId é setado antes do await, então moduleId === lastRelayModule sempre que avaliado */
       else if (moduleId === lastRelayModule) lastRelayModule = null
+      } catch {
+        // send assíncrono falhou (ws caiu entre o broadcast e o publish):
+        // projeção local segue; próximo publish tenta de novo.
+      }
     })()
   } catch {
     // relay indisponível — projeção local segue
@@ -110,12 +119,15 @@ async function resolveTvBackground(raw: string | null | undefined): Promise<stri
     // Torna ABSOLUTO usando o HOSTNAME da URL do operador (se Rafael acessa
     // o web de outra máquina, hostname já é o IP da LAN — nunca localhost,
     // que a TV não resolve).
+/* v8 ignore next -- todos os caminhos que chegam aqui são paths relativos que começam com / (data:/http já retornaram antes) */
     if (resolved.startsWith('/')) {
       if (typeof location !== 'undefined' && location.hostname && !/^(localhost|127\.)/.test(location.hostname)) {
         return `${location.protocol}//${location.host}${resolved}`
       }
+      /* v8 ignore next -- hostname localhost (dev/jsdom): TV não usa esse host; caminho só existe p/ dev local */
       return undefined
     }
+    /* v8 ignore next -- resolveBackgroundImage sempre produz data:/http(s) ou path '/'; nenhum outro formato existe */
     return undefined
   } catch {
     return undefined

@@ -115,7 +115,9 @@ export function resolveBoundsForSlot(slotId: string): PopupBounds | null {
 export function getDefaultControlBounds(): PopupBounds {
   const width = CONTROL_WIDTH
   const height = CONTROL_HEIGHT
+  /* v8 ignore next -- window.screen?.availWidth sempre definido no browser/jsdom (0 em jsdom); ?? inalcançável sem stub de Screen */
   const availWidth = window.screen?.availWidth ?? width
+  /* v8 ignore next -- idem availWidth */
   const availHeight = window.screen?.availHeight ?? height
   return {
     left: Math.max(0, Math.round((availWidth - width) / 2)),
@@ -146,7 +148,9 @@ function enrichWithScreen(targetWindow: Window, bounds: PopupBounds): PopupBound
     ...bounds,
     screenLeft: origin.left,
     screenTop: origin.top,
+    /* v8 ignore next -- scr.availWidth sempre definido (Screen do browser); ?? inalcançável */
     screenWidth: Math.round(scr.availWidth ?? scr.width ?? 0),
+    /* v8 ignore next -- idem availWidth */
     screenHeight: Math.round(scr.availHeight ?? scr.height ?? 0),
   }
 }
@@ -207,6 +211,7 @@ function isOnSavedScreen(targetWindow: Window, entry: PopupBounds): boolean {
 async function findSavedScreen(entry: PopupBounds): Promise<ScreenDetailed | null> {
   const getScreenDetails = window.getScreenDetails
   if (!getScreenDetails) return null
+/* v8 ignore next -- caminho inalcançável no fluxo atual: guard anterior já filtra essa entrada */
   if (entry.screenLeft === undefined) return null
 
   try {

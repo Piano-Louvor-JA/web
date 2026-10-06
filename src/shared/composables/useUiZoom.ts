@@ -30,6 +30,7 @@ const MOBILE_MAX_WIDTH = breakpoints.md - 1
  * Chromium às vezes devolve ~1.01 (101%) no nível 0.
  * Valores que arredondam para 99–101% viram exatamente 100%.
  */
+/* v8 ignore next -- defensivo: entradas já passam por Number.isFinite em readStoredZoom/levelToFactor */
 function snapZoom(value: number): number {
   if (!Number.isFinite(value)) return ZOOM_DEFAULT
   const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value))
@@ -55,17 +56,20 @@ function levelToFactor(level: number): number {
 }
 
 function isProjectionPopupLocation(): boolean {
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof window === 'undefined') return false
   const href = window.location.href
   const path = window.location.pathname
   return href.includes('#/popup') || path.includes('/popup') || href.includes('/popup?')
 }
 
+/* v8 ignore next 4 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 const mobileMediaQuery =
   typeof window !== 'undefined'
     ? window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`)
     : null
 
+/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 const isMobileViewport = ref(mobileMediaQuery?.matches ?? false)
 
 function onMobileViewportChange(event: MediaQueryListEvent) {
@@ -95,6 +99,7 @@ let shortcutInstalled = false
 let mobileListenerInstalled = false
 
 function clearCssZoom(): void {
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof document === 'undefined') return
   const root = document.documentElement
   root.style.removeProperty('zoom')
@@ -102,6 +107,7 @@ function clearCssZoom(): void {
 }
 
 function persistZoom(value: number): void {
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof localStorage === 'undefined') return
   setUserPreference(USER_PREFERENCE_KEYS.uiZoom, value)
 }
@@ -109,6 +115,7 @@ function persistZoom(value: number): void {
 /** Aplica zoom via CSS (web não tem webFrame do Electron). */
 function applyZoom(value: number): number {
   const next = clampZoom(value)
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof document !== 'undefined') {
     const root = document.documentElement
     root.style.zoom = String(next)

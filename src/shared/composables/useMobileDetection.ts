@@ -2,16 +2,19 @@ import { ref, computed, type ComputedRef } from 'vue'
 
 const MOBILE_BREAKPOINT = 768
 
+/* v8 ignore next -- guards de SSR (o web é SPA; window sempre existe no browser) */
 const mediaQuery = typeof window !== 'undefined'
   ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
   : null
 
+/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 const isMobileRef = ref(mediaQuery?.matches ?? false)
 
 function onMediaChange(e: MediaQueryListEvent) {
   isMobileRef.value = e.matches
 }
 
+/* v8 ignore next -- guards de SSR (o web é SPA; window sempre existe no browser) */
 if (typeof window !== 'undefined') {
   mediaQuery?.addEventListener('change', onMediaChange)
 }
