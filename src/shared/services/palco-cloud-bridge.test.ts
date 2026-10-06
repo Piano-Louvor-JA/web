@@ -557,4 +557,23 @@ describe('palco-cloud-bridge — última milha', () => {
     expect(m).toMatchObject({ type: 'projection', text: 'Hino 2' })
     expect(m).not.toHaveProperty('background')
   })
+
+
+  it('publish concorrente: A null depois que B (tv) mudou lastRelay → else-if false (78 else)', async () => {
+    routeMap['clock'] = 'tv'
+    mod.publishToStageRelay('bible', null) // A: msg null na microtask
+    mod.publishToStageRelay('clock', { time: '12:00' }) // B: gate tv ok → idle + lastRelay='clock' → timer
+    await new Promise((r) => setTimeout(r, 40))
+    const types = sendMock.mock.calls.map((c) => c[0].type)
+    expect(types).toEqual(expect.arrayContaining(['timer']))
+    // A (bible) null NÃO resetou o lastRelay do clock (else-if falso)
+    mod.publishToStageRelay('clock', { time: '12:01' })
+    await vi.waitFor(() => {
+      const timers = sendMock.mock.calls.filter((c) => c[0].type === 'timer')
+      expect(timers).toHaveLength(2)
+      // entre os 2 timers NÃO houve idle extra (só o 1º idle do A→B switch)
+      const idles = sendMock.mock.calls.filter((c) => c[0].type === 'idle')
+      expect(idles).toHaveLength(1)
+    })
+  })
 })
