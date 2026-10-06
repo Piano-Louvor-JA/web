@@ -9,7 +9,7 @@ import {
   saveUserPreferences,
 } from './user-preferences'
 
-const KEY = 'louvorja_user_preferences'
+const KEY = 'user_data'
 
 describe('user-preferences', () => {
   beforeEach(() => {
