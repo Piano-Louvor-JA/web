@@ -760,4 +760,47 @@ describe('popup-windows — cobertura definitiva de branches', () => {
     await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(false)
     expect(fresh.getPopupModule()).toBe('')
   })
+
+  it('rota palco:N COM controle aberto → não re-set (432 else)', async () => {
+    fresh.closeLiturgyControlWindow()
+    store.clear()
+    routeMock.mockReturnValue('palco:4')
+    const ctrl = makeFakeWindow(LITURGY_CONTROL_WINDOW_NAME)
+    mockOpen.mockReturnValue(ctrl)
+    fresh.openLiturgyControlWindow('liturgy-web')
+    await expect(fresh.openPopupModule('bible')).resolves.toBe(true)
+    expect(fresh.getPopupModule()).toBe('bible')
+  })
+
+  it('popups 0 COM controle aberto → módulo mantém (452 else)', async () => {
+    fresh.closeLiturgyControlWindow()
+    store.clear()
+    routeMock.mockReturnValue('mirror')
+    const ctrl = makeFakeWindow(LITURGY_CONTROL_WINDOW_NAME)
+    mockOpen.mockReturnValueOnce(ctrl).mockReturnValue(null) // 1ª abre controle; popups falham
+    fresh.openLiturgyControlWindow('liturgy-web')
+    registry = []
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(false)
+    // setActiveModule('media') incondicional; 452 (controle aberto) NÃO reseta p/ ''
+    expect(fresh.getPopupModule()).toBe('media')
+  })
+
+  it('fullscreen rejeitada → catch silencioso (F165) e displays.catch (F53)', async () => {
+    prefs.fullscreen = true
+    const w = makeFakeWindow('PopupWindow1', 1)
+    w.document.documentElement.requestFullscreen.mockRejectedValue(new Error('no fs'))
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: { list: vi.fn().mockRejectedValue(new Error('bridge off')) },
+    }
+    mockOpen.mockReturnValue(w)
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+    await new Promise((r) => setTimeout(r, 20))
+    prefs.fullscreen = false
+  })
+
+  it('installPopupOpenerBridge 2x com BroadcastChannel saudável → flag true evita reinstalar (536 else)', () => {
+    fresh.installPopupOpenerBridge()
+    expect(() => fresh.installPopupOpenerBridge()).not.toThrow() // 2ª: closeScreensBridgeInstalled true → else
+  })
 })

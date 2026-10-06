@@ -527,4 +527,34 @@ describe('palco-cloud-bridge — última milha', () => {
     await new Promise((r) => setTimeout(r, 20))
     expect(sendMock).not.toHaveBeenCalled()
   })
+
+  it('media isCover=true COM background → spread inclui background (207)', async () => {
+    stageByScope['hymns'] = { backgroundImage: '' }
+    const m = await mod.toReceiverMessage('media', {
+      active: true,
+      lyric: 'letra',
+      isCover: true,
+      title: 'Hino 1',
+      imageUrl: 'https://x/capa.png',
+    })
+    expect(m).toMatchObject({ type: 'projection', background: 'https://x/capa.png' })
+  })
+
+  it('stageFields com backgroundColor → inclui backgroundColor (149)', async () => {
+    stageByScope['bible'] = { backgroundColor: '#112233' }
+    const m = await mod.toReceiverMessage('bible', { reference: 'Sl 23', text: 'O Senhor' })
+    expect(m).toMatchObject({ type: 'projection', backgroundColor: '#112233' })
+  })
+
+  it('media isCover SEM background nenhum → spread vazio (207 else)', async () => {
+    stageByScope['hymns'] = { backgroundImage: '' }
+    const m = await mod.toReceiverMessage('media', {
+      active: true,
+      lyric: 'letra',
+      isCover: true,
+      title: 'Hino 2',
+    })
+    expect(m).toMatchObject({ type: 'projection', text: 'Hino 2' })
+    expect(m).not.toHaveProperty('background')
+  })
 })

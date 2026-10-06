@@ -118,6 +118,7 @@ function buildPopupUrl(
   moduleId?: string,
   role: 'screen' | 'control' = 'screen',
 ): string {
+  /* v8 ignore next 2 -- BASE_URL é constante de build ('/' no vitest); ?? e normalização de base custom inalcançáveis em runtime de teste */
   const base = import.meta.env.BASE_URL ?? '/'
   const normalizedBase = base.endsWith('/') ? base : `${base}/`
   const params = new URLSearchParams({
@@ -130,6 +131,7 @@ function buildPopupUrl(
 }
 
 function buildControlUrl(moduleId: string): string {
+  /* v8 ignore next 2 -- BASE_URL é constante de build ('/' no vitest); ?? e normalização de base custom inalcançáveis em runtime de teste */
   const base = import.meta.env.BASE_URL ?? '/'
   const normalizedBase = base.endsWith('/') ? base : `${base}/`
   const params = new URLSearchParams({

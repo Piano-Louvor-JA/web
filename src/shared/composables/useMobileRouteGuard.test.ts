@@ -159,4 +159,25 @@ describe('createMobileRouteGuard (guard global do router)', () => {
     } as any)
     expect(res2).toBe(true)
   })
-})
+
+describe('mobileRouteGuard — rota sem name (131)', () => {
+  it('mobile + desktopOnly sem mobileRouteKey e sem to.name → routeKey "unknown" + redirect', () => {
+    setMobile(true)
+    const events: CustomEvent[] = []
+    window.addEventListener('mobile-route-blocked', (e) => events.push(e as CustomEvent))
+    const guard = mod.createMobileRouteGuard()
+    const res = guard({ meta: { desktopOnly: true }, name: undefined } as any)
+    expect(res).toMatchObject({ name: 'home', replace: true })
+    expect(events).toHaveLength(1)
+    expect(events[0].detail.routeKey).toBe('unknown')
+  })
+
+  it('mobile + desktopOnly com to.name (sem mobileRouteKey) → routeKey do name', () => {
+    setMobile(true)
+    const events: CustomEvent[] = []
+    window.addEventListener('mobile-route-blocked', (e) => events.push(e as CustomEvent))
+    const guard = mod.createMobileRouteGuard()
+    guard({ meta: { desktopOnly: true }, name: 'rota-x' } as any)
+    expect(events[0].detail.routeKey).toBe('rota-x')
+  })
+})})

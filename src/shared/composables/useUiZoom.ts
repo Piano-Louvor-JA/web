@@ -63,8 +63,8 @@ function isProjectionPopupLocation(): boolean {
   return href.includes('#/popup') || path.includes('/popup') || href.includes('/popup?')
 }
 
+/* v8 ignore next 4 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 const mobileMediaQuery =
-/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
   typeof window !== 'undefined'
     ? window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`)
     : null
