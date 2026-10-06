@@ -55,6 +55,7 @@ function levelToFactor(level: number): number {
 }
 
 function isProjectionPopupLocation(): boolean {
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof window === 'undefined') return false
   const href = window.location.href
   const path = window.location.pathname
@@ -95,6 +96,7 @@ let shortcutInstalled = false
 let mobileListenerInstalled = false
 
 function clearCssZoom(): void {
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof document === 'undefined') return
   const root = document.documentElement
   root.style.removeProperty('zoom')
@@ -102,6 +104,7 @@ function clearCssZoom(): void {
 }
 
 function persistZoom(value: number): void {
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof localStorage === 'undefined') return
   setUserPreference(USER_PREFERENCE_KEYS.uiZoom, value)
 }
@@ -109,6 +112,7 @@ function persistZoom(value: number): void {
 /** Aplica zoom via CSS (web não tem webFrame do Electron). */
 function applyZoom(value: number): number {
   const next = clampZoom(value)
+/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof document !== 'undefined') {
     const root = document.documentElement
     root.style.zoom = String(next)
