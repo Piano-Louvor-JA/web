@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * browser-storage em memória (localStorage-like) para não depender de jsdom
@@ -205,5 +205,101 @@ describe('popup-layout', () => {
       mod.applyBounds({ closed: true } as unknown as Window, { width: 800, height: 600, left: 0, top: 0 }),
     ).resolves.toBeUndefined()
     await expect(mod.applyBounds(window, null)).resolves.toBeUndefined()
+  })
+})
+
+describe('popup-layout — capture/apply/restore (janelas fake)', () => {
+  beforeEach(() => {
+    store.clear()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  function makeWin(overrides: Record<string, unknown> = {}) {
+    return {
+      closed: false,
+      screenX: 100,
+      screenY: 50,
+      outerWidth: 800,
+      outerHeight: 600,
+      screen: { availLeft: 0, availTop: 0, availWidth: 1920, availHeight: 1080, width: 1920, height: 1080 },
+      resizeTo: vi.fn(),
+      moveTo: vi.fn(),
+      getScreenDetails: undefined as unknown,
+      ...overrides,
+    } as unknown as Window & Record<string, ReturnType<typeof vi.fn>>
+  }
+
+  it('captureCurrentBounds: janela normal → bounds + screen enriquecido', async () => {
+    const w = makeWin()
+    const bounds = mod.captureCurrentBounds(w as unknown as Window)
+    expect(bounds).toMatchObject({ left: 100, top: 50, width: 800, height: 600, screenLeft: 0, screenTop: 0, screenWidth: 1920, screenHeight: 1080 })
+  })
+
+  it('captureCurrentBounds: janela pequena demais → null', () => {
+    const w = makeWin({ outerWidth: 50, outerHeight: 40 })
+    expect(mod.captureCurrentBounds(w as unknown as Window)).toBeNull()
+  })
+
+  it('applyBounds: mesma tela → só resize/move; sem getScreenDetails → moveTo default', async () => {
+    const w = makeWin()
+    await mod.applyBounds(w as unknown as Window, { left: 200, top: 100, width: 900, height: 700, screenLeft: 0, screenTop: 0 })
+    expect(w.resizeTo).toHaveBeenCalledWith(900, 700)
+    expect(w.moveTo).toHaveBeenCalledWith(200, 100)
+  })
+
+  it('applyBounds: tela salva diferente + getScreenDetails achando o monitor → clamp no monitor', async () => {
+    const screenDetails = {
+      screens: [{ availLeft: 1920, availTop: 0, availWidth: 1366, availHeight: 768 }],
+    }
+    const w = makeWin({
+      getScreenDetails: vi.fn().mockResolvedValue(screenDetails),
+    })
+    // entrada salva no monitor 2 (1920,0) — janela atual está no monitor 1
+    await mod.applyBounds(w as unknown as Window, { left: 2000, top: 100, width: 800, height: 600, screenLeft: 1920, screenTop: 0, screenWidth: 1366, screenHeight: 768 })
+    // clamp: left entre 1920 e 1920+1366-800=2486 → 2000 ok; top entre 0 e 168 → 100 ok
+    expect(w.moveTo).toHaveBeenLastCalledWith(2000, 100)
+    expect(w.resizeTo).toHaveBeenLastCalledWith(800, 600)
+  })
+
+  it('applyBounds: getScreenDetails sem monitor compatível → moveTo original', async () => {
+    const w = makeWin({ getScreenDetails: vi.fn().mockResolvedValue({ screens: [] }) })
+    await mod.applyBounds(w as unknown as Window, { left: 2000, top: 100, width: 800, height: 600, screenLeft: 9999, screenTop: 9999 })
+    expect(w.moveTo).toHaveBeenLastCalledWith(2000, 100)
+  })
+
+  it('applyBounds: resize lança → catch silencioso (console.log)', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const w = makeWin({ resizeTo: vi.fn(() => { throw new Error('boom') }) })
+    await expect(mod.applyBounds(w as unknown as Window, { left: 1, top: 1, width: 800, height: 600 })).resolves.toBeUndefined()
+    expect(log).toHaveBeenCalled()
+    log.mockRestore()
+  })
+
+  it('scheduleRestoreOnWindow agenda as 7 tentativas e respeita closed', async () => {
+    const w = makeWin()
+    mod.scheduleRestoreOnWindow(w as unknown as Window, { left: 1, top: 1, width: 800, height: 600 })
+    await vi.advanceTimersByTimeAsync(2100)
+    expect(w.resizeTo).toHaveBeenCalled()
+    // janela fechada → callbacks não fazem nada
+    const w2 = makeWin({ closed: true })
+    mod.scheduleRestoreOnWindow(w2 as unknown as Window, { left: 1, top: 1, width: 800, height: 600 })
+    await vi.advanceTimersByTimeAsync(2100)
+    expect(w2.resizeTo).not.toHaveBeenCalled()
+  })
+
+  it('requestWindowManagementPermission: com API ok e com erro', async () => {
+    const w = makeWin({ getScreenDetails: vi.fn().mockResolvedValue({ screens: [] }) })
+    window.getScreenDetails = w.getScreenDetails as never
+    await expect(mod.requestWindowManagementPermission()).resolves.toBeUndefined()
+    window.getScreenDetails = vi.fn().mockRejectedValue(new Error('denied')) as never
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    await expect(mod.requestWindowManagementPermission()).resolves.toBeUndefined()
+    expect(log).toHaveBeenCalled()
+    log.mockRestore()
+    delete (window as { getScreenDetails?: unknown }).getScreenDetails
   })
 })
