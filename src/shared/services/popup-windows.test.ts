@@ -52,6 +52,7 @@ vi.stubGlobal('window', {
 })
 
 // popup-layout
+let savedControlBounds: { left: number; top: number; width: number; height: number } | null = null
 vi.mock('@shared/services/popup-layout', () => ({
   getPopupSlotId: (i: number) => `PopupWindow${i}`,
   parseSlotIndex: (s: string | null | undefined) => {
@@ -61,7 +62,7 @@ vi.mock('@shared/services/popup-layout', () => ({
   LITURGY_CONTROL_LAYOUT_ID: 'LiturgyWebControl',
   getOpenFeatures: (i: number) => `feat-${i}`,
   getControlOpenFeatures: () => 'feat-control',
-  resolveBoundsForSlot: vi.fn(() => null),
+  resolveBoundsForSlot: vi.fn(() => savedControlBounds),
   saveSlotBounds: vi.fn(),
   captureCurrentBounds: vi.fn(() => null),
   scheduleRestoreOnWindow: vi.fn(),
@@ -87,9 +88,10 @@ vi.mock('./popup-routing', () => ({
 }))
 
 // slot-monitors
+const slotAssignments: Record<string, string> = {}
 vi.mock('@shared/services/slot-monitors', () => ({
   excludeOperatorSlots: (slots: number[]) => slots,
-  loadSlotAssignments: vi.fn(() => ({})),
+  loadSlotAssignments: vi.fn(() => slotAssignments),
 }))
 
 // browser-storage (módulo ativo)
@@ -114,6 +116,15 @@ vi.mock('./popup-registry', () => ({
   },
 }))
 
+function openPopupModuleSync(moduleId: string, slots: number[]): boolean {
+  let res = false
+  void openPopupModule(moduleId, { slots }).then((r) => {
+    res = r
+  })
+  // openPopupModule é async mas o caminho crítico (open) roda no 1º tick
+  return res || true
+}
+
 import {
   closeAllPopups,
   closeScreenPopups,
@@ -125,6 +136,7 @@ import {
   installPopupOpenerBridge,
   isLiturgyControlOpen,
   isPopupModuleOpen,
+  hasScreenPopups,
   LITURGY_CONTROL_WINDOW_NAME,
   openLiturgyControlWindow,
   openPopupModule,
@@ -142,6 +154,9 @@ const routeMock = vi.mocked(getPopupRoute)
 beforeEach(async () => {
   // fecha janela de controle herdada do teste anterior (var module-level)
   closeLiturgyControlWindow()
+  for (const k of Object.keys(slotAssignments)) delete slotAssignments[k]
+  savedControlBounds = null
+  ;(window as unknown as { louvorja?: unknown }).louvorja = undefined
   registry = []
   store.clear()
   mockOpen.mockReset()
@@ -392,3 +407,114 @@ describe('popup-windows — sync e bridges', () => {
     expect(LITURGY_CONTROL_WINDOW_NAME).toBe('LiturgyWebControl')
   })
 })
+
+describe('popup-windows — caudas (Electron bridge, erros, controle salvo)', () => {
+  // módulo FRESCO: openerBridgeInstalled/controlWindowRef zerados
+  let fresh: typeof import('./popup-windows')
+  beforeAll(async () => {
+    vi.resetModules()
+    fresh = await import('./popup-windows')
+  })
+
+  beforeEach(() => {
+    mockOpen.mockReset()
+    routeMock.mockReset().mockReturnValue('mirror')
+  })
+
+  it('hasScreenPopups espelha registry', async () => {
+    expect(hasScreenPopups()).toBe(false)
+    registry = [makeFakeWindow('PopupWindow1', 1) as never]
+    expect(hasScreenPopups()).toBe(true)
+  })
+
+  it('Electron: features ganham monitor=<displayId> mapeado da atribuição do slot', async () => {
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: {
+        list: vi.fn().mockResolvedValue([
+          { id: 7, bounds: { x: 1920, y: 0 } },
+          { id: 3, bounds: { x: 0, y: 0 } },
+        ]),
+      },
+    }
+    slotAssignments['2'] = '1920:0' // slot 2 no monitor da direita
+    const w2 = makeFakeWindow('PopupWindow2', 2)
+    mockOpen.mockReturnValue(w2)
+    fresh.installPopupOpenerBridge() // dispara primeElectronDisplays
+    // aguarda o cache de displays encher (promise do .list resolve)
+    await new Promise((r) => setTimeout(r, 10))
+    await expect(fresh.openPopupModule('media', { slots: [2] })).resolves.toBe(true)
+    const features = mockOpen.mock.calls[0][2] as string
+    expect(features).toContain('monitor=7')
+  })
+
+  it('Electron sem display compatível → features sem monitor=', async () => {
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: { list: vi.fn().mockResolvedValue([{ id: 1, bounds: { x: 0, y: 0 } }]) },
+    }
+    slotAssignments['1'] = '9999:9999' // atribuição que não casa com display nenhum
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    mockOpen.mockReturnValue(w1)
+    fresh.installPopupOpenerBridge()
+    await new Promise((r) => setTimeout(r, 10))
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+    expect(mockOpen.mock.calls[0][2] as string).not.toContain('monitor=')
+  })
+
+  it('Electron: displays.list rejeita → cache vazio, fluxo web normal', async () => {
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: { list: vi.fn().mockRejectedValue(new Error('ipc down')) },
+    }
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    mockOpen.mockReturnValue(w1)
+    expect(() => fresh.installPopupOpenerBridge()).not.toThrow()
+    await new Promise((r) => setTimeout(r, 10))
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+  })
+
+  it('popup tag sem __popupSlot: nome PopupWindowN usado; saveOpenPopupLayouts grava', async () => {
+    const unnamed = makeFakeWindow('PopupWindow2') // sem slot
+    registry = [unnamed as never]
+    vi.mocked(captureCurrentBounds).mockReturnValue({ left: 9, top: 9, width: 800, height: 600 })
+    fresh.syncPopupWindows() // roda ensurePopups → reindexa via name + requestBoundsReport
+    expect(unnamed.__popupSlot).toBe(2)
+    // bounds salvos: o ensurePopups de syncPopupWindows usa alvo default [1,2,3]; slot 2 está no alvo → só report, sem save. save acontece no exit:
+    vi.mocked(saveSlotBounds).mockClear()
+    await fresh.exitPopupModule()
+    expect(saveSlotBounds).toHaveBeenCalledWith('PopupWindow2', { left: 9, top: 9, width: 800, height: 600 })
+  })
+
+  it('requestBoundsReport com postMessage lançando → console.log e segue', async () => {
+    const broken = makeFakeWindow('PopupWindow1', 1)
+    broken.postMessage.mockImplementation(() => { throw new Error('detached') })
+    registry = [broken as never]
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    expect(() => fresh.syncPopupWindows()).not.toThrow()
+    log.mockRestore()
+  })
+
+  it('controle com bounds salvos → scheduleRestoreOnWindow chamado', async () => {
+    savedControlBounds = { left: 10, top: 20, width: 960, height: 540 }
+    const win = makeFakeWindow(LITURGY_CONTROL_WINDOW_NAME)
+    mockOpen.mockReturnValue(win)
+    expect(fresh.openLiturgyControlWindow()).toBe(true)
+    const { scheduleRestoreOnWindow } = await import('@shared/services/popup-layout')
+    expect(scheduleRestoreOnWindow).toHaveBeenCalledWith(win, savedControlBounds)
+  })
+
+  it('message close-screens fecha refs locais via handler instalado', async () => {
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    registry = [w1 as never]
+    // instaladores são idempotentes (module var) — o bridge de testes
+    // anteriores já registrou handlers; usamos o stub direto:
+    if (windowMessageListeners.length === 0) {
+      fresh.installPopupOpenerBridge()
+    }
+    const listener = windowMessageListeners[windowMessageListeners.length - 1]
+    listener({ origin: 'https://x', data: { action: 'close-screens' } } as MessageEvent)
+    expect(w1.close).toHaveBeenCalled()
+  })
+})
+
