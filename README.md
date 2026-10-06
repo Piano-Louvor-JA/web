@@ -1,5 +1,11 @@
 # LouvorJA - PIANO (Web)
 
+![CI](https://img.shields.io/github/actions/workflow/status/Piano-Louvor-JA/web/ci.yml?branch=main&label=CI)
+![Security](https://img.shields.io/github/actions/workflow/status/Piano-Louvor-JA/web/security.yml?branch=main&label=security)
+![Release](https://img.shields.io/github/v/release/Piano-Louvor-JA/web?include_prereleases)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Platform](https://img.shields.io/badge/platform-browser-lightgrey)
+
 Aplicação web para gerenciamento de culto — músicas, bíblia, utilitários e projeção.
 
 Este projeto é um fork de recursos em relação ao app Louvor JA ([app.louvorja.com.br](https://app.louvorja.com.br/), [github.com/louvorja/app](https://github.com/louvorja/app)), onde as principais ferramentas são migradas e adaptadas para as tecnologias usadas neste projeto.
@@ -19,7 +25,13 @@ O LouvorJA - PIANO existe em **duas linhas de entrega**:
 | **Electron (desktop)** | App nativo para Windows, macOS e Linux | Não |
 | **Web** | Aplicação exclusiva para navegador | **Sim** |
 
-Este README cobre apenas a **versão Web**. A versão Electron é um projeto separado (`StackVue/electron`), com shell desktop.
+Este README cobre apenas a **versão Web**. A versão Electron é um projeto separado, com shell desktop.
+
+---
+
+## Qualidade
+
+CI em 4 portões: **Lint** (Biome) · **Type Check** · **Unit Tests** (Vitest) · **Build** — mais um **Regression Gate** anti-regressão. Security scan (gitleaks + npm audit) em todo PR.
 
 ---
 
@@ -41,6 +53,7 @@ Este README cobre apenas a **versão Web**. A versão Electron é um projeto sep
 - Pinia · Vue Router · Vue I18n
 - Vuetify (componentes ricos) · Tailwind CSS (layout)
 - Design system próprio (`src/design-system/`)
+- Testes: Vitest
 
 ---
 
@@ -119,6 +132,7 @@ npm run dev              # browser
 | `npm run host` | Vite na rede local |
 | `npm run build` | Type-check + build de produção |
 | `npm run preview` | Preview do build no browser |
+| `npm run test` | Suite de testes (Vitest) |
 | `npm run version:patch` | Sobe patch (`1.0.0` → `1.0.1`), commit + tag `vX.Y.Z` |
 | `npm run version:minor` | Sobe minor (`1.0.0` → `1.1.0`), commit + tag |
 | `npm run version:major` | Sobe major (`1.0.0` → `2.0.0`), commit + tag |
@@ -133,6 +147,12 @@ npm run git:publish     # envia commit e tags ao remoto
 ```
 
 Aliases: `version:bug` → patch · `version:min` → minor · `version:max` → major.
+
+---
+
+## Contribuir
+
+Branch default: `main`. PRs passam por lint, type-check, testes, build e regression gate antes do merge.
 
 ---
 
