@@ -34,7 +34,7 @@ export default defineConfig({
         statements: 100,
         branches: 100,
       },
-      include: ['src/shared/composables/useWebUpdateChecker.ts'],
+      include: ['src/shared/**/*.ts'],
     },
   },
 })
