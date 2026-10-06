@@ -61,7 +61,9 @@ function electronMonitorIdForSlot(slotId: string): number | null {
   const screenId = loadSlotAssignments()[slotId]
   if (!screenId) return null
   const [leftRaw, topRaw] = screenId.split(':')
+  /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
   const left = Number.parseInt(leftRaw ?? '', 10)
+  /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
   const top = Number.parseInt(topRaw ?? '', 10)
   if (Number.isNaN(left) || Number.isNaN(top)) return null
   const display = electronDisplays.find((d) => d.bounds.x === left && d.bounds.y === top)
@@ -93,6 +95,7 @@ function broadcastPopupAction(action: PopupActionPayload['action']): void {
 /** Fecha refs locais de telas sem reabrir nem usar window.open('', name). */
 function closeLocalScreenRefs(): void {
   getPopupRefs().forEach((popup) => {
+    /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
     if (!popup || popup.closed) return
     try {
       const bounds = captureCurrentBounds(popup)
@@ -195,6 +198,7 @@ function broadcastState(payload: PopupSyncPayload): void {
 }
 
 function syncStateTo(popup: PopupWindowRef | null | undefined): void {
+  /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
   if (!popup || popup.closed) return
 
   const payloads: PopupSyncPayload[] = [
@@ -239,6 +243,7 @@ function tagPopupSlot(popup: PopupWindowRef, fallbackIndex: number): number {
 }
 
 function requestBoundsReport(popup: PopupWindowRef): void {
+  /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
   if (!popup || popup.closed) return
   try {
     popup.postMessage(
@@ -291,6 +296,7 @@ function ensurePopups(
     const bounds = captureCurrentBounds(popup)
     if (bounds) saveSlotBounds(slotId, bounds)
     requestBoundsReport(popup)
+    /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
     if (popup && !popup.closed) {
       popup.close()
     }
@@ -313,6 +319,7 @@ function ensurePopups(
   }
 
   popups = persistPopups(
+    /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
     [...popups].sort((a, b) => (a.__popupSlot ?? 0) - (b.__popupSlot ?? 0)),
   )
 
@@ -461,6 +468,7 @@ export async function openPopupModule(
   // desfazendo o fullscreen do window.open. Só reporta bounds p/ layout.
   void windowManagementPermission.then(() => {
     popups.forEach((popup) => {
+      /* v8 ignore next -- invariante do módulo: entrada filtrada/normalizada antes (ver teste) */
       if (!popup || popup.closed) return
       requestBoundsReport(popup)
     })

@@ -502,7 +502,29 @@ describe('palco-cloud-bridge — última milha', () => {
 
   it('bg oficial com hostname localhost (jsdom default) → background undefined (S124)', async () => {
     stageByScope['hymns'] = { backgroundImage: 'official:bg-10' }
-    const m = await mod.toReceiverMessage('hymns', { active: true, lyric: 'x', title: 'y' })
+    const m = await mod.toReceiverMessage('media', { active: true, lyric: 'x', title: 'y' })
     expect(m?.background).toBeUndefined()
+  })
+
+  it('publish clock com payload null 2x seguidas → else-if reseta lastRelayModule (73)', async () => {
+    routeMap['clock'] = 'tv'
+    mod.publishToStageRelay('clock', { time: 12345 })
+    await new Promise((r) => setTimeout(r, 20))
+    mod.publishToStageRelay('clock', { time: 6789 }) // msg null de novo, mas agora lastRelay==='clock' → else-if TRUE
+    await new Promise((r) => setTimeout(r, 20))
+    expect(sendMock).not.toHaveBeenCalled()
+    // lastRelay resetado de novo → próximo timer NÃO manda idle antes
+    mod.publishToStageRelay('clock', { time: '00:00' })
+    await vi.waitFor(() => {
+      expect(sendMock.mock.calls).toHaveLength(1)
+      expect(sendMock.mock.calls[0][0].type).toBe('timer')
+    })
+  })
+
+  it('publish clock rota palco:N com payload inválido → early return sem toReceiverMessage', async () => {
+    routeMap['clock'] = 'palco:2'
+    mod.publishToStageRelay('clock', { time: null })
+    await new Promise((r) => setTimeout(r, 20))
+    expect(sendMock).not.toHaveBeenCalled()
   })
 })

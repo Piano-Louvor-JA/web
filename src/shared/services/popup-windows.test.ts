@@ -741,4 +741,23 @@ describe('popup-windows — cobertura definitiva de branches', () => {
     expect(() => listener({ data: { action: 'outra' } } as MessageEvent)).not.toThrow()
   })
 })
+
+  it('rota tv SEM controle aberto → setActiveModule (425 true / 445 true)', async () => {
+    fresh.closeLiturgyControlWindow()
+    store.clear()
+    routeMock.mockReturnValue('tv')
+    mockOpen.mockReturnValue(null)
+    await expect(fresh.openPopupModule('bible')).resolves.toBe(true)
+    expect(fresh.getPopupModule()).toBe('bible')
+  })
+
+  it('popups.length 0 sem controle → setActiveModule("") (445 true)', async () => {
+    fresh.closeLiturgyControlWindow()
+    store.clear()
+    routeMock.mockReturnValue('mirror')
+    mockOpen.mockReturnValue(null)
+    registry = []
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(false)
+    expect(fresh.getPopupModule()).toBe('')
+  })
 })
