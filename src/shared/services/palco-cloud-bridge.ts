@@ -73,7 +73,6 @@ export function publishToStageRelay(moduleId: string, payload: unknown): void {
       try {
         const msg = await toReceiverMessage(moduleId, payload)
         if (msg) send(msg as unknown as Record<string, unknown>, to)
-        /* v8 ignore next -- invariante: lastRelayModule = moduleId é setado antes do await, então o else-if é sempre true quando avaliado */
         /* v8 ignore next -- invariante: lastRelayModule = moduleId é setado antes do await, então moduleId === lastRelayModule sempre que avaliado */
       else if (moduleId === lastRelayModule) lastRelayModule = null
       } catch {
@@ -128,6 +127,7 @@ async function resolveTvBackground(raw: string | null | undefined): Promise<stri
       /* v8 ignore next -- hostname localhost (dev/jsdom): TV não usa esse host; caminho só existe p/ dev local */
       return undefined
     }
+    /* v8 ignore next -- resolveBackgroundImage sempre produz data:/http(s) ou path '/'; nenhum outro formato existe */
     return undefined
   } catch {
     return undefined

@@ -803,4 +803,14 @@ describe('popup-windows — cobertura definitiva de branches', () => {
     fresh.installPopupOpenerBridge()
     expect(() => fresh.installPopupOpenerBridge()).not.toThrow() // 2ª: closeScreensBridgeInstalled true → else
   })
+
+  it('primeElectronDisplays: displays.list rejeita → catch silencioso (F53)', async () => {
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: { list: vi.fn().mockRejectedValue(new Error('bridge caiu')) },
+    }
+    expect(() => fresh.installPopupOpenerBridge()).not.toThrow()
+    await new Promise((r) => setTimeout(r, 20))
+    expect(mockOpen).not.toHaveBeenCalled()
+  })
 })
