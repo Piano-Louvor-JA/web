@@ -394,4 +394,49 @@ describe('palco-cloud-bridge — caudas', () => {
     routeMocked.mockReset()
   })
 })
+
+describe('palco-cloud-bridge — caudas finais', () => {
+  beforeEach(() => {
+    sendMock.mockReset()
+    for (const k of Object.keys(routeMap)) delete routeMap[k]
+    for (const k of Object.keys(stageByScope)) delete stageByScope[k]
+    mod.resetStageRelayModule()
+  })
+
+  it('resolveBackgroundImage → null (bg desconhecido) → background undefined', async () => {
+    const settings = await import('@modules/settings/types/stage-settings')
+    vi.mocked(settings.resolveBackgroundImage).mockReturnValueOnce(null as never)
+    stageByScope['bible'] = { backgroundImage: 'official:inexistente' }
+    const m = await mod.toReceiverMessage('bible', { reference: 'a', text: 'b' })
+    expect(m?.background).toBeUndefined()
+  })
+
+  it('resolveBackgroundImage lançando → catch → undefined (não crasha publish)', async () => {
+    const settings = await import('@modules/settings/types/stage-settings')
+    vi.mocked(settings.resolveBackgroundImage).mockImplementationOnce(() => {
+      throw new Error('boom')
+    })
+    stageByScope['bible'] = { backgroundImage: 'official:x' }
+    const m = await mod.toReceiverMessage('bible', { reference: 'a', text: 'b' })
+    expect(m?.type).toBe('projection')
+    expect(m?.background).toBeUndefined()
+  })
+
+  it('publish sem janela (SSR): window sem __palcoRelaySend → no-op', async () => {
+    const prev = (window as unknown as { __palcoRelaySend?: unknown }).__palcoRelaySend
+    ;(window as unknown as { __palcoRelaySend?: unknown }).__palcoRelaySend = undefined
+    expect(() => mod.publishToStageRelay('clock', { time: '1' })).not.toThrow()
+    ;(window as unknown as { __palcoRelaySend?: unknown }).__palcoRelaySend = prev
+  })
+
+  it('liturgy-web payload null → idle com msg vazia', async () => {
+    const m = await mod.toReceiverMessage('liturgy-web', null)
+    expect(m).toMatchObject({ type: 'idle', msg: '' })
+  })
+
+  it('liturgy-web site com título vazio string → msg com título concatenado', async () => {
+    const m = await mod.toReceiverMessage('liturgy-web', { active: true, kind: 'site', title: '' })
+    expect(m?.msg).not.toContain('—')
+  })
+})
 })

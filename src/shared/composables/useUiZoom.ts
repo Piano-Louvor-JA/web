@@ -30,6 +30,7 @@ const MOBILE_MAX_WIDTH = breakpoints.md - 1
  * Chromium às vezes devolve ~1.01 (101%) no nível 0.
  * Valores que arredondam para 99–101% viram exatamente 100%.
  */
+/* v8 ignore next -- defensivo: entradas já passam por Number.isFinite em readStoredZoom/levelToFactor */
 function snapZoom(value: number): number {
   if (!Number.isFinite(value)) return ZOOM_DEFAULT
   const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, value))

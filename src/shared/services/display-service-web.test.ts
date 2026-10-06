@@ -182,4 +182,28 @@ describe('subscribeScreensChanged', () => {
     unsub()
     expect(removeSpy).toHaveBeenCalledWith('screenschange', spy)
   })
+
+describe('display-service-web — caudas', () => {
+  it('getScreenDetails sem screens (undefined) → fallback', async () => {
+    setApi(vi.fn().mockResolvedValue({}))
+    const res = await mod.listScreens()
+    expect(res.limited).toBe(true)
+    expect(res.supported).toBe(true)
+    expect(res.screens).toHaveLength(1)
+  })
+
+  it('requestScreenAccess: screens vazio → fallback limited=false?? (contrato atual: limited=true só quando vazio)', async () => {
+    setApi(vi.fn().mockResolvedValue({ screens: [] }))
+    const det = await mod.requestScreenAccess()
+    expect(det.screens).toHaveLength(1)
+    expect(det.limited).toBe(true)
+  })
+
+  it('requestScreenAccess: telas presentes → limited=false', async () => {
+    setApi(vi.fn().mockResolvedValue({ screens: [primary, secondary] }))
+    const det = await mod.requestScreenAccess()
+    expect(det.limited).toBe(false)
+    expect(det.screens).toHaveLength(2)
+  })
+})
 })

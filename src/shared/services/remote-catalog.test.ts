@@ -94,4 +94,28 @@ describe('remote-catalog', () => {
     expect(res).toEqual({ do: 'cache' })
     expect(mockedFetch).not.toHaveBeenCalled()
   })
+
+describe('remote-catalog — caudas', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+    mockedFetch.mockReset()
+    mockedFallback.mockReset()
+    mockedFallback.mockResolvedValue({ data: { from: 'fallback-default' }, base: 'x' })
+  })
+
+  it('Api-Token presente → header vai no fetch', async () => {
+    vi.stubEnv('VITE_API_TOKEN', 'tok-123')
+    mockedFetch.mockResolvedValue(reply(200, { ok: 1 }))
+    await fetchRemoteCatalogJson('com-token.json', 0)
+    const init = mockedFetch.mock.calls[0][1] as RequestInit
+    expect((init.headers as Record<string, string>)['Api-Token']).toBe('tok-123')
+    vi.unstubAllEnvs()
+  })
+
+  it('erro não-Error (string lançada) → fallback ainda funciona', async () => {
+    mockedFetch.mockRejectedValue('falha-pura-string')
+    const data = await fetchRemoteCatalogJson('string-erro.json', 0)
+    expect(data).toEqual({ from: 'fallback-default' })
+  })
+})
 })

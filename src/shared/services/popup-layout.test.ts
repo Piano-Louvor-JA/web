@@ -392,4 +392,46 @@ describe('popup-layout — caudas getScreenDetails', () => {
     expect(b).toMatchObject({ screenLeft: 5, screenTop: 6, screenWidth: 1280, screenHeight: 720 })
   })
 })
+
+describe('popup-layout — caudas finais', () => {
+  beforeEach(() => {
+    store.clear()
+  })
+
+  it('getDefaultControlBounds com screen sem avail* (jsdom) → usa width/height como fallback', () => {
+    // jsdom screen.width=0 → availWidth undefined → ?? width
+    const b = mod.getDefaultControlBounds()
+    expect(b.left).toBeGreaterThanOrEqual(0)
+    expect(b.top).toBeGreaterThanOrEqual(0)
+    expect(b.width).toBe(960)
+  })
+
+  it('enrichWithScreen: window sem screen → bounds originais (142)', () => {
+    const w = { screenX: 1, screenY: 2, outerWidth: 800, outerHeight: 600, screen: undefined } as unknown as Window
+    const b = mod.captureCurrentBounds(w)
+    expect(b).toMatchObject({ left: 1, top: 2, width: 800, height: 600 })
+    expect(b?.screenLeft).toBeUndefined()
+  })
+
+  it('isOnSavedScreen: entry sem screen coords → true (nao compara); window sem screen → true', async () => {
+    const w = { screen: undefined, closed: false, resizeTo: vi.fn(), moveTo: vi.fn() } as unknown as Window
+    // entry com screenLeft definido + window sem screen → true (não migra)
+    await mod.applyBounds(w, { left: 1, top: 1, width: 800, height: 600, screenLeft: 100, screenTop: 100 })
+    expect(w.moveTo).toHaveBeenCalledWith(1, 1)
+  })
+
+  it('findSavedScreen sem screenLeft no entry → null (210) — via applyBounds com getScreenDetails', async () => {
+    const w = {
+      closed: false,
+      screen: { availLeft: 0, availTop: 0, availWidth: 1920, availHeight: 1080, width: 1920, height: 1080 },
+      resizeTo: vi.fn(),
+      moveTo: vi.fn(),
+    } as unknown as Window & Record<string, ReturnType<typeof vi.fn>>
+    ;(window as unknown as { getScreenDetails?: unknown }).getScreenDetails = vi.fn().mockResolvedValue({ screens: [] })
+    // entry SEM screenLeft → findSavedScreen null → moveTo original
+    await mod.applyBounds(w, { left: 55, top: 66, width: 800, height: 600 })
+    expect(w.moveTo).toHaveBeenLastCalledWith(55, 66)
+    delete (window as { getScreenDetails?: unknown }).getScreenDetails
+  })
+})
 })

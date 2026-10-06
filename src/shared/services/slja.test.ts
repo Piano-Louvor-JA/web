@@ -1,4 +1,31 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+
+// fflate com overrides controláveis p/ callbacks de erro
+const fflateControl = vi.hoisted(() => ({
+  zipError: null as Error | null,
+  unzipError: null as Error | null,
+}))
+
+vi.mock('fflate', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fflate')>()
+  return {
+    ...actual,
+    zip: (files: Record<string, Uint8Array>, cb: (e: Error | null, d?: Uint8Array) => void) => {
+      if (fflateControl.zipError) {
+        cb(fflateControl.zipError)
+        return
+      }
+      actual.zip(files, cb)
+    },
+    unzip: (data: Uint8Array, cb: (e: Error | null, d?: Record<string, Uint8Array>) => void) => {
+      if (fflateControl.unzipError) {
+        cb(fflateControl.unzipError)
+        return
+      }
+      actual.unzip(data, cb)
+    },
+  }
+})
 
 import { buildSlja, parseSlja } from './slja'
 
@@ -266,6 +293,74 @@ describe('slja build — todos os campos do slide no INI', () => {
     const parsed = await parseSlja(buffer)
     expect(parsed.slides[0].auxiliaryTextColor).toBe('#ABCDEF')
     expect(parsed.slides).toHaveLength(2)
+  })
+})
+
+describe('slja — caminhos de erro do zip (fflate err callback)', () => {
+  it('buildSlja rejeita quando o zip falha (err callback)', async () => {
+    fflateControl.zipError = new Error('zip explodiu')
+    try {
+      await expect(
+        buildSlja({ title: 'x', slides: [{ lyric: 'a', type: 'LETRA', timeMs: 0 }] }),
+      ).rejects.toThrow('zip explodiu')
+    } finally {
+      fflateControl.zipError = null
+    }
+  })
+
+  it('parseSlja rejeita quando o unzip falha (err callback)', async () => {
+    fflateControl.unzipError = new Error('zip corrompido')
+    try {
+      await expect(parseSlja(new ArrayBuffer(8))).rejects.toThrow('zip corrompido')
+    } finally {
+      fflateControl.unzipError = null
+    }
+  })
+
+  it('parse: INI sem [Geral] e sem [Slide:1] → título Sem título, 0 slides; tempo bytes não-numérico → 0', async () => {
+    const ini = ['[Outra]', 'chave=1'].join('\r\n')
+    const buffer = await buildSlja({ title: 'vazio', rawIni: ini, slides: [] })
+    const parsed = await parseSlja(buffer)
+    expect(parsed.title).toBe('Sem título')
+    expect(parsed.slides).toHaveLength(0)
+  })
+
+  it('build: slide sem lyric não escreve linha letra; textBox=true escreve fundo_letra=1', async () => {
+    const buffer = await buildSlja({
+      title: 'sem letra',
+      slides: [{ lyric: '', type: 'LETRA', timeMs: 0, textBox: true }],
+    })
+    const parsed = await parseSlja(buffer)
+    const s = parsed.slides[0]
+    expect(s.lyric).toBe('')
+    expect(s.textBox).toBe(true)
+    // fundo_letra=1 presente; sem linha 'letra=' de conteúdo (lyric vazia)
+    expect(parsed.rawIni).toContain('fundo_letra=1')
+    expect(parsed.rawIni).not.toContain('\r\nletra=')
+    expect(parsed.rawIni).not.toContain('\nletra=')
+  })
+
+  it('parse: slide sem tipo herdado por índice (Slide:2 → LETRA)', async () => {
+    const ini = ['[Geral]', 'slides=2', '[Slide:1]', 'letra=a', '[Slide:2]', 'letra=b'].join('\r\n')
+    const buffer = await buildSlja({ title: 'tipos', rawIni: ini, slides: [] })
+    const parsed = await parseSlja(buffer)
+    expect(parsed.slides[0].type).toBe('CAPA')
+    expect(parsed.slides[1].type).toBe('LETRA')
+  })
+
+  it('parse: tempo bytes inválido (NaN) → 0; slide vazio → lyric vazia', async () => {
+    const ini = [
+      '[Geral]',
+      'slides=2',
+      '[Slide:1]',
+      'letra=a',
+      'tempo=abc',
+      '[Slide:2]',
+    ].join('\r\n')
+    const buffer = await buildSlja({ title: 'nan', rawIni: ini, slides: [] })
+    const parsed = await parseSlja(buffer)
+    expect(parsed.slides[0].timeMs).toBe(0)
+    expect(parsed.slides[1].lyric).toBe('')
   })
 })
 })

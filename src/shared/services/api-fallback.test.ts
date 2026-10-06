@@ -204,4 +204,17 @@ describe('fetchWithApiFallback — retries e backoff', () => {
     expect(String(f.mock.calls[1][0])).not.toContain('//com-barra')
   })
 })
+
+describe('fetchWithApiFallback — caudas', () => {
+  it('erro lançado como string → message via String(error)', async () => {
+    vi.stubEnv('VITE_URL_DATABASE', 'https://a.com/json_db')
+    vi.stubEnv('VITE_API_FALLBACK_URLS', '')
+    mockFetchSequenced([
+      () => Promise.reject('texto-puro'),
+    ])
+    await expect(
+      mod.fetchWithApiFallback('database', 's.json', { retries: 0 }),
+    ).rejects.toBe('texto-puro')
+  })
+})
 })

@@ -516,5 +516,64 @@ describe('popup-windows — caudas (Electron bridge, erros, controle salvo)', ()
     listener({ origin: 'https://x', data: { action: 'close-screens' } } as MessageEvent)
     expect(w1.close).toHaveBeenCalled()
   })
-})
 
+describe('popup-windows — caudas finais', () => {
+  beforeEach(() => {
+    mockOpen.mockReset()
+    routeMock.mockReset().mockReturnValue('mirror')
+  })
+
+  it('screenId malformado (não numérico) → features sem monitor=', async () => {
+    ;(window as unknown as { louvorja?: unknown }).louvorja = {
+      isElectron: true,
+      displays: { list: vi.fn().mockResolvedValue([{ id: 1, bounds: { x: 0, y: 0 } }]) },
+    }
+    slotAssignments['1'] = 'abc:def' // parse NaN
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    mockOpen.mockReturnValue(w1)
+    installPopupOpenerBridge()
+    await new Promise((r) => setTimeout(r, 10))
+    await expect(fresh.openPopupModule('media', { slots: [1] })).resolves.toBe(true)
+    expect(mockOpen.mock.calls[0][2] as string).not.toContain('monitor=')
+  })
+
+  it('closeLocalScreenRefs: popup com bounds+slot → saveSlotBounds antes do close (linha 100)', async () => {
+    const w1 = makeFakeWindow('PopupWindow1', 1)
+    registry = [w1 as never]
+    vi.mocked(captureCurrentBounds).mockReturnValue({ left: 3, top: 4, width: 800, height: 600 })
+    fresh.closeScreenPopups()
+    expect(saveSlotBounds).toHaveBeenCalledWith('PopupWindow1', { left: 3, top: 4, width: 800, height: 600 })
+    expect(w1.close).toHaveBeenCalled()
+  })
+
+  it('popup com __popupSlot já setado: tagPopupSlot não re-indexa (234); requestBoundsReport ignora closed (198)', async () => {
+    const tagged = makeFakeWindow('PopupWindowX', 1) // slot 1 já setado, nome inválido
+    tagged.closed = false
+    registry = [tagged as never]
+    const res = fresh.syncPopupWindows()
+    expect(tagged.__popupSlot).toBe(1) // NÃO re-indexou pelo name (que é inválido)
+    expect(res).toHaveLength(1)
+  })
+
+  it('ensurePopups: popup fechada no registry some no filtro do getPopupRefs; fallbackIndex via name (277)', async () => {
+    const named = makeFakeWindow('PopupWindow3') // sem __popupSlot
+    registry = [named as never]
+    mockOpen.mockReturnValue(makeFakeWindow('PopupWindow1', 1) as never)
+    await expect(fresh.openPopupModule('clock', { slots: [1, 3] })).resolves.toBe(true)
+    // slot 3 veio do name, não foi reaberto
+    const openedNames = mockOpen.mock.calls.map((c) => c[1])
+    expect(openedNames).toEqual(['PopupWindow1'])
+  })
+
+  it('openPopupModule com popups.length 0 e controle aberto → mantém módulo (373/418)', async () => {
+    // tv route: controle aberto → setActiveModule não é chamado de novo, mas módulo setado antes permanece
+    routeMock.mockReturnValue('tv')
+    const ctrl = makeFakeWindow(LITURGY_CONTROL_WINDOW_NAME)
+    mockOpen.mockReturnValue(ctrl)
+    fresh.openLiturgyControlWindow('liturgy-web')
+    const res = await fresh.openPopupModule('liturgy-web')
+    expect(res).toBe(true)
+    expect(fresh.getPopupModule()).toBe('liturgy-web')
+  })
+})
+})

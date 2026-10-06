@@ -94,4 +94,8 @@ describe('popup-routing', () => {
     mod.setPopupRoute('bible', '2')
     expect(mod.resolveSlotsForModule('bible', [])).toBeUndefined()
   })
+
+  it('módulo fora do map → mirror (fallback ?? )', () => {
+    expect(mod.getPopupRoute('desconhecido' as never)).toBe('mirror')
+  })
 })
