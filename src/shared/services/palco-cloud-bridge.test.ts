@@ -317,4 +317,81 @@ describe('resolveTvBackground (via toReceiverMessage)', () => {
   it('módulo desconhecido → null', async () => {
     expect(await mod.toReceiverMessage('desconhecido', {})).toBeNull()
   })
+
+describe('palco-cloud-bridge — caudas', () => {
+  beforeEach(() => {
+    sendMock.mockReset()
+    for (const k of Object.keys(routeMap)) delete routeMap[k]
+    for (const k of Object.keys(stageByScope)) delete stageByScope[k]
+    mod.resetStageRelayModule()
+  })
+
+  it('liturgy-web video/audio SEM url → idle vazio (não crasha)', async () => {
+    expect(
+      await mod.toReceiverMessage('liturgy-web', { active: true, kind: 'video', url: '   ' }),
+    ).toMatchObject({ type: 'idle', msg: '' })
+    expect(
+      await mod.toReceiverMessage('liturgy-web', { active: true, kind: 'audio' }),
+    ).toMatchObject({ type: 'idle', msg: '' })
+  })
+
+  it('liturgy-web vídeo local blob → aviso "Vídeo local"', async () => {
+    const msg = await mod.toReceiverMessage('liturgy-web', {
+      active: true,
+      kind: 'video',
+      url: 'blob:https://x/1',
+    })
+    expect(msg?.msg).toContain('Vídeo local')
+  })
+
+  it('liturgy-web site SEM título → aviso genérico', async () => {
+    const msg = await mod.toReceiverMessage('liturgy-web', { active: true, kind: 'site' })
+    expect(msg?.msg).toContain('não projetável')
+  })
+
+  it('media sem título nem subtitle → footer vazio, sem crash', async () => {
+    const msg = await mod.toReceiverMessage('media', { active: true, lyric: 'x' })
+    expect(msg?.footer).toBe('')
+    expect(msg?.footerRef).toBeUndefined()
+  })
+
+  it('resolveTvBackground: raw vazio → undefined; URL pública passa direto', async () => {
+    // vazio
+    stageByScope['bible'] = { backgroundImage: '' }
+    const m1 = await mod.toReceiverMessage('bible', { reference: 'a', text: 'b' })
+    expect(m1?.background).toBeUndefined()
+    // http
+    stageByScope['bible'] = { backgroundImage: 'https://cdn/bg.png' }
+    const m2 = await mod.toReceiverMessage('bible', { reference: 'a', text: 'b' })
+    expect(m2?.background).toBe('https://cdn/bg.png')
+    // path relativo com hostname localhost → undefined
+    stageByScope['bible'] = { backgroundImage: '/assets/bg.png' }
+    const m3 = await mod.toReceiverMessage('bible', { reference: 'a', text: 'b' })
+    expect(m3?.background).toBeUndefined()
+  })
+
+  it('resolveTvBackground: oficial sem match em hostname LAN → absoluto; protocolo relativo //', async () => {
+    stageByScope['bible'] = { backgroundImage: '//cdn.com/bg.png' }
+    const m = await mod.toReceiverMessage('bible', { reference: 'a', text: 'b' })
+    expect(m?.background).toBe('//cdn.com/bg.png')
+  })
+
+  it('publish: erro interno do send não derruba o chamador', async () => {
+    sendMock.mockImplementation(() => { throw new Error('ws morto') })
+    expect(() => mod.publishToStageRelay('bible', { reference: 'a', text: 'b' })).not.toThrow()
+  })
+
+  it('publish: routing lançando → broadcast (sem to)', async () => {
+    // routeMap sem bible = mirror, mas getPopupRoute mock pode lançar:
+    const { getPopupRoute } = await import('@shared/services/popup-routing')
+    const routeMocked = vi.mocked(getPopupRoute)
+    routeMocked.mockImplementationOnce(() => { throw new Error('routing down') })
+    mod.publishToStageRelay('bible', { reference: 'a', text: 'b' })
+    await vi.waitFor(() => {
+      expect(sendMock).toHaveBeenCalledTimes(1)
+      expect(sendMock.mock.calls[0][1]).toBeUndefined()
+    })
+    routeMocked.mockReset()
+  })
+})
 })

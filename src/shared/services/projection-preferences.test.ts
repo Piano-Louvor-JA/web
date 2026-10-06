@@ -77,4 +77,34 @@ describe('projection-preferences', () => {
     store.set('projection.fullscreenMode', 'sim')
     expect(mod.getProjectionFullscreenMode()).toBe(true)
   })
+
+describe('projection-preferences — media toggles', () => {
+  beforeEach(() => {
+    store.clear()
+  })
+
+  it.each([
+    ['mediaUseInternalPlayer', 'media_use_internal_player', true],
+    ['mediaAutoProjectVideo', 'media_auto_project_video', true],
+    ['mediaPauseOnMinimize', 'media_pause_on_minimize', false],
+    ['mediaLazyLoad', 'media_lazy_load', true],
+    ['mediaFadeAudio', 'media_fade_audio', true],
+  ] as const)('%s: default, set e fallback de lixo', (fn, key, def) => {
+    const get = mod[`get${fn.charAt(0).toUpperCase()}${fn.slice(1)}`] as () => boolean
+    const set = mod[`set${fn.charAt(0).toUpperCase()}${fn.slice(1)}`] as (v: boolean) => void
+    expect(get()).toBe(def)
+    set(!def)
+    expect(get()).toBe(!def)
+    // lixo no store → default
+    store.set(key, 'não-booleano')
+    expect(get()).toBe(def)
+  })
+
+  it('PROJECTION_DEFAULTS expostos', () => {
+    expect(mod.PROJECTION_DEFAULTS).toMatchObject({
+      popupCountMin: 1,
+      popupCountMax: 6,
+    })
+  })
+})
 })

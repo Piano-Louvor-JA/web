@@ -302,4 +302,94 @@ describe('popup-layout — capture/apply/restore (janelas fake)', () => {
     log.mockRestore()
     delete (window as { getScreenDetails?: unknown }).getScreenDetails
   })
+
+describe('popup-layout — caudas getScreenDetails', () => {
+  beforeEach(() => {
+    store.clear()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    delete (window as { getScreenDetails?: unknown }).getScreenDetails
+  })
+
+  function makeWin(overrides: Record<string, unknown> = {}) {
+    return {
+      closed: false,
+      screenX: 100,
+      screenY: 50,
+      outerWidth: 800,
+      outerHeight: 600,
+      screen: { availLeft: 0, availTop: 0, availWidth: 1920, availHeight: 1080, width: 1920, height: 1080 },
+      resizeTo: vi.fn(),
+      moveTo: vi.fn(),
+      ...overrides,
+    } as unknown as Window & Record<string, ReturnType<typeof vi.fn>>
+  }
+
+  it('applyBounds: getScreenDetails acha o monitor → clamp dentro do monitor e re-aplica', async () => {
+    const w = makeWin({
+      getScreenDetails: vi.fn().mockResolvedValue({
+        screens: [
+          { availLeft: 1920, availTop: 0, availWidth: 1366, availHeight: 768 },
+        ],
+      }),
+    })
+    ;(window as unknown as { getScreenDetails?: unknown }).getScreenDetails = w.getScreenDetails
+    // bounds salvos muito fora do monitor 2 → clampa para dentro dele
+    await mod.applyBounds(w as unknown as Window, {
+      left: 5000,
+      top: -400,
+      width: 800,
+      height: 600,
+      screenLeft: 1920,
+      screenTop: 0,
+      screenWidth: 1366,
+      screenHeight: 768,
+    })
+    // left clamp: max(1920, min(5000, 1920+1366-800=2486)) = 2486
+    // top clamp: max(0, min(-400, 0+768-600=168)) = 0
+    expect(w.moveTo).toHaveBeenLastCalledWith(2486, 0)
+    expect(w.resizeTo).toHaveBeenLastCalledWith(800, 600)
+  })
+
+  it('applyBounds: getScreenDetails lança → fallback moveTo original', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const w = makeWin({
+      getScreenDetails: vi.fn().mockRejectedValue(new Error('no perm')),
+    })
+    ;(window as unknown as { getScreenDetails?: unknown }).getScreenDetails = w.getScreenDetails
+    await mod.applyBounds(w as unknown as Window, {
+      left: 2000,
+      top: 100,
+      width: 800,
+      height: 600,
+      screenLeft: 1920,
+      screenTop: 0,
+    })
+    expect(w.moveTo).toHaveBeenLastCalledWith(2000, 100)
+    log.mockRestore()
+  })
+
+  it('scheduleRestore: janela fecha entre os delays → callback não faz nada', async () => {
+    const w = makeWin()
+    mod.scheduleRestoreOnWindow(w as unknown as Window, { left: 1, top: 1, width: 800, height: 600 })
+    await vi.advanceTimersByTimeAsync(100) // 0+50 já rodaram
+    w.closed = true
+    await vi.advanceTimersByTimeAsync(2000) // resto dos delays
+    const calls = (w.resizeTo as ReturnType<typeof vi.fn>).mock.calls.length
+    // depois de fechada não cresce
+    await vi.advanceTimersByTimeAsync(100)
+    expect((w.resizeTo as ReturnType<typeof vi.fn>).mock.calls.length).toBe(calls)
+  })
+
+  it('enrichWithScreen: screen sem availWidth cai no width', async () => {
+    const w = makeWin({
+      screen: { availLeft: 5, availTop: 6, width: 1280, height: 720 },
+    })
+    const b = mod.captureCurrentBounds(w as unknown as Window)
+    expect(b).toMatchObject({ screenLeft: 5, screenTop: 6, screenWidth: 1280, screenHeight: 720 })
+  })
+})
 })

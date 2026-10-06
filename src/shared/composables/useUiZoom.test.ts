@@ -172,4 +172,82 @@ describe('useUiZoom', () => {
     mod.initUiZoom()
     expect(z.zoom.value).toBe(1)
   })
+
+describe('useUiZoom — caudas', () => {
+  beforeEach(() => {
+    store.clear()
+    setMobile(false)
+    mod.useUiZoom().resetZoom()
+  })
+
+  it('stored numérico (não string) é lido e clamped no boot', async () => {
+    store.set(UI_ZOOM_KEY, 1.3)
+    mod.initUiZoom()
+    expect(mod.useUiZoom().zoom.value).toBe(1.3)
+    // fora do range → clamp
+    store.set(UI_ZOOM_KEY, 42)
+    mod.initUiZoom()
+    expect(mod.useUiZoom().zoom.value).toBe(1.5)
+  })
+
+  it('atalhos alternativos: NumpadAdd, NumpadSubtract, Digit0/Numpad0, metaKey, com alt ignorado', () => {
+    const z = mod.useUiZoom()
+    const fire = (init: KeyboardEventInit) =>
+      window.dispatchEvent(new KeyboardEvent('keydown', { ...init, bubbles: true, cancelable: true }))
+
+    fire({ code: 'NumpadAdd', key: '+', ctrlKey: true })
+    expect(z.zoom.value).toBeGreaterThan(1)
+    fire({ code: 'NumpadSubtract', key: '-', ctrlKey: true })
+    expect(z.zoom.value).toBeCloseTo(1, 5)
+    fire({ code: 'NumpadAdd', key: '+', metaKey: true })
+    expect(z.zoom.value).toBeGreaterThan(1)
+    fire({ key: '0', metaKey: true, code: 'Digit0' })
+    expect(z.zoom.value).toBe(1)
+    // alt+combo não é atalho de zoom
+    fire({ key: '+', ctrlKey: true, altKey: true })
+    expect(z.zoom.value).toBe(1)
+    // tecla sem ação de zoom (ex.: 'x' com ctrl) é ignorada
+    fire({ key: 'x', ctrlKey: true })
+    expect(z.zoom.value).toBe(1)
+  })
+
+  it('mobile desabilita: zoomIn/zoomOut/reset/shortcut e canZoom* false', () => {
+    setMobile(true)
+    const z = mod.useUiZoom()
+    z.setZoom(1) // set em mobile zera
+    z.zoomIn()
+    z.zoomOut()
+    z.resetZoom()
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '=', ctrlKey: true, cancelable: true }))
+    expect(z.zoom.value).toBe(1)
+    expect(z.canZoomIn.value).toBe(false)
+    expect(z.canZoomOut.value).toBe(false)
+    expect(z.zoomPercent.value).toBe(100)
+  })
+
+  it('popup (hash #/popup) desabilita zoom por completo', () => {
+    window.location.hash = '#/popup'
+    const z = mod.useUiZoom()
+    z.setZoom(1.4)
+    z.zoomIn()
+    expect(z.zoom.value).toBe(1)
+    expect(z.canZoomIn.value).toBe(false)
+    window.location.hash = ''
+  })
+
+  it('resetZoom em mobile é no-op (não reseta de outro módulo ativo)', () => {
+    setMobile(true)
+    const z = mod.useUiZoom()
+    z.resetZoom()
+    expect(z.zoom.value).toBe(1)
+  })
+
+  it('formatZoomPercent arredonda frações', () => {
+    const z = mod.useUiZoom()
+    z.setZoom(1.234)
+    expect(z.zoomPercent.value).toBe(123)
+    z.setZoom(0.777)
+    expect(z.zoomPercent.value).toBe(78)
+  })
+})
 })
