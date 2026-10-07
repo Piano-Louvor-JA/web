@@ -283,6 +283,19 @@ export default {
       speedNormal: 'Normal',
       speedFast: 'Fast',
     },
+    general: {
+      languageTitle: 'Language',
+      languageHint: 'Choose the app interface language.',
+      syncTitle: 'Synchronization',
+      syncHint: 'Export or import a .louvorja package with your liturgy. Use it to transfer between mobile, desktop and web.',
+      syncExport: 'Export package',
+      syncImport: 'Import package',
+      syncExported: 'Package exported successfully.',
+      syncImported: 'Package imported: {applied}.',
+      syncNothingToApply: 'Nothing to import — local data is already up to date (local: {localModified}; package: {packageModified}).',
+      syncInvalid: 'Invalid or incompatible .louvorja file.',
+      syncCancelled: 'Operation cancelled.'
+    },
     palco: {
       tvsPlain: 'Stage TVs',
       tv: 'TV',
