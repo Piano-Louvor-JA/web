@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, onScopeDispose, ref } from 'vue'
 import type { Router } from 'vue-router'
 
 import type { MediaPlaybackMode } from '@modules/media/types/media'
@@ -350,7 +350,7 @@ export const useLiturgyStore = defineStore('liturgy', () => {
     return Array.from({ length: book.chapters }, (_, index) => index + 1)
   })
 
-  function persist() {
+  function persist(markModified = true) {
     saveLiturgyState({
       weekdays: weekdays.value,
       dayNotes: dayNotes.value,
@@ -358,6 +358,9 @@ export const useLiturgyStore = defineStore('liturgy', () => {
       customLiturgies: customLiturgies.value,
       deletionLocks: deletionLocks.value,
     })
+    if (markModified) {
+      localStorage.setItem('sync.modified.v1.liturgy', new Date().toISOString())
+    }
   }
 
   /**
@@ -505,6 +508,49 @@ export const useLiturgyStore = defineStore('liturgy', () => {
 
     hydrated.value = true
   }
+
+  /**
+   * Re-import sem F5 (t_89f8d9e3): o import `.louvorja` grava no storage direto
+   * (`louvorja-adapter.ts`); este handler recarrega o estado do disco e reconcilia
+   * com o catálogo de música, sem recarregar a janela.
+   */
+  async function reloadImportedState() {
+    const state = loadLiturgyState()
+    weekdays.value = state.weekdays
+    dayNotes.value = state.dayNotes
+    daySessionTimes.value = state.daySessionTimes
+    customLiturgies.value = state.customLiturgies
+    deletionLocks.value = state.deletionLocks
+    if (selectedItemIndex.value != null) selectedItemIndex.value = null
+
+    const music = musicList.value
+    if (music.length === 0) return
+    const nextWeekdays = { ...weekdays.value }
+    let changed = false
+    for (const day of Object.keys(nextWeekdays) as LiturgyWeekday[]) {
+      const reconciled = reconcileMusicItemTitles(nextWeekdays[day], music)
+      if (reconciled !== nextWeekdays[day]) {
+        nextWeekdays[day] = reconciled
+        changed = true
+      }
+    }
+    weekdays.value = nextWeekdays
+    customLiturgies.value = customLiturgies.value.map((custom) => {
+      const reconciled = reconcileMusicItemTitles(custom.items, music)
+      if (reconciled === custom.items) return custom
+      changed = true
+      return { ...custom, items: reconciled }
+    })
+    if (changed) persist(false)
+  }
+
+  const onLiturgyImported = () => {
+    void reloadImportedState()
+  }
+  window.addEventListener('liturgy:imported', onLiturgyImported)
+  onScopeDispose(() => {
+    window.removeEventListener('liturgy:imported', onLiturgyImported)
+  })
 
   function selectDay(day: LiturgyDayKey) {
     selectedDay.value = day
