@@ -1,6 +1,14 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const storage = new Map<string, string>();
+vi.stubGlobal("localStorage", {
+	clear: () => storage.clear(),
+	getItem: (key: string) => storage.get(key) ?? null,
+	setItem: (key: string, value: string) => storage.set(key, value),
+	removeItem: (key: string) => storage.delete(key),
+});
+
 const { getUserPreferenceMock, setUserPreferenceMock } = vi.hoisted(() => ({
 	getUserPreferenceMock: vi.fn(),
 	setUserPreferenceMock: vi.fn(),
@@ -154,5 +162,30 @@ describe("import .louvorja hidrata o store de liturgia sem F5 (t_8bdaf97b)", () 
 		expect(result.applied).toEqual(["liturgy"]);
 		expect(result.packageModified).toBe(FUTURE);
 		expect(result.localModified).toBe("2000-01-01T00:00:00.000Z");
+	});
+
+	it("não deixa pacote anterior sobrescrever edição local", async () => {
+		const store = useLiturgyStore();
+		await store.hydrate();
+		store.selectDay("saturday");
+		const current = store.currentItems;
+		const newItem = {
+			id: "local-new",
+			type: "annotation" as const,
+			name: "Edição local",
+			subtitle: "",
+			done: false,
+			durationMs: 0,
+			accentColor: "#000000",
+		};
+		store.currentItems = [...current, newItem];
+
+		const localModified = localStorage.getItem(`${SYNC_MODIFIED_PREFIX}.liturgy`);
+		expect(localModified).not.toBeNull();
+		const oldPackage = saturdayPackage();
+		oldPackage.entities.liturgy!.modified = "2000-01-01T00:00:00.000Z";
+		const result = importLouvorjaIntoBrowser(oldPackage);
+		expect(result.applied).toEqual([]);
+		expect(result.skipped).toContain("liturgy");
 	});
 });

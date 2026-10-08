@@ -350,7 +350,7 @@ export const useLiturgyStore = defineStore('liturgy', () => {
     return Array.from({ length: book.chapters }, (_, index) => index + 1)
   })
 
-  function persist() {
+  function persist(markModified = true) {
     saveLiturgyState({
       weekdays: weekdays.value,
       dayNotes: dayNotes.value,
@@ -358,6 +358,9 @@ export const useLiturgyStore = defineStore('liturgy', () => {
       customLiturgies: customLiturgies.value,
       deletionLocks: deletionLocks.value,
     })
+    if (markModified) {
+      localStorage.setItem('sync.modified.v1.liturgy', new Date().toISOString())
+    }
   }
 
   /**
@@ -538,7 +541,7 @@ export const useLiturgyStore = defineStore('liturgy', () => {
       changed = true
       return { ...custom, items: reconciled }
     })
-    if (changed) persist()
+    if (changed) persist(false)
   }
 
   const onLiturgyImported = () => {
