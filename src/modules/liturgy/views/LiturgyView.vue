@@ -94,6 +94,7 @@ const {
   setNotes,
   onManageTeam,
   onMusicPick,
+  refreshMusicCatalog,
   clearMusicPick,
   onMusicSung,
   onMusicInstrumental,
@@ -106,6 +107,12 @@ const {
 
 /** Exibe avisos da liturgia e do player (ex.: áudio indisponível). */
 const liturgyAlertKey = computed(() => lastActionMessageKey.value || null)
+
+/** web#174 RF-1: pós-import .slja — recarrega o catálogo pra música aparecer
+ *  na busca (o draft já foi selecionado pelo próprio dialog via pick-music). */
+function onSljaImported(): void {
+  void refreshMusicCatalog()
+}
 </script>
 
 <template>
@@ -307,6 +314,7 @@ const liturgyAlertKey = computed(() => lastActionMessageKey.value || null)
       @update:draft="setItemDraft"
       @update:music-query="setMusicSearchQuery"
       @pick-music="onMusicPick"
+      @slja-imported="onSljaImported"
       @clear-music="clearMusicPick"
     />
 

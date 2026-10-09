@@ -6,6 +6,13 @@ export default {
     addItem: 'Add Category/Divider',
     addItemToLiturgy: 'Add category/divider to liturgy',
     importJa: 'Import .ja',
+    slja: {
+      importButton: 'Import .slja',
+      importing: 'Importing…',
+      imported: '"{name}" imported ({slides} stanzas). Adjust volume and project.',
+      importedLocal: '"{name}" imported ({slides} stanzas) and saved on THIS device (no account). Sign in and new imports will go to your account.',
+      importFailed: 'Failed to import the .slja file. Check the file and try again.',
+    },
     ok: 'OK',
     importJaDesktopOnly: 'Importing .ja files is desktop-only.',
     importJaReadError: 'Could not read the file.',

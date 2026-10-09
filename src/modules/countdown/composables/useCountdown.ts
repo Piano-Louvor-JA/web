@@ -20,7 +20,7 @@ import type {
   CountdownRuntimeState,
 } from '../types/countdown'
 import { useCountdownStore } from '../stores/useCountdownStore'
-import { playAlertTone, getCustomAudio } from '../services/alert-tone'
+import { clearAlertQueue, enqueueAlert, getCustomAudio, pauseAllAlerts, playAlertTone, resumeAllAlerts, stopAllAlerts } from '../services/alert-tone'
 
 export function useCountdownTick(active: MaybeRefOrGetter<boolean> = true) {
   const now = ref(Date.now())
@@ -109,36 +109,52 @@ export function useCountdownDisplay(
           runtime.value.accumulatedMs > 0),
     )
 
-    // ── Disparo de alertas nos marcos ────────────────────────────────────
-    // Observa o tempo restante "caindo" e dispara o preset quando cruza o marco.
-    // 'start' dispara na transição idle/running; os demais quando cruzam o valor.
-    const firedMarkers = new Set<string>()
+  // ── Disparo de alertas nos marcos ────────────────────────────────────
+  // Observa o tempo restante "caindo" e dispara o preset quando cruza o marco.
+  // 'start' dispara na transição idle/running; os demais quando cruzam o valor.
+  const firedMarkers = new Set<string>()
+
     let prevStatus: CountdownRuntimeState['status'] = runtime.value.status
 
     watch(remainingRawMs, (raw, prevRaw) => {
       if (runtime.value.status !== 'running') return
       const presets = config.value.alertTonePresets ?? DEFAULT_ALERT_TONE_PRESETS
       // start: primeira observação com status running
-      if (prevStatus !== 'running' && !firedMarkers.has('start') && presets.start && presets.start !== 'none') {
+      // (const local preserva a narrowing do preset dentro do closure)
+      const startPreset = presets.start
+      if (prevStatus !== 'running' && !firedMarkers.has('start') && startPreset && startPreset !== 'none') {
         firedMarkers.add('start')
-        void playAlertTone(presets.start, undefined, getCustomAudio('start'))
+        enqueueAlert(() => playAlertTone(startPreset, undefined, getCustomAudio('start')))
       }
       prevStatus = runtime.value.status
       // marcos por cruzamento (prevRaw >= marco > raw — contagem decrescente)
+      // Feedback Ezequias: "5min toca faltando 4" — no primeiro tick de running
+      // prevRaw é undefined (Infinity): se o cronômetro já iniciou com remaining
+      // abaixo do marco (ex.: start faltando 4:30), o cruzamento "Infinity >= 5min
+      // > raw" disparava o alerta FORA DE HORA. Primeiro tick só arma; marcos já
+      // vencidos são pulados (alerta que perdeu a hora não toca atrasado).
+      const firstTick = prevRaw == null
       for (const key of ['5min', '1min'] as const) {
         const markerMs = ALERT_MARKERS_MS[key]
         const preset = presets[key]
         if (firedMarkers.has(key) || !preset || preset === 'none') continue
-        if ((prevRaw ?? Infinity) >= markerMs && raw < markerMs) {
+        if (firstTick) {
+          if (raw < markerMs) firedMarkers.add(key) // já vencido no start — pula sem tocar
+          continue
+        }
+        if (prevRaw >= markerMs && raw < markerMs) {
           firedMarkers.add(key)
-          void playAlertTone(preset, undefined, getCustomAudio(key))
+          enqueueAlert(() => playAlertTone(preset, undefined, getCustomAudio(key)))
         }
       }
     })
 
     // Reset dos marcos quando o countdown volta pro idle (reset)
     watch(() => runtime.value.status, (status) => {
-      if (status === 'idle') firedMarkers.clear()
+      if (status === 'idle') {
+        firedMarkers.clear()
+        clearAlertQueue()
+      }
     })
 
     return {
@@ -159,9 +175,20 @@ export function useCountdownFeature() {
 
   store.hydrate()
 
+  // Toggle play/pause do áudio (feedback Ezequias) — vive no módulo,
+  // compartilhado entre a view e a feature (arquitetura web: composable).
+  const audioPaused = ref(false)
+  function setAudioPaused(paused: boolean) {
+    audioPaused.value = paused
+    if (paused) pauseAllAlerts()
+    else resumeAllAlerts()
+  }
+
   const durationParts = computed(() => durationPartsFromMs(store.runtime.durationMs))
 
   return {
+    audioPaused,
+    setAudioPaused,
     config: computed(() => store.config),
     runtime: computed(() => store.runtime),
     durationParts,
