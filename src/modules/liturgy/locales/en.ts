@@ -15,6 +15,7 @@ export default {
       uploadMessage: 'The file will be uploaded once (never duplicated) and becomes available on any device.',
       uploadConfirm: 'Upload to account',
       uploadCancel: 'Keep on this device',
+      migrationFailed: 'Some items were not fully uploaded. Originals remain on this device. An interrupted upload must be verified before retrying.',
       migrationTitle: 'Upload {count} imported hymn(s) to your account?',
       migrationMessage: 'You imported .slja files while logged out. They can go to your account (a single copy, never duplicated) and be available on any device.',
       keptLocal: '"{name}" was saved on this device only.',

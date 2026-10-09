@@ -15,6 +15,7 @@ export default {
       uploadMessage: 'El archivo se subirá una única vez (sin duplicar) y quedará disponible en cualquier dispositivo.',
       uploadConfirm: 'Subir a la cuenta',
       uploadCancel: 'Quedar solo en este dispositivo',
+      migrationFailed: 'Algunos elementos no se subieron por completo. Los originales siguen en este dispositivo. Una carga interrumpida debe verificarse antes de repetir.',
       migrationTitle: '¿Subir {count} himno(s) importado(s) a tu cuenta?',
       migrationMessage: 'Importaste archivos .slja sin sesión. Pueden ir a tu cuenta (una copia única, sin duplicar) y estar disponibles en cualquier dispositivo.',
       keptLocal: '"{name}" quedó guardado solo en este dispositivo.',

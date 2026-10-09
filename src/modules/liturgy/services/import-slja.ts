@@ -18,6 +18,7 @@ import {
   uploadCustomFile,
   updateCustomMusic,
   toCustomMusicId,
+  loadCustomMusicTrack,
 } from '@modules/media/services/custom-catalog'
 import { getAuthSession } from '@modules/auth/services/auth-client'
 import {
@@ -58,6 +59,7 @@ async function ensureImportCollectionId(): Promise<number | null> {
 
 export async function importSljaAsCustomMusic(
   file: File,
+  options: { localOnly?: boolean } = {},
 ): Promise<ImportedSljaMusic> {
   const buffer = await file.arrayBuffer()
   const archive = await parseSlja(buffer)
@@ -75,8 +77,8 @@ export async function importSljaAsCustomMusic(
   // ── Sem sessão: grava 100% LOCAL (IndexedDB) — uso local/offline-first. ──
   // A API exige identidade pra escrita e quota (api#82), então sem login
   // nada sobe; o import continua funcionando e nada se perde com reload.
-  if (!getAuthSession()) {
-    return importSljaLocal({ name, archive, slides })
+  if (options.localOnly || !getAuthSession()) {
+    return importSljaLocal({ name, archive, slides, clientUuid: sha256ToUuid(await sha256Hex(new Uint8Array(buffer))) })
   }
 
   const collectionId = await ensureImportCollectionId()
@@ -97,15 +99,18 @@ export async function importSljaAsCustomMusic(
     throw new Error('SLJA_IMPORT_MUSIC_FAILED')
   }
   if (createdMusic.existed) {
-    // Já existia (re-import): mídias já estão vinculadas — pular uploads.
+    const existing = await loadCustomMusicTrack(createdMusic.id)
+    if (!existing || existing.lyrics.length !== slides.length || (archive.audio && !existing.audioUrl)) {
+      throw new Error('SLJA_EXISTING_UPLOAD_INCOMPLETE')
+    }
     return {
-      musicId: createdMusic.id,
+      musicId: toCustomMusicId(createdMusic.id),
       name,
       collectionId,
-      slides: 0,
-      hasAudio: false,
-      uploadedImages: 0,
-      durationMs: 0,
+      slides: existing.lyrics.length,
+      hasAudio: Boolean(existing.audioUrl),
+      uploadedImages: existing.lyrics.filter(slide => slide.imageUrl).length,
+      durationMs: slides.reduce((max, slide) => Math.max(max, slide.timeMs), 0) + 30_000,
       local: false,
     }
   }
@@ -185,10 +190,12 @@ async function importSljaLocal({
   name,
   archive,
   slides,
+  clientUuid,
 }: {
   name: string
   archive: SljaArchive
   slides: SljaArchive['slides']
+  clientUuid: string
 }): Promise<ImportedSljaMusic> {
   let audioAssetId: number | null = null
   if (archive.audio) {
@@ -197,13 +204,11 @@ async function importSljaLocal({
     )
   }
 
-  // Imagem de fundo (compartilhada entre slides): primeiro asset.
-  let coverAssetId: number | null = null
-  if (archive.assets?.length) {
-    coverAssetId = await putLocalAsset(
-      new Blob([archive.assets[0].bytes as BlobPart], { type: 'image/png' }),
-    )
+  const localAssets = new Map<string, number>()
+  for (const asset of archive.assets ?? []) {
+    localAssets.set(asset.path, await putLocalAsset(new Blob([asset.bytes as BlobPart], { type: 'image/png' })))
   }
+  const coverAssetId = localAssets.values().next().value ?? null
 
   // web#174: duração estimada p/ o campo "Duração" do item — último
   // tempo_hms + margem de 30s (o MP3 real pode esticar além do último slide).
@@ -212,6 +217,7 @@ async function importSljaLocal({
 
   const id = await putLocalMusic({
     name,
+    clientUuid,
     createdAt: Date.now(),
     audioAssetId,
     slideCount: slides.length,
@@ -222,7 +228,9 @@ async function importSljaLocal({
     slides: slides.map((slide) => ({
       lyric: slide.lyric.trim(),
       timeMs: slide.timeMs,
-      imageAssetId: coverAssetId,
+      imageAssetId: slide.image?.name
+        ? [...localAssets].find(([path]) => slide.image!.name.toLowerCase().includes(path.toLowerCase()) || path.toLowerCase().includes(slide.image!.name.toLowerCase()))?.[1] ?? null
+        : null,
     })),
   } as Parameters<typeof putLocalMusic>[0] & Record<string, unknown>)
 
@@ -232,7 +240,7 @@ async function importSljaLocal({
     collectionId: 0,
     slides: slides.length,
     hasAudio: audioAssetId != null,
-    uploadedImages: coverAssetId != null ? 1 : 0,
+    uploadedImages: localAssets.size,
     durationMs,
     local: true,
   }

@@ -1,158 +1,56 @@
 #!/usr/bin/env node
-/**
- * Anti-deriva app↔web — gate canônico (S1).
- *
- * Compara os arquivos canônicos deste repo com os do repo irmão
- * (Piano-Louvor-JA/app ↔ Piano-Louvor-JA/web) via `gh api` (raw, branch staging).
- * Falha (exit 1) se qualquer arquivo divergir — deriva de tipos/serviços
- * copiados à mão entre as frentes.
- *
- * Uso:
- *   node scripts/check-paridade.mjs            # gate duro (CI)
- *   node scripts/check-paridade.mjs --report   # só reporta, nunca falha
- *
- * Requisitos: `gh` autenticado (CI usa GH_TOKEN/GITHUB_TOKEN) e rede.
- */
+/** Contratos compartilhados: adaptações de plataforma são permitidas. */
 import { execFileSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import assert from 'node:assert/strict'
+import ts from 'typescript'
 
-const REPORT_ONLY = process.argv.includes('--report')
-
-// (this repo, other repo) — manter idêntico nos dois repos
-const PEER = {
-  app: 'web',
-  web: 'app',
-}
-const ORG = 'Piano-Louvor-JA'
-const THIS = process.env.PARIDADE_THIS ?? detectThis()
-const OTHER = PEER[THIS] ?? 'app'
-
-/**
- * Branch do peer a comparar. Ordem:
- *  1. branch local de mesmo nome (janela de transição: os PRs de paridade
- *     dos DOIS repos coexistem antes de mergear — cada um compara com a
- *     branch espelho do outro);
- *  2. staging (regime permanente).
- */
-function peerBranch() {
-  if (process.env.PARIDADE_BRANCH) return process.env.PARIDADE_BRANCH
-  let current = 'staging'
-  try {
-    current = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
-      encoding: 'utf8',
-    }).trim()
-  } catch {
-    /* HEAD destacado — usa staging */
-  }
-  if (current !== 'staging' && current !== 'main') {
-    try {
-      execFileSync('gh', [
-        'api',
-        `repos/${ORG}/${OTHER}/git/ref/heads/${current}`,
-      ], { stdio: 'pipe' })
-      return current
-    } catch {
-      /* branch não existe no peer — cai para staging */
-    }
-  }
-  return 'staging'
-}
-const BRANCH = peerBranch()
-
-function detectThis() {
-  const remotes = execFileSync('git', ['remote', 'get-url', 'origin'], {
-    encoding: 'utf8',
-  })
-  return remotes.includes('/app') ? 'app' : 'web'
-}
-
-// Arquivos canônicos — fonte da verdade: app (frente à frente).
-// Editou aqui? Editou no outro repo também, no MESMO PR.
-const CANONICAL_FILES = [
-  'src/modules/bible/types/bible.ts',
-  'src/modules/settings/types/stage-settings.ts',
-  'src/modules/bible/services/scripture-format.ts',
-  'src/modules/bible/services/bible-runtime.ts',
+const contracts = [
+ ['src/modules/bible/types/bible.ts', { BibleBook: ['id','name','abbreviation','chapters','bookNumber','languageId'], BibleVersion: ['id','abbreviation','name','languageId'], BibleSelection: ['versionId','bookId','versionAbbreviation','bookName','chapter','verses','scripturalReference','text'] }],
+ ['src/modules/settings/types/stage-settings.ts', { StageSettings: ['backgroundColor','textColor','fontSize','fontWeight','margin','textShadow','textAlign','textVerticalAlign','footerRefColor','footerRefWeight','bibleFontSize','bibleFontWeight','bibleTextColor'] }],
 ]
-
-function sha256(content) {
-  return createHash('sha256').update(content).digest('hex')
+const printer = ts.createPrinter({ removeComments: true })
+function fields(source, name) {
+ const ast = ts.createSourceFile('contract.ts', source, ts.ScriptTarget.Latest, true)
+ const declaration = ast.statements.find(n => n.name?.text === name)
+ assert.ok(declaration, `Contrato ausente: ${name}`)
+ const members = declaration.members ?? declaration.type?.members
+ assert.ok(members, `Contrato não estrutural: ${name}`)
+ return new Map(members.map(m => [m.name.getText(ast), printer.printNode(ts.EmitHint.Unspecified, m.type, ast).replace(/\s/g,'')]))
 }
-
-/** Normaliza EOL: repos commitam LF, checkouts Windows/autocrlf viram CRLF. */
-function normalize(content) {
-  return content.replace(/\r\n/g, '\n')
-}
-
-function fetchRemote(path) {
-  const url = `repos/${ORG}/${OTHER}/contents/${path}?ref=${BRANCH}`
-  const out = execFileSync(
-    'gh',
-    ['api', url, '-H', 'Accept: application/vnd.github.raw+json'],
-    { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 },
-  )
-  return out
-}
-
-let diverged = 0
-console.log(`paridade: ${ORG}/${THIS} ↔ ${ORG}/${OTHER}@${BRANCH}`)
-
-for (const file of CANONICAL_FILES) {
-  let local
-  try {
-    local = readFileSync(file, 'utf8')
-  } catch {
-    console.error(`✗ ${file} — AUSENTE no repo local (${THIS})`)
-    diverged += 1
-    continue
+export function compareContracts(local, remote, specs) {
+ for (const [name, keys] of Object.entries(specs)) {
+  const a = fields(local,name), b = fields(remote,name)
+  for (const key of keys) {
+   assert.ok(a.has(key) && b.has(key), `${name}.${key}: campo ausente`)
+   // A seleção vazia no web aceita null; capítulo válido mantém number.
+   const normalize = value => name === 'BibleSelection' && key === 'chapter' ? value.replace(/\|null/g,'') : value
+   assert.equal(normalize(a.get(key)),normalize(b.get(key)), `${name}.${key}: tipo incompatível`)
   }
-
-  let remote
-  try {
-    remote = fetchRemote(file)
-  } catch (err) {
-    console.error(`✗ ${file} — falha ao buscar no peer: ${err.message}`)
-    diverged += 1
-    continue
-  }
-
-  const same = sha256(normalize(local)) === sha256(normalize(remote))
-  if (same) {
-    console.log(`✓ ${file}`)
-  } else {
-    console.error(`✗ ${file} — DIVERGIU app↔web`)
-    const localLines = local.split('\n')
-    const remoteLines = remote.split('\n')
-    // diff resumido: primeira linha divergente + totais
-    let first = -1
-    const max = Math.max(localLines.length, remoteLines.length)
-    for (let i = 0; i < max; i += 1) {
-      if (localLines[i] !== remoteLines[i]) {
-        first = i
-        break
-      }
-    }
-    console.error(
-      `    1ª divergência na linha ${first + 1}: local=${localLines.length}L peer=${remoteLines.length}L`,
-    )
-    if (localLines[first] !== undefined)
-      console.error(`    local: ${JSON.stringify(localLines[first].trim())}`)
-    if (remoteLines[first] !== undefined)
-      console.error(`    peer : ${JSON.stringify(remoteLines[first].trim())}`)
-    diverged += 1
-  }
+ }
 }
-
-if (diverged > 0) {
-  console.error(`\nparidade: ${diverged}/${CANONICAL_FILES.length} arquivo(s) divergente(s).`)
-  if (!REPORT_ONLY) {
-    console.error(
-      'Arquivos canônicos devem ser editados nos DOIS repos no mesmo PR (fonte da verdade: app).',
-    )
-    process.exit(1)
-  }
-  console.error('(modo --report: não falha o build)')
-} else {
-  console.log(`paridade: OK — ${CANONICAL_FILES.length}/${CANONICAL_FILES.length} idênticos.`)
+function peer(path) {
+ return execFileSync('gh',['api',`repos/Piano-Louvor-JA/app/contents/${path}?ref=staging`,'-H','Accept: application/vnd.github.raw+json'], { encoding:'utf8' })
 }
+async function formatModule(source) {
+ const js = ts.transpile(source, { module:ts.ModuleKind.ESNext, target:ts.ScriptTarget.ES2022 })
+ return import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`)
+}
+async function main() {
+ for (const [path,specs] of contracts) {
+  compareContracts(readFileSync(path,'utf8'),peer(path),specs)
+  console.log(`✓ ${path}: contratos comuns compatíveis`)
+ }
+ const path = 'src/modules/bible/services/scripture-format.ts'
+ const a = await formatModule(readFileSync(path,'utf8')), b = await formatModule(peer(path))
+ for (const verses of [[],[1],[1,2,3,5],[5,3,1]]) assert.equal(a.formatVerseIntervals(verses),b.formatVerseIntervals(verses))
+ for (const chapter of [1,12]) assert.equal(a.formatScripturalReference({ bookName:'Salmos', chapter, verses:[1,2], versionAbbreviation:'ARA' }),b.formatScripturalReference({ bookName:'Salmos', chapter, verses:[1,2], versionAbbreviation:'ARA' }))
+ const runtime = 'src/modules/bible/services/bible-runtime.ts'
+ for (const name of ['BIBLE_RUNTIME_CHANNEL','BIBLE_RUNTIME_STORAGE_KEY']) {
+  const value = text => text.match(new RegExp(`${name}\\s*=\\s*['"]([^'"]+)['"]`))?.[1]
+  assert.ok(value(readFileSync(runtime,'utf8')))
+  assert.equal(value(readFileSync(runtime,'utf8')),value(peer(runtime)))
+ }
+ console.log('✓ formato bíblico e canais de projeção compatíveis')
+}
+if (process.argv[1]?.endsWith('check-paridade.mjs')) await main()

@@ -82,6 +82,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: node --test scripts/__tests__/paridade.test.mjs
       - name: Check paridade
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

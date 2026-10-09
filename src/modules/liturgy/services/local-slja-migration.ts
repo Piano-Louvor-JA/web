@@ -1,151 +1,103 @@
-/**
- * web#187 (paridade app 588e7dc): migração pós-login dos .slja gravados
- * local (IndexedDB) quando o usuário ainda não tinha sessão.
- *
- * Regras (mesmas do app):
- * - pergunta UMA vez por sessão (recusou → não pergunta de novo)
- * - falha de rede NÃO marca (tenta no próximo login)
- * - o upload usa client_uuid determinístico do conteúdo → a API dedupeia
- * - nunca bloqueia o fluxo local (fire-and-forget)
- */
+/** Upload consentido; originais locais nunca são removidos. */
 import { getAuthSession } from '@modules/auth/services/auth-client'
-import {
-  createCustomCollection,
-  createCustomMusic,
-  createCustomLyric,
-  listCustomCollections,
-  uploadCustomFile,
-  updateCustomMusic,
-} from '@modules/media/services/custom-catalog'
+import { createCustomCollection, createCustomMusic, createCustomLyric, listCustomCollections, uploadCustomFile, updateCustomMusic } from '@modules/media/services/custom-catalog'
 import { appConfirm } from '@shared/composables/useAppConfirm'
+import { sha256Hex, sha256ToUuid } from '@shared/services/content-hash'
 import i18n from '@plugins/i18n'
+import { listLocalMusics, getLocalAsset } from './local-slja-store'
 
-import { listLocalMusics, getLocalAssetUrl } from './local-slja-store'
+export interface SljaMigrationResult { uploaded: number; failed: number }
+interface LocalMeta { clientUuid?: string; slides?: Array<{ lyric: string; timeMs: number; imageAssetId?: number | null }> }
+let running = false
 
-const OFFERED_KEY = 'louvorja:sync:slja-migration:offered'
-const IMPORT_COLLECTION_NAME = 'Importações .slja'
-
-export interface SljaMigrationResult {
-  uploaded: number
-  failed: number
-}
-
-/** Metadados extras gravados schemaless pelo import local. */
-interface LocalSlidesMeta {
-  slides?: Array<{ lyric: string; timeMs: number; imageAssetId?: number | null }>
-  durationMs?: number
-}
-
-async function ensureImportCollectionId(): Promise<number | null> {
+export async function runSljaMigration(locals: Awaited<ReturnType<typeof listLocalMusics>>, opts: { confirm: boolean }): Promise<SljaMigrationResult> {
+  const result = { uploaded: 0, failed: 0 }
+  const session = getAuthSession()
+  if (!opts.confirm || !session || running) return result
+  running = true
+  const assertSession = () => { if (getAuthSession()?.token !== session.token) throw new Error('SLJA_SESSION_CHANGED') }
   try {
+    assertSession()
     const collections = await listCustomCollections()
-    const existing = collections.find((c) => c.name === IMPORT_COLLECTION_NAME)
-    if (existing) return existing.id
-  } catch {
-    // catálogo indisponível — tenta criar mesmo assim
-  }
-  const created = await createCustomCollection(IMPORT_COLLECTION_NAME)
-  return created?.id ?? null
-}
-
-/** Migra os itens locais pra conta. `confirm` = o usuário aprovou subir. */
-export async function runSljaMigration(
-  locals: Awaited<ReturnType<typeof listLocalMusics>>,
-  opts: { confirm: boolean },
-): Promise<SljaMigrationResult> {
-  const result: SljaMigrationResult = { uploaded: 0, failed: 0 }
-  const collectionId = await ensureImportCollectionId()
-  if (collectionId == null) {
-    return { uploaded: 0, failed: locals.length }
-  }
-
-  for (const local of locals) {
-    try {
-      const meta = local as unknown as LocalSlidesMeta
-      const created = await createCustomMusic(collectionId, {
-        name: local.name,
-        client_uuid: `local-${local.id}-web`,
-      })
-      if (!created) throw new Error('create failed')
-      if (created.existed) {
-        result.uploaded += 1
-        continue
-      }
-
-      // áudio local → upload (via URL do asset no IndexedDB)
-      if (local.audioAssetId != null) {
-        const url = await getLocalAssetUrl(local.audioAssetId)
-        const blob = url ? await (await fetch(url)).blob() : null
-        if (blob) {
-          const bytes = new Uint8Array(await blob.arrayBuffer())
-          const up = await uploadCustomFile(bytes, `${local.name}.mp3`, 'audio')
-          if (up) await updateCustomMusic(created.id, { id_file_audio: up.idFile })
+    assertSession()
+    const collectionId = collections.find(c => c.name === 'Importações .slja')?.id ?? (await createCustomCollection('Importações .slja'))?.id
+    if (collectionId == null) return { uploaded: 0, failed: locals.length }
+    for (const local of locals) {
+      try {
+        const slides = (local as unknown as LocalMeta).slides
+        if (!slides || slides.length !== local.slideCount) throw new Error('SLJA_LOCAL_SLIDES_MISSING')
+        const ids = new Set(slides.map(s => s.imageAssetId).filter((id): id is number => id != null))
+        if (local.audioAssetId != null) ids.add(local.audioAssetId)
+        const assets = new Map<number, Awaited<ReturnType<typeof getLocalAsset>>>()
+        for (const id of ids) {
+          const asset = await getLocalAsset(id)
+          if (!asset) throw new Error('SLJA_LOCAL_ASSET_MISSING')
+          assets.set(id, asset)
         }
-      }
-
-      // slides → lyrics (batch simples, ordem explícita)
-      const slides = meta.slides ?? []
-      let order = 0
-      for (const slide of slides) {
-        if (!slide.lyric.trim()) continue
-        const mins = Math.floor(slide.timeMs / 60000)
-        const secs = Math.floor((slide.timeMs % 60000) / 1000)
-        const hh = Math.floor(mins / 60)
-        const time = [
-          hh.toString().padStart(2, '0'),
-          (mins % 60).toString().padStart(2, '0'),
-          secs.toString().padStart(2, '0'),
-        ].join(':')
-        await createCustomLyric(created.id, { lyric: slide.lyric.trim(), time, order })
-        order += 1
-      }
-      result.uploaded += 1
-    } catch {
-      result.failed += 1
+        const content = JSON.stringify({ name: local.name, slides, assets: [...assets].map(([id,a]) => [id, Array.from(new Uint8Array(a!.bytes))]) })
+        const uuid = (local as unknown as LocalMeta).clientUuid ?? sha256ToUuid(await sha256Hex(new TextEncoder().encode(content)))
+        const key = `louvorja:slja-migrated:${session.user.id_user}:${uuid}`
+        if (localStorage.getItem(key) === '1') continue
+        assertSession()
+        const created = await createCustomMusic(collectionId, { name: local.name, client_uuid: uuid })
+        if (!created) throw new Error('SLJA_CREATE_FAILED')
+        // Um registro existente sem comprovante local pode ser upload interrompido.
+        // Nunca o declarar completo nem sobrescrevê-lo automaticamente.
+        if (created.existed) throw new Error('SLJA_EXISTING_UPLOAD_REQUIRES_VERIFICATION')
+        const images = new Map<number, number>()
+        for (const id of ids) {
+          assertSession()
+          const asset = assets.get(id)!
+          const audio = id === local.audioAssetId
+          const uploaded = await uploadCustomFile(new Uint8Array(asset.bytes), `${local.name}-${id}.${audio ? "mp3" : "png"}`, audio ? 'audio' : 'imagens')
+          if (!uploaded) throw new Error('SLJA_UPLOAD_FAILED')
+          assertSession()
+          if (audio) {
+            if (!await updateCustomMusic(created.id, { id_file_audio: uploaded.idFile })) throw new Error('SLJA_AUDIO_LINK_FAILED')
+          } else images.set(id, uploaded.idFile)
+        }
+        let order = 0
+        for (const slide of slides) {
+          assertSession()
+          const seconds = Math.floor(slide.timeMs / 1000)
+          const time = [Math.floor(seconds/3600), Math.floor(seconds/60)%60, seconds%60].map(n => String(n).padStart(2,'0')).join(':')
+          if (!await createCustomLyric(created.id, { lyric: slide.lyric, time, order: order++, id_file_image: slide.imageAssetId == null ? undefined : images.get(slide.imageAssetId) })) throw new Error('SLJA_LYRIC_FAILED')
+        }
+        assertSession()
+        localStorage.setItem(key, '1')
+        result.uploaded++
+      } catch { result.failed++ }
     }
-  }
-  return result
+    return result
+  } catch { return { uploaded: 0, failed: locals.length } }
+  finally { running = false }
 }
 
-/**
- * Watcher de login: quando o usuário ganha sessão, oferece UMA vez migrar
- * os .slja locais pra conta. Chamado no boot (App.vue).
- */
 let watching = false
 let lastSessionToken: string | null = null
-
+let checking = false
 export function startSljaMigrationWatch(): void {
   if (watching) return
   watching = true
-  const timer = setInterval(() => {
-    void checkAndOffer().catch(() => {})
-  }, 15_000)
-  window.addEventListener('beforeunload', () => clearInterval(timer))
+  const timer = setInterval(() => { void checkAndOffer() }, 15_000)
+  window.addEventListener('beforeunload', () => clearInterval(timer), { once: true })
 }
-
 async function checkAndOffer(): Promise<void> {
-  const session = getAuthSession()
-  const token = session?.token ?? null
-  if (!token) {
-    lastSessionToken = null
-    return
-  }
-  if (token === lastSessionToken) return
-  lastSessionToken = token
-
-  if (localStorage.getItem(OFFERED_KEY) === '1') return
-  const locals = await listLocalMusics().catch(() => [])
-  if (locals.length === 0) return
-
-  localStorage.setItem(OFFERED_KEY, '1')
-  const t = i18n.global.t
-  const approved = await appConfirm({
-    title: t('liturgy.slja.migrationTitle', { count: locals.length }),
-    message: t('liturgy.slja.migrationMessage'),
-    confirmLabel: t('liturgy.slja.uploadConfirm'),
-    cancelLabel: t('liturgy.slja.uploadCancel'),
-  }).catch(() => false)
-
-  if (!approved) return // fica local; não pergunta de novo nesta sessão
-  await runSljaMigration(locals, { confirm: true }).catch(() => {})
+  if (checking) return
+  checking = true
+  try {
+    const token = getAuthSession()?.token ?? null
+    if (!token) { lastSessionToken = null; return }
+    if (token === lastSessionToken) return
+    const locals = await listLocalMusics()
+    if (!locals.length || getAuthSession()?.token !== token) return
+    lastSessionToken = token
+    const t = i18n.global.t
+    const approved = await appConfirm({ title: t('liturgy.slja.migrationTitle', { count: locals.length }), message: t('liturgy.slja.migrationMessage'), confirmLabel: t('liturgy.slja.uploadConfirm'), cancelLabel: t('liturgy.slja.uploadCancel') })
+    if (approved && getAuthSession()?.token === token) {
+      const result = await runSljaMigration(locals, { confirm: true })
+      if (result.failed) await appConfirm({ title: t('liturgy.slja.importFailed'), message: t('liturgy.slja.migrationFailed'), confirmLabel: 'OK' })
+    }
+  } catch { /* Originais locais preservados; próxima sessão pode tentar novamente. */ }
+  finally { checking = false }
 }

@@ -16,6 +16,7 @@ export default {
       uploadMessage: 'O arquivo será enviado uma única vez (sem duplicar) e fica disponível em qualquer dispositivo.',
       uploadConfirm: 'Subir pra conta',
       uploadCancel: 'Ficar só neste dispositivo',
+      migrationFailed: 'Alguns itens não foram enviados por completo. Os originais continuam neste dispositivo. Um envio interrompido precisa ser verificado antes de repetir.',
       migrationTitle: 'Subir {count} hino(s) importado(s) pra sua conta?',
       migrationMessage: 'Você importou .slja sem estar logado. Eles podem ir pra sua conta (uma cópia única, sem duplicar) e ficar disponíveis em qualquer dispositivo.',
       keptLocal: '"{name}" ficou salvo apenas neste dispositivo.',

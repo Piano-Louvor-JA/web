@@ -166,7 +166,7 @@ export const DEFAULT_STAGE_SETTINGS: StageSettings = {
   textShadow: true,
   shadowBlur: 2.2,
   shadowIntensity: 0.8,
-  textBox: true,
+  textBox: false,
   boxOpacity: 0.45,
   boxBorder: true,
   textAlign: 'center',

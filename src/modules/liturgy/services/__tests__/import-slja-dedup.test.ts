@@ -1,3 +1,4 @@
+import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
@@ -24,9 +25,10 @@ const mocks = vi.hoisted(() => ({
   updateCustomMusic: vi.fn(),
   parseSlja: vi.fn(),
   getAuthSession: vi.fn(),
+  loadCustomMusicTrack: vi.fn(),
 }))
 
-vi.mock('@modules/media/services/custom-catalog', () => mocks)
+vi.mock('@modules/media/services/custom-catalog', () => ({ ...mocks, toCustomMusicId: (id: number) => id + 1_000_000 }))
 vi.mock('@shared/services/slja', () => ({ parseSlja: mocks.parseSlja }))
 vi.mock('@modules/auth/services/auth-client', () => ({
   getAuthSession: mocks.getAuthSession,
@@ -53,6 +55,7 @@ describe('dedup de import .slja (web#187)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     lsStore.clear()
+    mocks.loadCustomMusicTrack.mockResolvedValue({ lyrics: [{}, {}], audioUrl: null })
     mocks.parseSlja.mockResolvedValue(archive())
     mocks.getAuthSession.mockReturnValue({ token: 'tok', idUser: 7 })
     mocks.listCustomCollections.mockResolvedValue([
@@ -79,16 +82,30 @@ describe('dedup de import .slja (web#187)', () => {
     mocks.createCustomMusic.mockResolvedValue({ id: 555, existed: true })
     const r = await importSljaAsCustomMusic(sljaFile())
 
-    expect(r).toMatchObject({ musicId: 555, local: false, slides: 0 })
+    expect(r).toMatchObject({ musicId: 1_000_555, local: false, slides: 2 })
     expect(mocks.uploadCustomFile).not.toHaveBeenCalled()
     expect(mocks.createCustomLyric).not.toHaveBeenCalled()
+  })
+
+  it('existente incompleto não é declarado importado', async () => {
+    mocks.createCustomMusic.mockResolvedValue({id:555,existed:true})
+    mocks.loadCustomMusicTrack.mockResolvedValue({lyrics:[],audioUrl:null})
+    await expect(importSljaAsCustomMusic(sljaFile())).rejects.toThrow('SLJA_EXISTING_UPLOAD_INCOMPLETE')
+  })
+
+  it('recusa de upload preserva importação local mesmo logado', async () => {
+    const result = await importSljaAsCustomMusic(sljaFile(), {localOnly:true})
+    expect(result.local).toBe(true)
+    expect(mocks.createCustomMusic).not.toHaveBeenCalled()
+    const {getLocalMusic} = await import('../local-slja-store')
+    expect((await getLocalMusic(result.musicId))?.name).toBe('Hino Teste')
   })
 
   it('201 (novo) → fluxo normal com uploads e lyrics', async () => {
     mocks.createCustomMusic.mockResolvedValue({ id: 556 })
     const r = await importSljaAsCustomMusic(sljaFile())
 
-    expect(r).toMatchObject({ musicId: 556, local: false })
+    expect(r).toMatchObject({ musicId: 1_000_556, local: false })
     expect(mocks.createCustomLyric).toHaveBeenCalled()
   })
 

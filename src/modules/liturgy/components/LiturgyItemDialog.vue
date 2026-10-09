@@ -70,6 +70,7 @@ async function onImportSljaFile(event: Event): Promise<void> {
   try {
     // web#187 (paridade app): logado, pergunta ANTES de subir pro banco —
     // recusou = grava só local, sem erro. Deslogado nunca pergunta.
+    let localOnly = false
     const wantsUpload = !!getAuthSession()
     if (wantsUpload) {
       const ok = await appConfirm({
@@ -78,13 +79,9 @@ async function onImportSljaFile(event: Event): Promise<void> {
         confirmLabel: t('liturgy.slja.uploadConfirm'),
         cancelLabel: t('liturgy.slja.uploadCancel'),
       })
-      if (!ok) {
-        sljaMessage.value = t('liturgy.slja.keptLocal', { name: file.name })
-        sljaImporting.value = false
-        return
-      }
+      localOnly = !ok
     }
-    const imported = await importSljaAsCustomMusic(file)
+    const imported = await importSljaAsCustomMusic(file, { localOnly })
     // web#174: recarrega o catálogo ANTES do pick — sem isso o id novo
     // (900M+ local / 1M+ custom) não existe em musicList, selectedMusic
     // fica null e o submit é bloqueado (música "não toca").
