@@ -99,18 +99,36 @@ export async function playAlertTone(
     audio = await preloadAudio(presetDef.url)
   }
   if (!audio) return
+  const finished = typeof audio.addEventListener === 'function'
+    ? new Promise<void>((resolve) => {
+        const finish = () => {
+          audio!.removeEventListener('ended', finish)
+          audio!.removeEventListener('error', finish)
+          activeAudios.delete(audio!)
+          audioCompletions.delete(audio!)
+          resolve()
+        }
+        audio!.addEventListener('ended', finish)
+        audio!.addEventListener('error', finish)
+        audioCompletions.set(audio!, finish)
+      })
+    : Promise.resolve()
   try {
-    audio.volume = volume ?? 1
+    audio.volume = volume
     audio.currentTime = 0
     registerActiveAudio(audio)
     await audio.play()
+    await finished
   } catch {
+    audioCompletions.get(audio)?.()
+    activeAudios.delete(audio)
     // autoplay bloqueado — silencioso
   }
 }
 
 // ── app#338/#339 paridade: fila + pause/resume + volume ao vivo ─────────
 const activeAudios = new Set<HTMLAudioElement>()
+const audioCompletions = new Map<HTMLAudioElement, () => void>()
 
 function registerActiveAudio(audio: HTMLAudioElement): void {
   activeAudios.add(audio)
@@ -134,6 +152,7 @@ export function stopAllAlerts(): void {
   for (const audio of [...activeAudios]) {
     audio.pause()
     try { audio.currentTime = 0 } catch { /* some browsers */ }
+    audioCompletions.get(audio)?.()
     activeAudios.delete(audio)
   }
 }
@@ -146,16 +165,20 @@ export function setLiveVolume(volume: number): void {
 // ── Fila serial (app#338 paridade): marcos que cruzam juntos tocam em sequência ──
 let queueChain: Promise<void> = Promise.resolve()
 let pendingCount = 0
-let queueDropped = 0
+let queueGeneration = 0
 
 export function enqueueAlert(play: () => Promise<void>, opts: { maxPending?: number } = {}): void {
   const maxPending = opts.maxPending ?? 2
   if (pendingCount >= maxPending) {
-    queueDropped += 1
     return
   }
   pendingCount += 1
-  queueChain = queueChain.then(play).catch(() => {}).finally(() => { pendingCount -= 1 })
+  const generation = queueGeneration
+  queueChain = queueChain.then(() => {
+    if (generation === queueGeneration) return play()
+  }).catch(() => {}).finally(() => {
+    if (generation === queueGeneration) pendingCount -= 1
+  })
 }
 
 export function pendingAlertCount(): number {
@@ -163,6 +186,8 @@ export function pendingAlertCount(): number {
 }
 
 export function clearAlertQueue(): void {
+  queueGeneration += 1
+  stopAllAlerts()
   queueChain = Promise.resolve()
   pendingCount = 0
 }

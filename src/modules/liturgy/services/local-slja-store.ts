@@ -57,28 +57,29 @@ async function withStore<T>(
   return new Promise<T>((resolve, reject) => {
     const tx = db.transaction(storeName, mode)
     const request = fn(tx.objectStore(storeName))
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-    tx.oncomplete = () => db.close()
+    let result: T
+    request.onsuccess = () => { result = request.result }
+    tx.oncomplete = () => { db.close(); resolve(result) }
+    tx.onabort = () => { db.close(); reject(tx.error ?? request.error) }
+    tx.onerror = () => { db.close(); reject(tx.error ?? request.error) }
   })
 }
 
-/** Próximo id local disponível (900_000_000+). */
-async function nextLocalId(): Promise<number> {
+/** Aloca e grava na mesma transação para não sobrescrever importações concorrentes. */
+async function addWithNextId(storeName: string, value: object, minimum: number): Promise<number> {
   const db = await openDb()
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_METAS, 'readonly')
-    const request = tx.objectStore(STORE_METAS).openCursor(null, 'prev')
-    request.onsuccess = () => {
-      const cursor = request.result
-      db.close()
-      const highest = cursor ? (cursor.key as number) : LOCAL_MUSIC_ID_BASE
-      resolve(highest + 1)
+    const tx = db.transaction(storeName, 'readwrite')
+    const store = tx.objectStore(storeName)
+    const cursor = store.openCursor(null, 'prev')
+    let id: number
+    cursor.onsuccess = () => {
+      id = Math.max(Number(cursor.result?.key ?? minimum), minimum) + 1
+      store.add({ ...value, id })
     }
-    request.onerror = () => {
-      db.close()
-      reject(request.error)
-    }
+    tx.oncomplete = () => { db.close(); resolve(id) }
+    tx.onabort = () => { db.close(); reject(tx.error ?? cursor.error) }
+    tx.onerror = () => { db.close(); reject(tx.error ?? cursor.error) }
   })
 }
 
@@ -86,11 +87,9 @@ export async function putLocalAsset(
   blob: Blob,
 ): Promise<number> {
   const bytes = await blob.arrayBuffer()
-  const id = Date.now() + Math.floor(Math.random() * 1000)
-  await withStore(STORE_ASSETS, 'readwrite', (store) =>
-    store.put({ id, mime: blob.type || 'application/octet-stream', bytes } satisfies LocalSljaAsset),
-  )
-  return id
+  return addWithNextId(STORE_ASSETS, {
+    mime: blob.type || 'application/octet-stream', bytes,
+  }, 0)
 }
 
 export async function getLocalAssetUrl(assetId: number): Promise<string | null> {
@@ -108,11 +107,7 @@ export async function getLocalAssetUrl(assetId: number): Promise<string | null> 
 }
 
 export async function putLocalMusic(meta: Omit<LocalSljaMusic, 'id'>): Promise<number> {
-  const id = await nextLocalId()
-  await withStore(STORE_METAS, 'readwrite', (store) =>
-    store.put({ ...meta, id } satisfies LocalSljaMusic),
-  )
-  return id
+  return addWithNextId(STORE_METAS, meta, LOCAL_MUSIC_ID_BASE)
 }
 
 export async function getLocalMusic(id: number): Promise<LocalSljaMusic | null> {

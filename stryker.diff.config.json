@@ -1,0 +1,48 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Medi\u00e7\u00e3o opcional dos arquivos alterados da PR. N\u00e3o substitui stryker.config.json nem muda as metas do teste completo.",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "coverageAnalysis": "off",
+  "incremental": true,
+  "incrementalFile": "reports/stryker-incremental.json",
+  "mutate": [
+    "src/modules/settings/services/*.ts",
+    "src/modules/settings/stores/*.ts",
+    "src/modules/settings/composables/*.ts",
+    "src/modules/clock/**/*.ts",
+    "src/modules/random/**/*.ts",
+    "src/modules/timer/**/*.ts",
+    "src/shared/services/*.ts",
+    "src/shared/composables/*.ts",
+    "src/modules/albums/services/*.ts"
+  ],
+  "thresholds": {
+    "high": 95,
+    "low": 80,
+    "break": 50
+  },
+  "reporters": [
+    "json",
+    "clear-text",
+    "progress"
+  ],
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "vitest": {
+    "configFile": "vitest.config.ts"
+  },
+  "timeoutMS": 30000,
+  "concurrency": 2,
+  "warnings": false,
+  "ignorePatterns": [
+    ".worktrees",
+    "reports",
+    "coverage",
+    "dist",
+    ".hermes",
+    "e2e",
+    "site"
+  ]
+}

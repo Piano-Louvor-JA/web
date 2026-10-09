@@ -13,7 +13,7 @@ const mocks = {
 }
 
 vi.mock('@modules/media/services/custom-catalog', () => ({
-  parseSlja: vi.fn(),
+  toCustomMusicId: (id: number) => id + 1_000_000,
   createCustomCollection: vi.fn(async (name: string) => {
     const existing = mocks.collections.find((c) => c.name === name)
     if (existing) return { id: existing.id }
@@ -103,6 +103,25 @@ describe('importSljaAsCustomMusic (RF-1/B1)', () => {
       time: '00:00',
     })
     expect(mocks.createdLyrics[1]?.time).toBe('00:30')
+  })
+
+  it('devolve o ID do catálogo custom, preservando o ID remoto nas escritas', async () => {
+    const result = await importSljaAsCustomMusic(makeFile())
+    expect(result.musicId).toBe(mocks.createdMusics[0]!.id + 1_000_000)
+    expect(mocks.createdLyrics[0]!.musicId).toBe(mocks.createdMusics[0]!.id)
+  })
+
+  it('não anuncia sucesso quando a API não salva um slide', async () => {
+    const { createCustomLyric } = await import('@modules/media/services/custom-catalog')
+    vi.mocked(createCustomLyric).mockResolvedValueOnce(null)
+    await expect(importSljaAsCustomMusic(makeFile())).rejects.toThrow('SLJA_IMPORT_LYRIC_FAILED')
+  })
+
+  it('não anuncia áudio disponível quando o vínculo com a música falha', async () => {
+    const { updateCustomMusic } = await import('@modules/media/services/custom-catalog')
+    vi.mocked(updateCustomMusic).mockResolvedValueOnce(false as never)
+    const result = await importSljaAsCustomMusic(makeFile())
+    expect(result.hasAudio).toBe(false)
   })
 
   it('faz upload de áudio e imagens do arquivo', async () => {

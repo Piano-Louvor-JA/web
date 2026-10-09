@@ -17,6 +17,7 @@ import {
   listCustomCollections,
   uploadCustomFile,
   updateCustomMusic,
+  toCustomMusicId,
 } from '@modules/media/services/custom-catalog'
 import { getAuthSession } from '@modules/auth/services/auth-client'
 import {
@@ -26,7 +27,7 @@ import {
 } from './local-slja-store'
 
 export interface ImportedSljaMusic {
-  /** id REAL da música custom (sem offset) OU id local (900M+). */
+  /** ID usado no catálogo/player: custom (1M+) ou local (900M+). */
   musicId: number
   name: string
   collectionId: number
@@ -117,8 +118,7 @@ export async function importSljaAsCustomMusic(
       'audio',
     )
     if (uploadedAudio) {
-      await updateCustomMusic(createdMusic.id, { id_file_audio: uploadedAudio.idFile })
-      hasAudio = true
+      hasAudio = Boolean(await updateCustomMusic(createdMusic.id, { id_file_audio: uploadedAudio.idFile }))
     }
   }
 
@@ -149,11 +149,12 @@ export async function importSljaAsCustomMusic(
       )
       if (match) imageUrl = match.url
     }
-    await createCustomLyric(createdMusic.id, {
+    const createdLyric = await createCustomLyric(createdMusic.id, {
       lyric: text,
       time: formatMsAsTime(slide.timeMs),
       id_file_image: imageIdByUrl.get(imageUrl),
     })
+    if (!createdLyric) throw new Error('SLJA_IMPORT_LYRIC_FAILED')
     slideCount += 1
   }
 
@@ -163,7 +164,7 @@ export async function importSljaAsCustomMusic(
   const apiDurationMs = apiLastTimeMs > 0 ? apiLastTimeMs + 30_000 : 0
 
   return {
-    musicId: createdMusic.id,
+    musicId: toCustomMusicId(createdMusic.id),
     name,
     collectionId,
     slides: slideCount,
