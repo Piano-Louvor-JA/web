@@ -23,6 +23,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./src/test-setup-stryker.ts'],
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
     include: [
       'src/**/__tests__/**/*.test.ts',
       'src/__tests__/**/*.test.ts',
