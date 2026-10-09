@@ -431,7 +431,10 @@ function resolveFilePathsFromItem(item: LiturgyItem): string[] {
 /** Resolve nome de exibição a partir do tipo do item. */
 function resolveDraftName(item: LiturgyItem): string {
   return item.type === 'music'
-    ? (item.complementaryTitle ?? '').trim()
+    ? // Cascata: título complementar → nome do item (import .slja grava o
+      // título em item.name). Sem isso itens importados abriam o editor com
+      // o campo obrigatório vazio (feedback Ezequias/Rafael 02/10).
+      (item.complementaryTitle ?? '').trim() || item.name.trim()
     : item.name
 }
 
@@ -533,6 +536,13 @@ export function reconcileMusicItemTitles(
     } else if (nextItem.notes && !existingNotes) {
       changed = true
       nextItem = { ...nextItem, notes: undefined }
+    }
+
+    // web#174: itens musicais sem duração herdam a duração do catálogo
+    // (importações .slja locais passam a ter durationMs estimada).
+    if (nextItem.durationMs <= 0 && (music.durationMs ?? 0) > 0) {
+      changed = true
+      nextItem = { ...nextItem, durationMs: clampMomentDurationMs(music.durationMs!) }
     }
 
     return nextItem

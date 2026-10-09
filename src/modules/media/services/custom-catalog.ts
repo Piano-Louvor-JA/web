@@ -5,6 +5,7 @@ import type {
 
 import { loadMediaTrack } from './media-catalog'
 import { resolveRemoteFileUrl } from './media-audio'
+import { isLocalSljaMusicId } from '@modules/liturgy/services/local-slja-store'
 
 /**
  * Catálogo de músicas customizadas (Minhas Coletâneas) via API /v1/custom
@@ -656,6 +657,14 @@ export async function deleteCustomLyric(lyricId: number): Promise<boolean> {
 export async function resolveMediaTrack(
   musicId: number,
 ): Promise<MediaTrackRecord | null> {
+  // web#174: ORDEM IMPORTA — local (900M+) checa ANTES de custom (1M+),
+  // pois todo id >= 1M também satisfaz o guard de custom.
+  if (isLocalSljaMusicId(musicId)) {
+    const { loadLocalSljaTrack } = await import(
+      '@modules/liturgy/services/local-slja-track'
+    )
+    return loadLocalSljaTrack(musicId)
+  }
   if (isCustomMusicId(musicId)) {
     return loadCustomMusicTrack(fromCustomMusicId(musicId))
   }
