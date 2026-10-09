@@ -3,7 +3,11 @@ const QUEUE_STORAGE_KEY = 'pianolouvorja:sync:download-queue'
 
 function readPersistedQueue(): Array<{ id: string; label: string; priority: string; status: string; error?: string }> {
   try {
-    return JSON.parse(localStorage.getItem(QUEUE_STORAGE_KEY) ?? '[]')
+    const value: unknown = JSON.parse(localStorage.getItem(QUEUE_STORAGE_KEY) ?? '[]')
+    if (!Array.isArray(value)) return []
+    return value.filter((item) => item && typeof item.id === 'string' && typeof item.label === 'string'
+      && (item.priority === 'user' || item.priority === 'bg')
+      && (item.status === 'pending' || item.status === 'running'))
   } catch {
     return []
   }
@@ -29,7 +33,7 @@ export interface DownloadQueueItem {
 
 interface QueuedTask {
   item: DownloadQueueItem
-  task: () => Promise<void>
+  task: (() => Promise<void>) | null
 }
 
 const PRIORITY_RANK: Record<DownloadPriority, number> = { user: 0, bg: 1 }
@@ -42,7 +46,7 @@ for (const item of readPersistedQueue()) {
   if (item.status === 'pending' || item.status === 'running') {
     queue.push({
       item: { ...item, status: 'pending' } as DownloadQueueItem,
-      task: async () => {},
+      task: null,
     })
   }
 }
@@ -96,7 +100,12 @@ export function enqueueDownload(options: {
   // dedupe por id (re-request do mesmo item não duplica)
   const existing = queue.find((q) => q.item.id === options.id)
   if (existing) {
-    if (existing.item.status === 'failed') existing.item.status = 'pending'
+    if (existing.item.status === 'running' || existing.item.status === 'done') return
+    existing.task = options.task
+    existing.item.status = 'pending'
+    existing.item.error = undefined
+    notify()
+    void drain()
     return
   }
   queue.push({
@@ -122,7 +131,7 @@ async function drain(): Promise<void> {
     await new Promise((r) => setTimeout(r, 50))
     for (;;) {
       const next = queue
-        .filter((q) => q.item.status === 'pending')
+        .filter((q) => q.item.status === 'pending' && q.task != null)
         .sort(
           (a, b) =>
             PRIORITY_RANK[a.item.priority] - PRIORITY_RANK[b.item.priority],
@@ -131,7 +140,7 @@ async function drain(): Promise<void> {
       next.item.status = 'running'
       notify()
       try {
-        await next.task()
+        await next.task!()
         next.item.status = 'done'
       } catch (error) {
         next.item.status = 'failed'
@@ -147,7 +156,7 @@ async function drain(): Promise<void> {
 /** app#338 UI: re-enfileira um item failed (ou done → re-download). */
 export function retryDownload(id: string): void {
   const entry = queue.find((q) => q.item.id === id)
-  if (!entry || entry.item.status === 'running') return
+  if (!entry || entry.item.status === 'running' || !entry.task) return
   entry.item.status = 'pending'
   entry.item.error = undefined
   notify()

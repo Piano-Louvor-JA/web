@@ -1,11 +1,14 @@
 import { expect, test } from '@playwright/test'
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { zipSync, strToU8 } from 'fflate'
 
 // web#174: importar .slja SEM login → grava local (IndexedDB, id 900M+) →
 // título do item recebe o nome da música → toca no player (blob: URL).
+
+const fixtureDirs: string[] = []
+test.afterEach(() => { for (const dir of fixtureDirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
 
 function makeSlja(): string {
   const ini = [
@@ -17,13 +20,13 @@ function makeSlja(): string {
     '[Slide:1]',
     'tipo=CAPA',
     'letra=Hino de Probe E2E',
-    'time=0',
+    'tempo_hms=00:00:00',
     '[Slide:2]',
     'tipo=LETRA',
     'letra=Segunda estrofe do probe',
-    'time=2000',
+    'tempo_hms=00:00:02',
   ].join('\r\n')
-  const audio = readFileSync('/tmp/probe-real.mp3')
+  const audio = readFileSync(new URL('../public/assets/alerts/5minutos_escsb.mp3', import.meta.url))
   const png = Buffer.from(
     '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63fcffff3f030005fe02fea72d4c5b0000000049454e44ae426082',
     'hex',
@@ -37,6 +40,7 @@ function makeSlja(): string {
     { level: 0 },
   )
   const dir = mkdtempSync(join(tmpdir(), 'slja-e2e-'))
+  fixtureDirs.push(dir)
   const path = join(dir, 'Hino Probe E2E.slja')
   writeFileSync(path, zipped)
   return path
@@ -82,13 +86,16 @@ test('importa .slja sem login, preenche título e toca no player', async ({ page
   // salvar
   await page.locator('.moment-dialog button[type=submit]').click()
 
-  // tocar: botão "Cantado" do item
+  await page.reload()
+
+  // tocar após recarregar: comprova persistência dos metadados e mídia local.
+  // botão "Cantado" do item
   const row = page.locator('.liturgy-item', { hasText: /Hino Probe E2E/i }).first()
   await expect(row).toBeVisible({ timeout: 5_000 })
   await row.getByRole('button', { name: 'Cantado' }).click()
 
   // player tocando (sem "Não foi possível iniciar")
-  await page.waitForTimeout(6000)
+  await expect(page.locator('.media-player-pill__play')).toHaveAttribute('aria-label', /pausar/i, { timeout: 10_000 })
   const body = await page.locator('body').innerText()
   expect(body).not.toContain('Não foi possível iniciar')
   await expect(page.locator('body')).toContainText(/Hino Probe E2E/i)
