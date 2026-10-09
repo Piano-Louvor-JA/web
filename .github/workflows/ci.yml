@@ -112,6 +112,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Valida o seletor e a métrica de mutação
+        run: node --test scripts/__tests__/mutation-diff.test.mjs
       - name: Stryker incremental só nos arquivos do diff
         run: node scripts/mutation-diff.mjs --base origin/${{ github.base_ref }}
       - name: Salva relatório como artifact

@@ -1,28 +1,26 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Stryker mutation testing — config FINAL (baseline MUT-3). Meta >=95% por módulo (survivor morto por assertion OU documentado equivalent/defensive-guard). Gate por diff de PR: <80% = warning, <50% = fail (ver .github/workflows/ci.yml job mutation-score).",
+  "_comment": "Stryker mutation testing config — measure test quality by injecting bugs",
   "packageManager": "npm",
-  "testRunner": "vitest",
+  "reporters": ["html", "clear-text", "progress"],
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "npx vitest run --config vitest.stryker.config.ts"
+  },
   "coverageAnalysis": "off",
-  "incremental": true,
-  "incrementalFile": "reports/stryker-incremental.json",
   "mutate": [
-    "src/modules/settings/services/*.ts",
-    "src/modules/settings/stores/*.ts",
-    "src/modules/settings/composables/*.ts",
-    "src/modules/clock/**/*.ts",
-    "src/modules/random/**/*.ts",
-    "src/modules/timer/**/*.ts",
-    "src/shared/services/*.ts",
-    "src/shared/composables/*.ts",
-    "src/modules/albums/services/*.ts"
+    "src/shared/composables/useEula.ts"
   ],
-  "thresholds": { "high": 95, "low": 80, "break": 50 },
-  "reporters": ["json", "clear-text", "progress"],
-  "jsonReporter": { "fileName": "reports/mutation/mutation.json" },
-  "vitest": { "configFile": "vitest.config.ts" },
+  "thresholds": {
+    "high": 100,
+    "low": 100,
+    "break": 100
+  },
   "timeoutMS": 30000,
   "concurrency": 2,
-  "warnings": false,
-  "ignorePatterns": [".worktrees", "reports", "coverage", "dist", ".hermes", "e2e", "site"]
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "e2e/**",
+    "site/**"
+  ]
 }

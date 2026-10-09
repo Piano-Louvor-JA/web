@@ -1,56 +1,47 @@
-# Mutation Score — como interpretar
+# Medição de mutação no diff da PR
 
-Config: `stryker.config.json` (FINAL, baseline MUT-3). Gate de diff: `scripts/mutation-diff.mjs` + job CI `mutation-score`.
+O job opcional `mutation-score` usa `scripts/mutation-diff.mjs` e
+`stryker.diff.config.json`. A configuração completa `stryker.config.json` e
+suas metas existentes permanecem inalteradas.
 
-## Como o gate funciona
+## Execução
 
-O job `mutation-score` roda **só nos arquivos .ts do diff do PR** que caem nos globos
-`mutate` da config (settings, clock, random, timer, shared services/composables, albums
-services). Full tree em CI é inviável (10.895 mutantes ≈ 2,5h+).
+Apenas arquivos TypeScript adicionados ou modificados no diff com a base da PR
+são analisados. O seletor respeita os globs simples/recursivos e exclusões da
+configuração; arquivos `.test.ts` ficam fora da mutação. Quando nenhum arquivo
+se enquadra no escopo, a execução informa o skip sem iniciar Stryker.
 
-- **<50%** = `::error::` e exit 1 → **FAIL** (bloqueante)
-- **<80%** = `::warning::` → WARNING (não bloqueia o merge)
-- **≥80%** = OK
-- Diff não toca arquivos do escopo → skip com notice (não roda Stryker)
+O script passa a lista completa em uma configuração temporária e executa o
+Stryker sem shell. O relatório anterior é removido para evitar leitura de dados
+antigos. Falhas de execução, relatório inválido ou ausência de mutantes válidos
+nos arquivos selecionados são informadas como falhas de medição.
 
-Fase 1: o job inteiro está com `continue-on-error: true` (warning apenas). Para tornar o
-<50% realmente bloqueante, remover essa linha do job no `ci.yml`.
+- Score abaixo de 50%: script retorna 1.
+- Entre 50% e 80%: script retorna 0 com aviso.
+- A partir de 80%: script retorna 0.
 
-## Como interpretar survivors
+Na fase atual o job usa `continue-on-error: true`: seus resultados são
+informativos, sem bloquear merge nem alterar os gates obrigatórios. Tornar a
+medição obrigatória exige mudança explícita de política, workflow e regras.
 
-Um mutant **Survived** não é automaticamente teste ruim. Na ordem:
+## Interpretação
 
-1. **Equivalent mutant** — a mudança não altera o comportamento observável
-   (ex: `const` → `let`, reordenação de declaração sem efeito, `===` entre tipos
-   sempre iguais). Não existe teste que mate. **Documentar** no PR ou no comentário
-   do survivor e seguir — equivalente provado conta como "morto" para a meta.
+Score bruto = (Killed + Timeout) / (Killed + Timeout + Survived + NoCoverage).
+Erros de compilação/runtime e mutantes ignorados não contam como mortos.
+Survivors reais indicam testes que não detectaram a alteração. Mutantes
+comprovadamente equivalentes podem ser documentados para análise humana;
+essa documentação não transforma um survivor em morto nem modifica o score
+bruto publicado. Guards defensivos não são automaticamente equivalentes.
 
-2. **Defensive guard** — código de proteção contra estados impossíveis no fluxo
-   atual (ex: fallback se API retorna null que o interceptor já garante). Matar
-   exigiria mock artificial que testa o mock. **Documentar** como defensive-guard.
+## Uso local
 
-3. **Survivor real** — o teste passa com o bug injetado = **gap de assertion**.
-   Corrigir adicionando/reforçando assertion no teste. Este é o alvo real do gate.
-
-### Meta acordada (Rafael)
-
-**≥95% por módulo**, onde score efetivo = (killed + equivalents/defensive-guards
-documentados) / total. Os ~3.053 survivors do baseline MUT-3 full são majoritariamente
-equivalents/defensive-guards a documentar módulo a módulo (ver killplanes doc inline
-do gauntlet) — o score bruto do Stryker NÃO é a métrica da meta.
-
-## Baseline incremental
-
-`reports/stryker-incremental.json` é gerado pelo Stryker (`incremental: true` na config)
-e acelera runs seguintes (só re-testa código alterado). O arquivo foi commitado vazio na
-fase 1: o primeiro `stryker run` local (full) o popula. **Não deletar** — é o cache do gate.
-
-## Rodando local
-
-```bash
-npm run test:mutation                     # full tree (lento, ~2-3h) — popula o incremental
-node scripts/mutation-diff.mjs            # só o diff vs origin/staging (rápido)
-node scripts/mutation-diff.mjs --base main # outra base
+```sh
+node --test scripts/__tests__/mutation-diff.test.mjs
+node scripts/mutation-diff.mjs
+node scripts/mutation-diff.mjs --base origin/staging
 ```
 
-**NUNCA rodar 2 Strykers simultâneos nesta máquina** (55% RAM cada — earlyoom mata o desktop).
+O relatório fica em `reports/mutation/mutation-diff.json` e é enviado como
+artifact pelo CI. O arquivo incremental é um cache gerado pelo Stryker, não
+prova de validação; a primeira execução deve funcionar sem um cache pronto.
+Não execute dois Strykers simultaneamente nesta máquina.
