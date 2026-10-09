@@ -1,6 +1,9 @@
 export default {
   countdown: {
     title: 'Temporizador',
+    playAudio: 'Reproducir alertas',
+    pauseAudio: 'Pausar alertas',
+    audioAppliesToProjection: 'El audio suena en la proyección',
     moduleConfig: 'Configuración del módulo',
     config: 'Personalizar',
     configTitle: 'Configuración del Contador',
