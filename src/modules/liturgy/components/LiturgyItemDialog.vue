@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { importSljaAsCustomMusic } from '../services/import-slja'
+import { getAuthSession } from '@modules/auth/services/auth-client'
+import { appConfirm } from '@shared/composables/useAppConfirm'
 
 import {
   DEFAULT_MOMENT_DURATION_MS,
@@ -66,7 +68,20 @@ async function onImportSljaFile(event: Event): Promise<void> {
   sljaMessage.value = ''
   sljaError.value = false
   try {
-    const imported = await importSljaAsCustomMusic(file)
+    // web#187 (paridade app): logado, pergunta ANTES de subir pro banco —
+    // recusou = grava só local, sem erro. Deslogado nunca pergunta.
+    let localOnly = false
+    const wantsUpload = !!getAuthSession()
+    if (wantsUpload) {
+      const ok = await appConfirm({
+        title: t('liturgy.slja.uploadTitle', { name: file.name.replace(/\.slja$/i, '') }),
+        message: t('liturgy.slja.uploadMessage'),
+        confirmLabel: t('liturgy.slja.uploadConfirm'),
+        cancelLabel: t('liturgy.slja.uploadCancel'),
+      })
+      localOnly = !ok
+    }
+    const imported = await importSljaAsCustomMusic(file, { localOnly })
     // web#174: recarrega o catálogo ANTES do pick — sem isso o id novo
     // (900M+ local / 1M+ custom) não existe em musicList, selectedMusic
     // fica null e o submit é bloqueado (música "não toca").

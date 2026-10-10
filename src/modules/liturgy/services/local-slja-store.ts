@@ -92,6 +92,10 @@ export async function putLocalAsset(
   }, 0)
 }
 
+export async function getLocalAsset(assetId: number): Promise<LocalSljaAsset | undefined> {
+  return withStore<LocalSljaAsset | undefined>(STORE_ASSETS, 'readonly', store => store.get(assetId))
+}
+
 export async function getLocalAssetUrl(assetId: number): Promise<string | null> {
   try {
     const asset = await withStore<LocalSljaAsset | undefined>(

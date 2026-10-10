@@ -468,8 +468,13 @@ export async function createCustomCollection(
 
 export async function createCustomMusic(
   collectionId: number,
-  input: { name?: string; lyric?: string; auxiliary_lyric?: string },
-): Promise<{ id: number } | null> {
+  input: {
+    name?: string
+    lyric?: string
+    auxiliary_lyric?: string
+    client_uuid?: string
+  },
+): Promise<{ id: number; existed?: boolean } | null> {
   try {
     const response = await fetch(
       `${customBaseUrl()}/collections/${collectionId}/musics`,
@@ -481,7 +486,9 @@ export async function createCustomMusic(
     )
     if (!response.ok) return null
     const json = (await response.json()) as { id_music: number }
-    return { id: json.id_music }
+    // Dedup (web#187): 200 = já existia (mesmo client_uuid, mesmo dono) e a
+    // API retornou o registro existente; 201 = criado agora.
+    return { id: json.id_music, existed: response.status === 200 }
   } catch {
     return null
   }
