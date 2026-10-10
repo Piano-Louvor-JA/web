@@ -1,46 +1,31 @@
-/**
- * Identidade de plataforma do cliente — padrão da org (X-Client-Platform).
- *
- * Valores: web (PWA/navegador) — o web roda só no navegador.
- * A API usa isso pra telemetria por tipo de acesso (app/web/apk/palco).
- *
- * Instalação: este módulo faz patch do fetch UMA vez no boot (main.ts)
- * e injeta os headers em toda request same-origin+z-api. Sem dependências.
- */
-
+/** Identificação do web somente na origem local e nas APIs configuradas. */
 export const CLIENT_PLATFORM = 'web'
-
-/** Versão do build (injectada pelo Vite do package.json). */
-export const CLIENT_VERSION: string =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_VERSION) || ''
-
-const HEADER_PLATFORM = 'X-Client-Platform'
-const HEADER_VERSION = 'X-Client-Version'
-
+export const CLIENT_VERSION: string = import.meta.env.VITE_APP_VERSION || (typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '')
 let patched = false
 
 export function installClientPlatformHeader(): void {
-  if (patched || typeof globalThis.fetch !== 'function') return
+  if (patched || typeof globalThis.fetch !== 'function' || typeof location === 'undefined') return
   patched = true
   const originalFetch = globalThis.fetch.bind(globalThis)
+  const origins = new Set([location.origin, 'https://api.louvorja.com.br'])
+  const configured = [import.meta.env.VITE_URL_DATABASE, import.meta.env.VITE_PALCO_API_URL, ...(import.meta.env.VITE_API_FALLBACK_URLS || '').split(',')]
+  for (const value of configured) {
+    if (!value?.trim()) continue
+    try { origins.add(new URL(value.trim(), location.href).origin) } catch { /* Configuração inválida não amplia o escopo. */ }
+  }
   globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    let next = init
     try {
-      const url =
-        typeof input === 'string'
-          ? input
-          : input instanceof URL
-            ? input.href
-            : input.url
-      // Só marca requests pra APIs http(s) — ignora blob:, data:, etc.
-      if (!/^https?:\/\//i.test(url)) {
-        return originalFetch(input as RequestInfo, init)
+      const request = input instanceof Request ? input : undefined
+      const url = new URL(request ? request.url : String(input), location.href)
+      const mode = init?.mode ?? request?.mode
+      if (['http:', 'https:'].includes(url.protocol) && origins.has(url.origin) && mode !== 'no-cors') {
+        const headers = new Headers(init?.headers ?? request?.headers)
+        if (!headers.has('X-Client-Platform')) headers.set('X-Client-Platform', CLIENT_PLATFORM)
+        if (CLIENT_VERSION && !headers.has('X-Client-Version')) headers.set('X-Client-Version', CLIENT_VERSION)
+        next = { ...init, headers }
       }
-      const headers = new Headers(init?.headers || (input instanceof Request ? input.headers : undefined))
-      if (!headers.has(HEADER_PLATFORM)) headers.set(HEADER_PLATFORM, CLIENT_PLATFORM)
-      if (CLIENT_VERSION && !headers.has(HEADER_VERSION)) headers.set(HEADER_VERSION, CLIENT_VERSION)
-      return originalFetch(input as RequestInfo, { ...init, headers })
-    } catch {
-      return originalFetch(input as RequestInfo, init)
-    }
+    } catch { /* Preserva a semântica do fetch para entradas não normalizáveis. */ }
+    return originalFetch(input, next)
   }
 }
