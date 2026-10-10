@@ -5,6 +5,7 @@ import type {
 
 import { loadMediaTrack } from './media-catalog'
 import { resolveRemoteFileUrl } from './media-audio'
+import { isLocalSljaMusicId } from '@modules/liturgy/services/local-slja-store'
 
 /**
  * Catálogo de músicas customizadas (Minhas Coletâneas) via API /v1/custom
@@ -467,8 +468,13 @@ export async function createCustomCollection(
 
 export async function createCustomMusic(
   collectionId: number,
-  input: { name?: string; lyric?: string; auxiliary_lyric?: string },
-): Promise<{ id: number } | null> {
+  input: {
+    name?: string
+    lyric?: string
+    auxiliary_lyric?: string
+    client_uuid?: string
+  },
+): Promise<{ id: number; existed?: boolean } | null> {
   try {
     const response = await fetch(
       `${customBaseUrl()}/collections/${collectionId}/musics`,
@@ -480,7 +486,9 @@ export async function createCustomMusic(
     )
     if (!response.ok) return null
     const json = (await response.json()) as { id_music: number }
-    return { id: json.id_music }
+    // Dedup (web#187): 200 = já existia (mesmo client_uuid, mesmo dono) e a
+    // API retornou o registro existente; 201 = criado agora.
+    return { id: json.id_music, existed: response.status === 200 }
   } catch {
     return null
   }
@@ -656,6 +664,14 @@ export async function deleteCustomLyric(lyricId: number): Promise<boolean> {
 export async function resolveMediaTrack(
   musicId: number,
 ): Promise<MediaTrackRecord | null> {
+  // web#174: ORDEM IMPORTA — local (900M+) checa ANTES de custom (1M+),
+  // pois todo id >= 1M também satisfaz o guard de custom.
+  if (isLocalSljaMusicId(musicId)) {
+    const { loadLocalSljaTrack } = await import(
+      '@modules/liturgy/services/local-slja-track'
+    )
+    return loadLocalSljaTrack(musicId)
+  }
   if (isCustomMusicId(musicId)) {
     return loadCustomMusicTrack(fromCustomMusicId(musicId))
   }

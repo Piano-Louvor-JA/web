@@ -6,6 +6,7 @@ import EulaDialog from '@shared/components/EulaDialog.vue'
 import { useEula } from '@shared/composables/useEula'
 import { handleRedirectResult } from '@modules/auth/services/firebase-client'
 import { startOutboxTriggers } from '@modules/sync/services/sync-outbox-service'
+import { startSljaMigrationWatch } from '@modules/liturgy/services/local-slja-migration'
 
 const { isAccepted } = useEula()
 
@@ -24,6 +25,8 @@ const showApp = computed(() => isAccepted.value || isPopupWindow.value)
 
 onMounted(async () => {
   const result = await handleRedirectResult()
+  // web#187: watcher de login — oferta de migração dos .slja locais (1x/sessão)
+  startSljaMigrationWatch()
   if (result) {
     // Atualiza o estado reativo (localStorage sozinho não dispara reatividade)
     const { authSession } = await import('@modules/auth/composables/useAuth')
