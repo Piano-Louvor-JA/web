@@ -85,14 +85,12 @@ export default {
     scheduleEndOnly: 'End only',
     scheduleStartEnd: 'Start and end',
   },
-  media: {
-    slja: {
-      uploadTitle: 'Upload "{name}" to your account?',
-      uploadMessage: 'The file is uploaded to your account once (it never duplicates). If you prefer, it stays saved on this device only.',
-      uploadConfirm: 'Upload to account',
-      uploadCancel: 'This device only',
-      uploadDeclined: '"{name}" was not uploaded — nothing was saved to the account.',
-      importedExisting: 'Imported: {name} (already in your account — no duplicate)',
+  sync: {
+    downloadQueue: {
+      title: 'Downloads',
+      clearFinished: 'Clear finished',
+      retry: 'Retry',
+      cancel: 'Cancel',
     },
   },
 }

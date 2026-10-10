@@ -91,14 +91,12 @@ export default {
     scheduleEndOnly: 'Apenas término',
     scheduleStartEnd: 'Início e término',
   },
-  media: {
-    slja: {
-      uploadTitle: 'Subir "{name}" pra sua conta?',
-      uploadMessage: 'O arquivo sobe uma única vez pra sua conta (nunca duplica). Se preferir, fica salvo só neste dispositivo.',
-      uploadConfirm: 'Subir pra conta',
-      uploadCancel: 'Só neste dispositivo',
-      uploadDeclined: '"{name}" não foi enviado — nada foi salvo na conta.',
-      importedExisting: 'Importado: {name} (já existia na sua conta — sem duplicar)',
+  sync: {
+    downloadQueue: {
+      title: 'Downloads',
+      clearFinished: 'Limpar concluídos',
+      retry: 'Tentar de novo',
+      cancel: 'Cancelar',
     },
   },
 }

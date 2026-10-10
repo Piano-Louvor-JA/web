@@ -30,6 +30,8 @@ import {
 } from '../services/custom-catalog'
 import type { CustomCollectionSummary, CustomMusicSummary } from '../services/custom-catalog'
 import { buildSlja, parseSlja } from '../../../shared/services/slja'
+import { importSljaAsCustomMusic } from '@modules/liturgy/services/import-slja'
+import { loadCustomMusicTrack } from '../services/custom-catalog'
 import { sha256Hex, sha256ToUuid } from '../../../shared/services/content-hash'
 import { appConfirm } from '@shared/composables/useAppConfirm'
 import { useI18n } from 'vue-i18n'
@@ -443,6 +445,23 @@ async function onImportFile(event: Event): Promise<void> {
       ? file.name.replace(/\.slja$/i, '')
       : archive.title.trim()
 
+    // Regra de produto (Rafael, web#187 / app#336 fase 3): pro banco o
+    // arquivo sobe UM (dedup por client_uuid) e SÓ com consentimento.
+    // Recusou = import não sobe (mensagem clara, sem erro) — sem fricção.
+    const clientUuid = sha256ToUuid(sljaHash)
+    const approved = await appConfirm({
+      title: t('media.slja.uploadTitle', { name: file.name }),
+      message: t('media.slja.uploadMessage'),
+      confirmLabel: t('media.slja.uploadConfirm'),
+      cancelLabel: t('media.slja.uploadCancel'),
+    })
+    if (!approved) {
+      await importSljaAsCustomMusic(file, { localOnly: true })
+      notify(t('media.slja.uploadDeclined', { name: file.name }))
+      return
+    }
+
+
     // Garante coletânea de importação: reaproveita a primeira "Importações .slja"
     // existente; só cria se ainda não houver nenhuma.
     let collectionId = selectedCollectionId.value
@@ -462,21 +481,6 @@ async function onImportFile(event: Event): Promise<void> {
       selectedCollectionId.value = collectionId
     }
 
-    // Regra de produto (Rafael, web#187 / app#336 fase 3): pro banco o
-    // arquivo sobe UM (dedup por client_uuid) e SÓ com consentimento.
-    // Recusou = import não sobe (mensagem clara, sem erro) — sem fricção.
-    const clientUuid = sha256ToUuid(sljaHash)
-    const approved = await appConfirm({
-      title: t('media.slja.uploadTitle', { name: file.name }),
-      message: t('media.slja.uploadMessage'),
-      confirmLabel: t('media.slja.uploadConfirm'),
-      cancelLabel: t('media.slja.uploadCancel'),
-    })
-    if (!approved) {
-      notify(t('media.slja.uploadDeclined', { name: file.name }))
-      return
-    }
-
     const createdMusic = await createCustomMusic(collectionId, {
       name,
       client_uuid: clientUuid,
@@ -489,6 +493,11 @@ async function onImportFile(event: Event): Promise<void> {
     // Já existia (re-import do mesmo .slja): mídias já estão vinculadas —
     // pular uploads e selecionar a música existente (no-op na API).
     if (createdMusic.existed) {
+      const existing = await loadCustomMusicTrack(createdMusic.id)
+      const expectedSlides = archive.slides.filter(slide => slide.lyric.trim()).length
+      if (!existing || existing.lyrics.length !== expectedSlides || (archive.audio && !existing.audioUrl)) {
+        throw new Error('SLJA_EXISTING_UPLOAD_INCOMPLETE')
+      }
       selectedMusicId.value = createdMusic.id
       await onSelectMusic(createdMusic.id)
       notify(t('media.slja.importedExisting', { name: file.name }))
@@ -541,7 +550,9 @@ async function onImportFile(event: Event): Promise<void> {
           a.path.toLowerCase().includes(coverImageName),
       )
       if (coverMatch) {
-        await updateCustomMusic(createdMusic.id, { id_file_image: coverMatch.idFile })
+        if (!await updateCustomMusic(createdMusic.id, { id_file_image: coverMatch.idFile })) {
+          throw new Error('SLJA_COVER_LINK_FAILED')
+        }
       }
     }
 
