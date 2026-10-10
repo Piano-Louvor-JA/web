@@ -89,6 +89,9 @@ export function enqueueOperatorState(
     deleted_at: null,
   }
   writeOutbox(box)
+  if (namespace === 'liturgy' && key === 'week') markLocalLiturgyPushed(box[k].updated_at)
+  if (namespace === 'scheduled' && key === 'items') markLocalScheduledPushed(box[k].updated_at)
+  if (namespace === 'prefs' && key === 'values') markLocalPrefsPushed(box[k].updated_at)
 }
 
 let outboxFlushTimer: ReturnType<typeof setTimeout> | null = null
@@ -129,7 +132,6 @@ export type OperatorStateItem = {
 export async function flushOutbox(): Promise<OperatorStateItem[] | null> {
   const box = readOutbox()
   const entries = Object.values(box)
-  if (entries.length === 0) return null
   if (!hasRealSession()) return null
 
   const session = getAuthSession()
@@ -160,6 +162,8 @@ export async function flushOutbox(): Promise<OperatorStateItem[] | null> {
     return null
   }
 
+  if (getAuthSession()?.token !== session?.token) return null
+
   const json = (await response.json()) as {
     operator_state?: Array<{
       client_uuid: string
@@ -172,23 +176,13 @@ export async function flushOutbox(): Promise<OperatorStateItem[] | null> {
   }
 
   // enviado com sucesso: limpa SOMENTE os itens que foram no batch
-  const sent = new Set(entries.map((e) => e.client_uuid))
+  const sent = new Map(entries.map((e) => [coalesceKey(e.namespace, e.key), JSON.stringify(e)]))
   const rest = readOutbox()
   for (const [k, entry] of Object.entries(rest)) {
-    if (sent.has(entry.client_uuid)) delete rest[k]
+    if (sent.get(k) === JSON.stringify(entry)) delete rest[k]
   }
   writeOutbox(rest)
 
-  // registra o instante do push (base do LWW) e aplica o pull do servidor
-  const newestLocal = entries.reduce(
-    (max, e) => Math.max(max, e.updated_at),
-    Date.now(),
-  )
-  // LWW por namespace: cada produtor marca o SEU relógio (se veio no batch)
-  const names = new Set(entries.map((e) => `${e.namespace}::${e.key}`))
-  if (names.has('liturgy::week')) markLocalLiturgyPushed(newestLocal)
-  if (names.has('scheduled::items')) markLocalScheduledPushed(newestLocal)
-  if (names.has('prefs::values')) markLocalPrefsPushed(newestLocal)
   const serverItems = json.operator_state ?? []
   applyOperatorState(serverItems)
 
@@ -206,13 +200,21 @@ export function startOutboxTriggers(): () => void {
   // user-preferences; só keys da whitelist vão pro outbox (lote 'prefs::values').
   registerPrefsChangedHook((key) => {
     if (!SYNCABLE_PREF_KEYS.has(key)) return
-    enqueueOperatorState('prefs', 'values', {
-      [key]: getUserPreference(key),
-    })
+    const preferences: Record<string, unknown> = {}
+    for (const allowed of SYNCABLE_PREF_KEYS) {
+      const value = getUserPreference(allowed)
+      if (value !== null) preferences[allowed] = value
+    }
+    enqueueOperatorState('prefs', 'values', preferences)
     scheduleOutboxFlush()
   })
 
   // pull no boot (rede disponível): puxa o estado da conta
   onOnline()
-  return () => window.removeEventListener('online', onOnline)
+  return () => {
+    window.removeEventListener('online', onOnline)
+    registerPrefsChangedHook(null)
+    if (outboxFlushTimer) clearTimeout(outboxFlushTimer)
+    outboxFlushTimer = null
+  }
 }

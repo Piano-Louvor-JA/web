@@ -1,4 +1,4 @@
-import { setUserPreference, getUserPreference } from '@shared/services/user-preferences'
+import { setUserPreference, getUserPreference, withoutPreferenceSync } from '@shared/services/user-preferences'
 import { USER_PREFERENCE_KEYS } from '@shared/constants/storage-keys'
 
 /**
@@ -76,6 +76,10 @@ function isValidScheduledState(value: unknown): value is Record<string, unknown>
  * foi aplicado (e o estado local re-persistido).
  */
 export function applyOperatorState(items: OperatorStateItem[]): boolean {
+  return withoutPreferenceSync(() => applyItems(items))
+}
+
+function applyItems(items: OperatorStateItem[]): boolean {
   let applied = false
 
   for (const item of items) {

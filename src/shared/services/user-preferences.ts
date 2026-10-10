@@ -8,9 +8,17 @@ export type UserPreferences = Record<string, unknown>
  * chamado a CADA setUserPreference de key sincronizável. Mantém shared
  * sem dependência de modules (inversão).
  */
+let remoteApplyDepth = 0
+
+/** Aplicar dados recebidos não deve gerar uma nova escrita remota. */
+export function withoutPreferenceSync<T>(fn: () => T): T {
+  remoteApplyDepth++
+  try { return fn() } finally { remoteApplyDepth-- }
+}
+
 let prefsChangedHook: ((key: string) => void) | null = null
 
-export function registerPrefsChangedHook(fn: (key: string) => void): void {
+export function registerPrefsChangedHook(fn: ((key: string) => void) | null): void {
   prefsChangedHook = fn
 }
 
@@ -27,7 +35,7 @@ export function setUserPreference(key: string, value: unknown): UserPreferences 
   const next = { ...current, [key]: value }
   saveUserPreferences(next)
   try {
-    prefsChangedHook?.(key)
+    if (!remoteApplyDepth) prefsChangedHook?.(key)
   } catch {
     // hook de sync nunca bloqueia o fluxo local
   }

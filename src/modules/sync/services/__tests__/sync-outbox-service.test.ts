@@ -151,4 +151,53 @@ describe('outbox do estado do operador (web#188)', () => {
       vi.useRealTimers()
     }
   })
+  it('preserva edição feita enquanto o envio aguarda resposta', async () => {
+    sessionState.token = 'tok'
+    let complete!: (r: Response) => void
+    fetchMock.mockImplementation(() => new Promise<Response>(resolve => { complete = resolve }))
+    enqueueOperatorState('scheduled', 'items', { categories: [], items: ['antes'] })
+    const pending = flushOutbox()
+    enqueueOperatorState('scheduled', 'items', { categories: [], items: ['depois'] })
+    complete(new Response(JSON.stringify({ operator_state: [] }), { status: 200 }))
+    await pending
+    expect(outboxCount()).toBe(1)
+    expect(lsStore.get('pianolouvorja:sync:outbox')).toContain('depois')
+  })
+
+  it('fila vazia com sessão consulta o estado remoto', async () => {
+    sessionState.token = 'tok'
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ operator_state: [] }), { status: 200 }))
+    await flushOutbox()
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).operator_state).toEqual([])
+  })
+
+  it('não aplica resposta de uma sessão que já foi encerrada', async () => {
+    sessionState.token = 'tok'
+    fetchMock.mockImplementation(async () => {
+      sessionState.token = null
+      return new Response(JSON.stringify({ operator_state: [] }), { status: 200 })
+    })
+    enqueueOperatorState('prefs', 'values', { theme: 'dark' })
+    expect(await flushOutbox()).toBeNull()
+    expect(outboxCount()).toBe(1)
+  })
+
+  it('agrupa preferências e não reenvia dados recebidos', async () => {
+    const { startOutboxTriggers } = await import('../sync-outbox-service')
+    const { setUserPreference } = await import('@shared/services/user-preferences')
+    const { applyOperatorState } = await import('../operator-state-apply')
+    vi.useFakeTimers()
+    const stop = startOutboxTriggers()
+    try {
+      setUserPreference('theme', 'dark')
+      setUserPreference('language', 'en')
+      const box = JSON.parse(lsStore.get('pianolouvorja:sync:outbox')!)
+      expect(JSON.parse(box['prefs::values'].value_json)).toMatchObject({ theme: 'dark', language: 'en' })
+      clearOutbox()
+      applyOperatorState([{ client_uuid: 'remote', namespace: 'prefs', key: 'values',
+        value_json: JSON.stringify({ theme: 'light' }), updated_at_ms: Date.now() + 10000, deleted_at: null }])
+      expect(outboxCount()).toBe(0)
+    } finally { stop(); vi.clearAllTimers(); vi.useRealTimers() }
+  })
+
 })
