@@ -20,11 +20,11 @@ vi.stubGlobal('localStorage', {
   clear: () => void lsStore.clear(),
 })
 
-const sessionState = { token: null as string | null }
+const sessionState = { token: null as string | null, userId: 42 }
 vi.doMock('@modules/auth/services/auth-client', () => ({
   getAuthSession: () =>
     sessionState.token
-      ? { token: sessionState.token, user: { id_user: 42, email: 'r@x', displayName: 'R' } }
+      ? { token: sessionState.token, user: { id_user: sessionState.userId, email: 'r@x', displayName: 'R' } }
       : null,
 }))
 
@@ -44,6 +44,7 @@ beforeEach(async () => {
   lsStore.clear()
   fetchMock.mockReset()
   sessionState.token = null
+  sessionState.userId = 42
   clearOutbox()
 })
 
@@ -157,6 +158,7 @@ describe('outbox do estado do operador (web#188)', () => {
     fetchMock.mockImplementation(() => new Promise<Response>(resolve => { complete = resolve }))
     enqueueOperatorState('scheduled', 'items', { categories: [], items: ['antes'] })
     const pending = flushOutbox()
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
     enqueueOperatorState('scheduled', 'items', { categories: [], items: ['depois'] })
     complete(new Response(JSON.stringify({ operator_state: [] }), { status: 200 }))
     await pending
@@ -198,6 +200,22 @@ describe('outbox do estado do operador (web#188)', () => {
         value_json: JSON.stringify({ theme: 'light' }), updated_at_ms: Date.now() + 10000, deleted_at: null }])
       expect(outboxCount()).toBe(0)
     } finally { stop(); vi.clearAllTimers(); vi.useRealTimers() }
+  })
+
+  it('dados compartilhados usam identidade remota diferente em cada conta', async () => {
+    sessionState.token = 'conta-42'
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ operator_state: [] }), { status: 200 }))
+    enqueueOperatorState('prefs', 'values', { theme: 'dark' })
+    await flushOutbox()
+    const first = JSON.parse(fetchMock.mock.calls[0][1].body).operator_state[0]
+    sessionState.userId = 43
+    sessionState.token = 'conta-43'
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ operator_state: [] }), { status: 200 }))
+    enqueueOperatorState('prefs', 'values', { theme: 'dark' })
+    await flushOutbox()
+    const second = JSON.parse(fetchMock.mock.calls[1][1].body).operator_state[0]
+    expect(first.client_uuid).not.toBe(second.client_uuid)
+    expect(first.value_json).toBe(second.value_json)
   })
 
 })

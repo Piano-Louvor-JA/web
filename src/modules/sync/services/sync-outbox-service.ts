@@ -1,3 +1,4 @@
+import { sha256Hex, sha256ToUuid } from '@shared/services/content-hash'
 import { getAuthSession } from '@modules/auth/services/auth-client'
 import { getUserPreference, registerPrefsChangedHook } from '@shared/services/user-preferences'
 import {
@@ -140,6 +141,15 @@ export async function flushOutbox(): Promise<OperatorStateItem[] | null> {
     import.meta.env.VITE_PALCO_API_URL as string | undefined
   )?.replace(/\/+$/, '') ?? ''
 
+  // Os dados são compartilhados no dispositivo, mas a identidade remota é da conta.
+  const outgoing = await Promise.all(entries.map(async (entry) => ({
+    ...entry,
+    client_uuid: sha256ToUuid(await sha256Hex(new TextEncoder().encode(
+      `operator-state:${session!.user.id_user}:${entry.namespace}:${entry.key}`,
+    ))),
+  })))
+  if (getAuthSession()?.token !== session?.token) return null
+
   let response: Response
   try {
     response = await fetch(`${base}/v1/custom/sync`, {
@@ -150,7 +160,7 @@ export async function flushOutbox(): Promise<OperatorStateItem[] | null> {
       },
       body: JSON.stringify({
         collections: [],
-        operator_state: entries,
+        operator_state: outgoing,
       }),
     })
   } catch {
