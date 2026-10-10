@@ -17,6 +17,7 @@ import { useMediaPlayer } from '@modules/media/composables/useMediaPlayer'
 import { useRandomStore } from '@modules/random/stores/useRandomStore'
 import { useTimerStore } from '@modules/timer/stores/useTimerStore'
 import { mainNavRoutes } from '@shared/constants/navigation'
+import DownloadQueueIndicator from '@modules/sync/components/DownloadQueueIndicator.vue'
 import PopupScreenControls from '@shared/components/PopupScreenControls.vue'
 import UiZoomControls from '@shared/components/UiZoomControls.vue'
 import { useOperatorEscapeToCloseAllProjections } from '@shared/composables/useOperatorEscapeToCloseAllProjections'
@@ -294,6 +295,9 @@ function viewKey(viewRoute: typeof route) {
         </span>
       </div>
       <div class="app-shell__header-end">
+        <!-- app#338 paridade app: fila de downloads com feedback visual -->
+        <DownloadQueueIndicator v-if="!smAndDown" />
+
         <!-- Zoom + projeção + multi-telas: desktop only (mesmo critério smAndDown do dock) -->
         <UiZoomControls v-if="!smAndDown" />
         <div
