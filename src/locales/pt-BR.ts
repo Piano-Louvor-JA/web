@@ -91,4 +91,12 @@ export default {
     scheduleEndOnly: 'Apenas término',
     scheduleStartEnd: 'Início e término',
   },
+  sync: {
+    downloadQueue: {
+      title: 'Downloads',
+      clearFinished: 'Limpar concluídos',
+      retry: 'Tentar de novo',
+      cancel: 'Cancelar',
+    },
+  },
 }
