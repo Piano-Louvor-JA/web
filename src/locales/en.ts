@@ -85,4 +85,12 @@ export default {
     scheduleEndOnly: 'End only',
     scheduleStartEnd: 'Start and end',
   },
+  sync: {
+    downloadQueue: {
+      title: 'Downloads',
+      clearFinished: 'Clear finished',
+      retry: 'Retry',
+      cancel: 'Cancel',
+    },
+  },
 }

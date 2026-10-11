@@ -53,6 +53,8 @@ const {
   clearSavedMarks,
   toggleProjection,
   clearProjection,
+  audioPaused,
+  setAudioPaused,
 } = useCountdownFeature()
 
 function goBack() {
@@ -214,6 +216,29 @@ const effectiveConfig = computed(() => {
         </h1>
       </div>
       <PopupRouteSelect module="countdown" compact />
+
+      <!-- app#338/#339 paridade app: controles de áudio do operador -->
+      <div
+        v-if="effectiveConfig.mode === 'sabbath'"
+        class="countdown-view__audio-controls"
+        data-testid="operator-audio-controls"
+      >
+        <button
+          type="button"
+          class="countdown-view__audio-btn"
+          :class="{ 'countdown-view__audio-btn--toggle-playing': !audioPaused }"
+          :aria-label="audioPaused ? t('countdown.playAudio') : t('countdown.pauseAudio')"
+          :title="audioPaused ? t('countdown.playAudio') : t('countdown.pauseAudio')"
+          @click="setAudioPaused(!audioPaused)"
+        >
+          <i
+            :class="audioPaused ? 'ti ti-player-play' : 'ti ti-player-pause'"
+            aria-hidden="true"
+          />
+        </button>
+        <span class="countdown-view__audio-hint">{{ t('countdown.audioAppliesToProjection') }}</span>
+      </div>
+
       <label
         class="countdown-view__mode-switch"
         :title="t('countdown.modeHint')"
@@ -1012,5 +1037,40 @@ const effectiveConfig = computed(() => {
     flex-direction: column;
     align-items: center;
   }
+}
+
+/* app#338/#339 paridade app: controles de áudio do operador */
+.countdown-view__audio-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.countdown-view__audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-color-on-surface) 8%, transparent);
+  color: var(--ds-color-on-surface);
+  font-size: 1.05rem;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--ds-color-on-surface) 15%, transparent);
+  }
+
+  &--toggle-playing {
+    background: color-mix(in srgb, var(--ds-color-primary) 25%, transparent);
+  }
+}
+
+.countdown-view__audio-hint {
+  font-size: 0.68rem;
+  color: var(--ds-color-on-surface-variant);
+  user-select: none;
 }
 </style>

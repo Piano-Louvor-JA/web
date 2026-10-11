@@ -15,6 +15,11 @@ permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+
 jobs:
   lint:
     name: Lint & Format
@@ -50,7 +55,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run test
+      # Coverage com thresholds 100% (vitest.config) — falha se cobertura cair
+      - run: npm run test -- --coverage
 
   build:
     name: Build
@@ -64,6 +70,23 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+
+  paridade:
+    name: Paridade app↔web (anti-deriva S1)
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/__tests__/paridade.test.mjs
+      - name: Check paridade
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/check-paridade.mjs
 
   regression-gate:
     name: Regression Gate (anti-regressão)
@@ -92,10 +115,37 @@ jobs:
           git checkout "$PR_SHA"
           node /tmp/test-regression.mjs --compare
 
+  mutation-score:
+    name: Mutation Score (diff do PR)
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'pull_request'
+    continue-on-error: true # fase 1: warning apenas — virar bloqueante quando o baseline estiver maduro
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Valida o seletor e a métrica de mutação
+        run: node --test scripts/__tests__/mutation-diff.test.mjs
+      - name: Stryker incremental só nos arquivos do diff
+        run: node scripts/mutation-diff.mjs --base origin/${{ github.base_ref }}
+      - name: Salva relatório como artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-diff-report
+          path: reports/mutation/mutation-diff.json
+          if-no-files-found: ignore
+
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, build, regression-gate]
+    needs: [lint, typecheck, test, build, regression-gate, paridade]
     if: always()
     steps:
       - name: Verifica se todos os gates passaram
@@ -105,7 +155,8 @@ jobs:
           echo "test: ${{ needs.test.result }}"
           echo "build: ${{ needs.build.result }}"
           echo "regression-gate: ${{ needs.regression-gate.result }}"
-          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.typecheck.result }}" != "success" || "${{ needs.test.result }}" != "success" || "${{ needs.build.result }}" != "success" ]]; then
+          echo "paridade: ${{ needs.paridade.result }}"
+          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.typecheck.result }}" != "success" || "${{ needs.test.result }}" != "success" || "${{ needs.build.result }}" != "success" || "${{ needs.paridade.result }}" != "success" ]]; then
             echo "::error::Quality Gate FALHOU — corrija os erros antes do merge"
             exit 1
           fi

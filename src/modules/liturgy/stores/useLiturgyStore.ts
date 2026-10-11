@@ -1096,6 +1096,16 @@ export const useLiturgyStore = defineStore('liturgy', () => {
     }
   }
 
+  /** web#174 RF-1: recarrega SÓ o catálogo de músicas (após import .slja). */
+  async function refreshMusicCatalog() {
+    catalogLoading.value = true
+    try {
+      musicList.value = await loadLiturgyMusicOptions()
+    } finally {
+      catalogLoading.value = false
+    }
+  }
+
   function clearMusicPick() {
     itemDraft.value = {
       ...itemDraft.value,
@@ -1213,6 +1223,7 @@ export const useLiturgyStore = defineStore('liturgy', () => {
     closeCloneDialog,
     cloneLiturgyFromSelected,
     onMusicPick,
+    refreshMusicCatalog,
     clearMusicPick,
     onBookPick,
     clearActionMessage,

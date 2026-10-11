@@ -1,5 +1,13 @@
 export default {
   media: {
+    slja: {
+      uploadTitle: 'Subir "{name}" pra sua conta?',
+      uploadMessage: 'O arquivo sobe uma única vez pra sua conta (nunca duplica). Se preferir, fica salvo só neste dispositivo.',
+      uploadConfirm: 'Subir pra conta',
+      uploadCancel: 'Só neste dispositivo',
+      uploadDeclined: '"{name}" não foi enviado — salvo neste dispositivo; disponível pela liturgia.',
+      importedExisting: 'Importado: {name} (já existia na sua conta — sem duplicar)',
+    },
     title: 'Player',
     empty: 'Nenhuma música em reprodução. Abra uma faixa pelos álbuns ou pela liturgia.',
     play: 'Reproduzir',
