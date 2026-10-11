@@ -35,6 +35,12 @@ import {
   saveLiturgyState,
   todayWeekday,
 } from '../services/liturgy-preferences'
+// sync v2 (web#183): toda mutação enfileira no outbox (local-first) e
+// agenda flush em bg — sem rede o item fica na fila (nada se perde).
+import {
+  enqueueOperatorState,
+  scheduleOutboxFlush,
+} from '@modules/sync/services/sync-outbox-service'
 import {
   clearLiturgyWebRuntime,
   readLiturgyWebRuntimeFromStorage,
@@ -351,13 +357,21 @@ export const useLiturgyStore = defineStore('liturgy', () => {
   })
 
   function persist() {
-    saveLiturgyState({
+    const state = {
       weekdays: weekdays.value,
       dayNotes: dayNotes.value,
       daySessionTimes: daySessionTimes.value,
       customLiturgies: customLiturgies.value,
       deletionLocks: deletionLocks.value,
-    })
+    }
+    saveLiturgyState(state)
+    // sync v2 (web#183): outbox nunca bloqueia o fluxo local
+    try {
+      enqueueOperatorState('liturgy', 'week', state)
+      scheduleOutboxFlush()
+    } catch {
+      // quota/SSR — segue local-only
+    }
   }
 
   /**

@@ -26,7 +26,7 @@ const showApp = computed(() => isAccepted.value || isPopupWindow.value)
 
 let stopSync: (() => void) | undefined
 const stopSessionWatch = watch(() => authSession.value?.token, (token) => {
-  if (token) void flushOutbox().catch(() => {})
+  if (token && !isPopupWindow.value) void flushOutbox().catch(() => {})
 })
 onUnmounted(() => { stopSync?.(); stopSessionWatch() })
 
@@ -39,7 +39,7 @@ onMounted(async () => {
     authSession.value = result
   }
   // sync v2 (web#188): flush on-online + hook de prefs + pull no boot
-  stopSync = startOutboxTriggers()
+  if (!isPopupWindow.value) stopSync = startOutboxTriggers()
 })
 </script>
 
