@@ -168,7 +168,7 @@ export async function parseSlja(zipBuffer: ArrayBuffer): Promise<SljaArchive> {
     if (!section) continue
 
     const slide = parseSlideSection(section, i)
-    if (slide) slides.push(slide)
+    slides.push(slide)
   }
 
   return {
@@ -286,7 +286,7 @@ function parseIni(ini: string): Record<string, Record<string, string>> {
 /**
  * Parse seção de slide do INI
  */
-function parseSlideSection(section: Record<string, string>, index: number): SljaSlide | null {
+function parseSlideSection(section: Record<string, string>, index: number): SljaSlide {
   const type = section.tipo || (index === 1 ? 'CAPA' : 'LETRA')
   const lyric = section.letra ? section.letra.replace(/\|/g, '\n') : ''
   const auxiliaryLyric = section.letra_aux ? section.letra_aux.replace(/\|/g, '\n') : undefined

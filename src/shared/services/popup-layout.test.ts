@@ -478,3 +478,12 @@ describe('popup-layout — findSavedScreen real (216)', () => {
   })
 })
 })
+it('controle usa tamanho padrão sem screen disponível', () => {
+  vi.stubGlobal('screen', undefined)
+  try { expect(mod.getDefaultControlBounds()).toEqual({ left: 0, top: 0, width: 960, height: 540 }) }
+  finally { vi.unstubAllGlobals() }
+})
+it('captura telas sem dimensões disponíveis e usa zero', () => {
+  const target = { screenX: 10, screenY: 20, outerWidth: 800, outerHeight: 600, screen: {} } as unknown as Window
+  expect(mod.captureCurrentBounds(target)).toMatchObject({ screenWidth: 0, screenHeight: 0 })
+})

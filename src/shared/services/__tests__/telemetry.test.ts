@@ -28,6 +28,7 @@ describe('telemetria web', () => {
 
   it('com DSN inicializa sem PII/tracing e captura erro técnico', async () => {
     vi.stubEnv('VITE_TELEMETRIA_DSN', 'https://key@errors.example/1')
+    vi.stubEnv('DEV', false)
     const { startTelemetry, reportError } = await import('../telemetry')
     await startTelemetry()
     const error = new Error('falhou')

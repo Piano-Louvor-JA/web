@@ -818,3 +818,82 @@ describe('popup-windows — cobertura definitiva de branches', () => {
     expect(mockOpen).not.toHaveBeenCalled()
   })
 })
+describe('rotas de popup em subdiretórios e mensagens de bridge', () => {
+  beforeEach(() => { vi.resetModules() })
+  it('normaliza BASE_URL com e sem barra e aceita fallback', async () => {
+    const module = await import('./popup-windows')
+    for (const base of ['/web', undefined]) {
+      vi.stubEnv('BASE_URL', base)
+      registry = []
+      mockOpen.mockReturnValue(makeFakeWindow('PopupWindow1', 1))
+      await module.openPopupModule('media', { slots: [1] })
+      expect(mockOpen.mock.lastCall?.[0]).toContain(base ? '/web/popup?' : '/popup?')
+      module.openLiturgyControlWindow()
+      expect(mockOpen.mock.lastCall?.[0]).toContain(base ? '/web/popup?' : '/popup?')
+      module.closeLiturgyControlWindow()
+    }
+    vi.unstubAllEnvs()
+  })
+  it('fecha referências sem posição válida e não reinstala o bridge', async () => {
+    const module = await import('./popup-windows')
+    const popup = makeFakeWindow('PopupWindow1', 1)
+    popup.closed = true
+    registry = [popup as never]
+    module.closeScreenPopups()
+    expect(popup.close).not.toHaveBeenCalled()
+    module.installPopupOpenerBridge()
+    module.installPopupOpenerBridge()
+  })
+})
+it('atribuição Electron incompleta não escolhe um monitor', async () => {
+  vi.resetModules()
+  const module = await import('./popup-windows')
+  ;(window as unknown as { louvorja?: unknown }).louvorja = { isElectron: true, displays: { list: vi.fn().mockResolvedValue([]) } }
+  slotAssignments['1'] = '1920'
+  mockOpen.mockReturnValue(makeFakeWindow('PopupWindow1', 1))
+  await module.openPopupModule('media', { slots: [1] })
+  expect(mockOpen.mock.lastCall?.[2]).not.toContain('monitor=')
+})
+it('bridge registra canal de fechamento uma única vez', async () => {
+  vi.resetModules()
+  const module = await import('./popup-windows')
+  const channels: unknown[] = []
+  const original = globalThis.BroadcastChannel
+  vi.stubGlobal('BroadcastChannel', class { constructor() { channels.push(this) } addEventListener() {} postMessage() {} close() {} })
+  module.installPopupOpenerBridge()
+  module.installPopupOpenerBridge()
+  expect(channels).toHaveLength(1)
+  vi.stubGlobal('BroadcastChannel', original)
+})
+it('janela que fecha ao receber mensagem não é reutilizada', async () => {
+  vi.resetModules()
+  const module = await import('./popup-windows')
+  const popup = makeFakeWindow('PopupWindow1', 1)
+  popup.postMessage.mockImplementation(() => { popup.closed = true })
+  mockOpen.mockReturnValue(popup)
+  await module.openPopupModule('media', { slots: [1] })
+  await Promise.resolve()
+  for (const timer of mockTimeouts) timer.fn()
+  expect(popup.closed).toBe(true)
+})
+it('janela fechada durante captura de bounds não recebe nova mensagem', async () => {
+  vi.resetModules()
+  const module = await import('./popup-windows')
+  const popup = makeFakeWindow('PopupWindow1', 1)
+  registry = [popup as never]
+  vi.mocked(captureCurrentBounds).mockImplementationOnce(() => { popup.closed = true; return null })
+  await module.openPopupModule('media', { slots: [2] })
+  expect(popup.postMessage).not.toHaveBeenCalled()
+  expect(popup.close).not.toHaveBeenCalled()
+})
+it('fechar uma tela pode fechar outra referência antes de sua vez', async () => {
+  vi.resetModules()
+  const module = await import('./popup-windows')
+  const first = makeFakeWindow('PopupWindow1', 1)
+  const second = makeFakeWindow('PopupWindow2', 2)
+  first.close.mockImplementation(() => { second.closed = true })
+  registry = [first as never, second as never]
+  module.closeScreenPopups()
+  expect(first.close).toHaveBeenCalledOnce()
+  expect(second.close).not.toHaveBeenCalled()
+})
