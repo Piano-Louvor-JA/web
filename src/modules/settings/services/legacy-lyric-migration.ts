@@ -29,10 +29,6 @@ function asHex(value: unknown): string | null {
   return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value) ? value.toUpperCase() : null
 }
 
-function asBool(value: unknown): boolean | null {
-  return typeof value === 'boolean' ? value : null
-}
-
 /** Tabela de conversão campo-a-campo (doc da task P1): */
 export function migrateLegacyLyricCustomization(
   legacy: LegacyLyricCustomization | null | undefined,
@@ -72,7 +68,6 @@ export function migrateLegacyLyricCustomization(
   const textColor = textActive ? asHex(legacy.fontColor) : null
 
   // Sombra: o legado não tinha toggle de sombra → null (herda).
-  void asBool
 
   return {
     lyricFontSize: fontSize,
