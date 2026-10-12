@@ -35,9 +35,11 @@ export function formatScripturalReference(selection: {
 
   const versePart =
     selection.verses.length > 0 ? `:${formatVerseIntervals(selection.verses)}` : ''
-  const versionPart = selection.versionAbbreviation
-    ? ` (${selection.versionAbbreviation})`
-    : ''
+  const versionPart =
+    selection.versionAbbreviation &&
+    selection.versionAbbreviation.toLowerCase() !== 'null'
+      ? ` (${selection.versionAbbreviation})`
+      : ''
 
   return `${selection.bookName} ${selection.chapter}${versePart}${versionPart}`
 }
@@ -53,11 +55,13 @@ export function buildProjectionText(
     .join(' ')
 }
 
-/**
- * Interpreta busca por números/intervalos (`1`, `1-3`, `1,3-5`).
- * Retorna apenas versículos existentes no capítulo.
- */
-function addVerseRange(selected: Set<number>, from: number, to: number, verses: BibleChapterVerses) {
+/** Adiciona ao conjunto os versículos existentes do intervalo (ordem livre). */
+function addVerseRange(
+  selected: Set<number>,
+  from: number,
+  to: number,
+  verses: BibleChapterVerses,
+): void {
   const lo = Math.min(from, to)
   const hi = Math.max(from, to)
   for (let i = lo; i <= hi; i += 1) {
@@ -65,6 +69,7 @@ function addVerseRange(selected: Set<number>, from: number, to: number, verses: 
   }
 }
 
+/** Interpreta UM item da query (`1`, `1-3`). Retorna apenas versículos existentes. */
 function parseSinglePart(part: string, verses: BibleChapterVerses): number[] {
   const trimmed = part.trim()
   if (!trimmed) return []
@@ -84,6 +89,10 @@ function parseSinglePart(part: string, verses: BibleChapterVerses): number[] {
   return Array.from(selected)
 }
 
+/**
+ * Interpreta busca por números/intervalos (`1`, `1-3`, `1,3-5`).
+ * Retorna apenas versículos existentes no capítulo, ordenados.
+ */
 export function parseVerseQuery(
   query: string,
   verses: BibleChapterVerses,
