@@ -101,6 +101,21 @@ const textStyle = computed(() => ({
     : 'none',
 }))
 
+// Estrofes com personalização própria; fallback = estilo geral (paridade app).
+const lyricStyle = computed(() => {
+  const st = stage.value
+  return {
+    ...textStyle.value,
+    fontSize: `${((st.lyricFontSize ?? st.fontSize) / 1920) * 100}cqw`,
+    fontWeight: String(st.lyricFontWeight ?? st.fontWeight),
+    color: st.lyricTextColor ?? st.textColor,
+    textShadow: (st.lyricTextShadow ?? st.textShadow)
+      ? `0 0 ${(st.shadowBlur / 108) * 100}cqw rgba(0,0,0,${st.shadowIntensity})`
+      : 'none',
+    textTransform: st.lyricUpperCase ? 'uppercase' : 'none',
+  }
+})
+
 const boxClass = computed(() => ({
   'media-projection__boxed': stage.value.textBox,
   'media-projection__boxed--border': stage.value.textBox && stage.value.boxBorder,
@@ -141,7 +156,7 @@ const boxStyle = computed(() =>
         v-if="lyric && !runtime.isCover"
         class="media-projection__lyric"
         :class="boxClass"
-        :style="[boxStyle, textStyle]"
+        :style="[boxStyle, lyricStyle]"
       >
         {{ lyric }}
       </p>

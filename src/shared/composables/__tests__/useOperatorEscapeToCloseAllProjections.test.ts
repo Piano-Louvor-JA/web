@@ -198,4 +198,61 @@ describe('useOperatorEscapeToCloseAllProjections', () => {
 
     expect(appConfirm).not.toHaveBeenCalled()
   })
+
+  it('tecla não-Escape não abre confirm', async () => {
+    const wrapper = mountHook()
+    mocks.media.isProjecting = true
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+    await vi.waitFor(() => {})
+    expect(appConfirm).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('fecha random/timer/countdown/clock projetando (além de media/bíblia/liturgia)', async () => {
+    vi.mocked(appConfirm).mockResolvedValue(true)
+    mocks.random.isProjecting = true
+    mocks.timer.isProjecting = true
+    mocks.countdown.isProjecting = true
+    mocks.clock.isProjecting = true
+    mocks.bible.isProjecting = true
+    mocks.liturgy.siteProjectionItemId = 's1'
+    const wrapper = mountHook()
+
+    pressEscape()
+    await vi.waitFor(() => {
+      expect(mocks.random.clearProjection).toHaveBeenCalled()
+      expect(mocks.timer.clearProjection).toHaveBeenCalled()
+      expect(mocks.countdown.clearProjection).toHaveBeenCalled()
+      expect(mocks.clock.clearProjection).toHaveBeenCalled()
+      expect(mocks.bible.clearProjectionWindow).toHaveBeenCalled()
+      expect(mocks.liturgy.clearWebProjection).toHaveBeenCalled()
+    })
+    wrapper.unmount()
+  })
+
+  it('reentrada durante confirm é bloqueada (handling)', async () => {
+    let resolveConfirm!: (v: boolean) => void
+    vi.mocked(appConfirm).mockReturnValue(new Promise((r) => { resolveConfirm = r }))
+    mocks.media.isProjecting = true
+    const wrapper = mountHook()
+
+    pressEscape()
+    await vi.waitFor(() => expect(appConfirm).toHaveBeenCalledTimes(1))
+    pressEscape()
+    await vi.waitFor(() => {})
+    expect(appConfirm).toHaveBeenCalledTimes(1)
+
+    resolveConfirm(true)
+    await vi.waitFor(() => expect(mocks.media.clearProjection).toHaveBeenCalledOnce())
+    wrapper.unmount()
+  })
+
+  it('liturgy só com videoProjectionItemId também entra nos closers', async () => {
+    vi.mocked(appConfirm).mockResolvedValue(true)
+    mocks.liturgy.videoProjectionItemId = 'v9'
+    const wrapper = mountHook()
+    pressEscape()
+    await vi.waitFor(() => expect(mocks.liturgy.clearWebProjection).toHaveBeenCalled())
+    wrapper.unmount()
+  })
 })
