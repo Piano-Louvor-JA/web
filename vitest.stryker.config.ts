@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify('0.0.0-test') },
   plugins: [vue()],
   resolve: {
     alias: {
@@ -27,10 +28,7 @@ export default defineConfig({
     environmentOptions: {
       jsdom: { url: 'http://localhost/' },
     },
-    include: [
-      'src/**/__tests__/**/*.test.ts',
-      'src/__tests__/**/*.test.ts',
-    ],
+    include: ['src/**/*.test.ts'],
     exclude: [
       'node_modules/**',
       'site/**',
