@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { saveSession } from '../../../auth/services/auth-client'
 import {
   createCustomCollection,
   loadCustomMusicTrack,
@@ -73,7 +74,17 @@ describe('custom-catalog', () => {
     vi.unstubAllGlobals()
   })
 
-  it('cria coletânea via POST', async () => {
+  it('cria coletânea via POST quando autenticado', async () => {
+    const storage = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+      removeItem: vi.fn((key: string) => storage.delete(key)),
+    })
+    saveSession({
+      token: 'test-token',
+      user: { id_user: 1, email: 'test@louvorja.com', displayName: 'Test' },
+    })
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
