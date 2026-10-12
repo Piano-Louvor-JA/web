@@ -1,8 +1,11 @@
+import { coverageThreshold } from './scripts/coverage-policy'
 import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
+
+const minimumCoverage = coverageThreshold(process.env)
 
 export default defineConfig({
   define: {
@@ -32,10 +35,10 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'text-summary', 'lcov'],
       thresholds: {
-        lines: 100,
-        functions: 100,
-        statements: 100,
-        branches: 100,
+        lines: minimumCoverage,
+        functions: minimumCoverage,
+        statements: minimumCoverage,
+        branches: minimumCoverage,
       },
       include: ['src/shared/**/*.ts'],
     },

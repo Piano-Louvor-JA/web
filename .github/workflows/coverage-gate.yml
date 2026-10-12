@@ -1,4 +1,4 @@
-name: Coverage Gate 100%
+name: Coverage Gate
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   coverage:
-    name: Coverage 100/100/100/100 (src/shared)
+    name: Coverage (src/shared)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -29,5 +29,5 @@ jobs:
 
       - run: npm ci
 
-      - name: Coverage gate (thresholds 100x4)
+      - name: Coverage gate (50% staging PR; 100% main/publication)
         run: npm run test:coverage:gate

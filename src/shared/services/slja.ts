@@ -168,8 +168,7 @@ export async function parseSlja(zipBuffer: ArrayBuffer): Promise<SljaArchive> {
     if (!section) continue
 
     const slide = parseSlideSection(section, i)
-/* v8 ignore next -- parseSlideSection sempre retorna slide (null nunca ocorre no parser atual) */
-        if (slide) slides.push(slide)
+    if (slide) slides.push(slide)
   }
 
   return {

@@ -10,7 +10,6 @@ const isMobileRef = ref(false)
 const mobileWarningDismissed = ref<Record<string, boolean>>({})
 
 function initMobileDetection() {
-/* v8 ignore next -- guard de ambiente (web é SPA; no browser o branch ativo é sempre este) */
   if (typeof window !== 'undefined') {
     const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
     isMobileRef.value = mediaQuery.matches
@@ -19,8 +18,6 @@ function initMobileDetection() {
     })
   }
 }
-
-/* v8 ignore next 2 -- module-level: avaliado no import; SPA nunca roda sem window (SSR) */
 if (typeof window !== 'undefined') {
   initMobileDetection()
 }
