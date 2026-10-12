@@ -577,14 +577,15 @@ export async function createCustomCollection(
   visibility?: CollectionVisibility,
 ): Promise<{ id: number } | null> {
   // Sem auth: cria LOCAL (regra de produto 12/09 — sem identidade não sobe).
-  if (!getAuthSession()) {
+  const creationSession = getAuthSession()
+  if (!creationSession) {
     const local = createLocalCollection(name, description)
     return { id: local.id }
   }
   try {
     const response = await fetch(`${customBaseUrl()}/collections`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', ...authHeaders() },
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${creationSession.token}` },
       // SEMPRE envia visibility explícita (default PRIVADO no app — decisão
       // t_35e4d3ea: usuário escolhe publicar; API-default 'public' é pegadinha).
       body: JSON.stringify({
@@ -606,7 +607,7 @@ export async function createCustomCollection(
       action: 'upsert',
       payload: { name, description: description ?? null, author_name: authorName ?? null, updated_at: Date.now() },
       updated_at: Date.now(),
-      owner_email: getAuthSession()?.user?.email ?? null,
+      owner_email: creationSession.user.email,
     })
     return null
   }
