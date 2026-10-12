@@ -14,7 +14,7 @@ vi.mock('@modules/settings/services/stage-settings-runtime', () => ({
 beforeEach(() => {
   localStorage.clear()
   overrides.value = {}
-  localStorage.setItem(MEDIA_RUNTIME_STORAGE_KEY, JSON.stringify({ ...DEFAULT_MEDIA_PROJECTION, lyric: 'Minha estrofe', isCover: false }))
+  localStorage.setItem(MEDIA_RUNTIME_STORAGE_KEY, JSON.stringify({ ...DEFAULT_MEDIA_PROJECTION, active: true, lyric: 'Minha estrofe', isCover: false }))
 })
 
 it('aplica overrides na estrofe renderizada', async () => {
