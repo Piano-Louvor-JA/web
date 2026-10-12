@@ -12,6 +12,7 @@ import { useThemeManager } from '@design-system/composables'
 import { APP_PRODUCT_NAME } from '@shared/constants/app'
 import { initUiZoom } from '@shared/composables/useUiZoom'
 import { installPopupOpenerBridge } from '@shared/services/popup-windows'
+import { startTelemetry } from '@shared/services/telemetry'
 
 registerBibleRuntimeSink((state) => publishToStageRelay('bible', state))
 
@@ -20,6 +21,7 @@ document.title = APP_PRODUCT_NAME
 useThemeManager()
 initUiZoom()
 installPopupOpenerBridge()
+void startTelemetry()
 
 installClientPlatformHeader()
 const app = createApp(App)
