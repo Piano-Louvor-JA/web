@@ -18,7 +18,6 @@ function initMobileDetection() {
     })
   }
 }
-
 if (typeof window !== 'undefined') {
   initMobileDetection()
 }

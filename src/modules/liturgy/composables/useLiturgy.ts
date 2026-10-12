@@ -427,6 +427,7 @@ export function useLiturgy() {
     setNotes: store.setNotes,
     onManageTeam,
     onMusicPick: store.onMusicPick,
+    refreshMusicCatalog: store.refreshMusicCatalog,
     clearMusicPick: store.clearMusicPick,
     onMusicSung,
     onMusicInstrumental,

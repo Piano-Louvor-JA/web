@@ -1,4 +1,7 @@
+import { registerBibleRuntimeSink } from '@modules/bible/services/bible-runtime'
+import { publishToStageRelay } from '@shared/services/palco-cloud-bridge'
 import { createApp } from 'vue'
+import { installClientPlatformHeader } from './shared/lib/client-platform'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import '@styles/tailwind.css'
@@ -11,6 +14,8 @@ import { initUiZoom } from '@shared/composables/useUiZoom'
 import { installPopupOpenerBridge } from '@shared/services/popup-windows'
 import { startTelemetry } from '@shared/services/telemetry'
 
+registerBibleRuntimeSink((state) => publishToStageRelay('bible', state))
+
 document.title = APP_PRODUCT_NAME
 
 useThemeManager()
@@ -18,6 +23,7 @@ initUiZoom()
 installPopupOpenerBridge()
 void startTelemetry()
 
+installClientPlatformHeader()
 const app = createApp(App)
 
 app.use(createPinia())

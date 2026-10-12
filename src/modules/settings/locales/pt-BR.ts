@@ -271,7 +271,16 @@ export default {
     },
     general: {
       languageTitle: 'Idioma',
-      languageHint: 'Escolha o idioma da interface do aplicativo.'
+      languageHint: 'Escolha o idioma da interface do aplicativo.',
+      syncTitle: 'Sincronização',
+      syncHint: 'Exporta ou importa um pacote .louvorja com sua liturgia. Use para transferir entre celular, desktop e web.',
+      syncExport: 'Exportar pacote',
+      syncImport: 'Importar pacote',
+      syncExported: 'Pacote exportado com sucesso.',
+      syncImported: 'Pacote importado: {applied}.',
+      syncNothingToApply: 'Nada para importar — dados locais já estão atualizados (local: {localModified}; pacote: {packageModified}).',
+      syncInvalid: 'Arquivo .louvorja inválido ou de versão incompatível.',
+      syncCancelled: 'Operação cancelada.'
     }
   }
 }

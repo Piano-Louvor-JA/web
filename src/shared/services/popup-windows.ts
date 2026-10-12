@@ -524,7 +524,6 @@ export function installPopupOpenerBridge(): void {
       closeLocalScreenRefs()
     }
   })
-
   if (!closeScreensBridgeInstalled) {
     closeScreensBridgeInstalled = true
     try {

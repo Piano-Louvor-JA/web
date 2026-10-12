@@ -64,3 +64,6 @@ test-results/
 reports/
 .stryker-tmp/
 GAUNTLET-STATE.md
+
+# Build local do catálogo de componentes
+storybook-static/
