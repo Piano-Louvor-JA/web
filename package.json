@@ -23,6 +23,7 @@
     "git:tag": "git tag -a \"v$npm_package_version\" -m \"Versão $npm_package_version\" && git push origin \"v$npm_package_version\"",
     "git:publish": "git push -u origin HEAD --follow-tags",
     "test:regression": "node scripts/test-regression.mjs",
+    "test:coverage:gate": "vitest run --coverage",
     "storybook": "storybook dev -p 6007",
     "build-storybook": "storybook build"
   },

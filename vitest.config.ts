@@ -8,6 +8,9 @@ import vue from '@vitejs/plugin-vue'
 const minimumCoverage = coverageThreshold(process.env)
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify('0.0.0-test'),
+  },
   plugins: [vue()],
   resolve: {
     alias: {
@@ -37,7 +40,7 @@ export default defineConfig({
         statements: minimumCoverage,
         branches: minimumCoverage,
       },
-      include: ['src/shared/composables/useWebUpdateChecker.ts'],
+      include: ['src/shared/**/*.ts'],
     },
   },
 })

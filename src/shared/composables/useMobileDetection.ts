@@ -1,17 +1,14 @@
 import { ref, computed, type ComputedRef } from 'vue'
 
 const MOBILE_BREAKPOINT = 768
-
 const mediaQuery = typeof window !== 'undefined'
   ? window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
   : null
-
 const isMobileRef = ref(mediaQuery?.matches ?? false)
 
 function onMediaChange(e: MediaQueryListEvent) {
   isMobileRef.value = e.matches
 }
-
 if (typeof window !== 'undefined') {
   mediaQuery?.addEventListener('change', onMediaChange)
 }

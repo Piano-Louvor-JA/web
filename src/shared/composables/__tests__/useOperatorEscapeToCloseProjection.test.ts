@@ -84,4 +84,73 @@ describe('useOperatorEscapeToCloseProjection', () => {
     input.remove()
     wrapper.unmount()
   })
+
+  it('tecla que não é Escape é ignorada (sem confirm)', async () => {
+    const wrapper = mountHook()
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true }))
+    await nextTick()
+    await nextTick()
+    expect(appConfirm).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('ESC dentro de dialog aberto é ignorado (guard anti confirm-sobre-confirm)', async () => {
+    isProjectionActive.mockReturnValue(true)
+    const wrapper = mountHook()
+    const dialog = document.createElement('div')
+    dialog.setAttribute('role', 'dialog')
+    document.body.appendChild(dialog)
+    try {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+      await nextTick()
+      await nextTick()
+      expect(appConfirm).not.toHaveBeenCalled()
+      expect(closeProjection).not.toHaveBeenCalled()
+    } finally {
+      dialog.remove()
+    }
+    wrapper.unmount()
+  })
+
+  it('ESC em contenteditable e textarea é ignorado', async () => {
+    const wrapper = mountHook()
+    const ta = document.createElement('textarea')
+    document.body.appendChild(ta)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', target: ta } as KeyboardEventInit & { target: HTMLElement }))
+    await nextTick()
+    await nextTick()
+    expect(appConfirm).not.toHaveBeenCalled()
+    ta.remove()
+
+    const ce = document.createElement('div')
+    ce.contentEditable = 'true'
+    document.body.appendChild(ce)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', target: ce } as KeyboardEventInit & { target: HTMLElement }))
+    await nextTick()
+    await nextTick()
+    expect(appConfirm).not.toHaveBeenCalled()
+    ce.remove()
+    wrapper.unmount()
+  })
+
+  it('reentrada durante confirm em andamento é bloqueada (handling flag)', async () => {
+    isProjectionActive.mockReturnValue(true)
+    let resolveConfirm!: (v: boolean) => void
+    vi.mocked(appConfirm).mockReturnValue(new Promise((r) => { resolveConfirm = r }))
+    const wrapper = mountHook()
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await nextTick()
+    // segunda ESC enquanto confirm aberto
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await nextTick()
+    expect(appConfirm).toHaveBeenCalledTimes(1)
+
+    resolveConfirm(true)
+    await nextTick()
+    await nextTick()
+    expect(closeProjection).toHaveBeenCalledOnce()
+    wrapper.unmount()
+  })
 })
