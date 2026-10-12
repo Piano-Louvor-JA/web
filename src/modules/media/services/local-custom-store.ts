@@ -89,11 +89,7 @@ function loadDb(): LocalDb {
 }
 
 function saveDb(db: LocalDb): void {
-	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-	} catch {
-		// quota (áudio base64 grande) — falha silenciosa; dados ficam só em memória
-	}
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
 }
 
 /* ---------- Coletâneas ---------- */

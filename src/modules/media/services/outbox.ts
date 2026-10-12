@@ -1,3 +1,4 @@
+import { authHeaders as currentAuthHeaders, getAuthSession } from '../../auth/services/auth-client'
 /**
  * Outbox — fila de operações pendentes de sync (offline-first, B1/B2 da BARRA).
  *
@@ -62,9 +63,9 @@ function tx<T>(
       new Promise<T>((resolve, reject) => {
         const t = db.transaction(STORE, mode);
         const req = fn(t.objectStore(STORE));
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-        t.oncomplete = () => db.close();
+        t.oncomplete = () => { db.close(); resolve(req.result); };
+        t.onabort = () => { db.close(); reject(t.error ?? new Error("outbox transaction aborted")); };
+        t.onerror = () => { db.close(); reject(t.error); };
       }),
   );
 }
@@ -90,6 +91,7 @@ export async function enqueue(
     await tx("readwrite", (s) => s.add(op) as IDBRequest<IDBValidKey>);
   } catch (err) {
     console.error("[outbox] enqueue falhou", err);
+    throw err;
   }
 }
 
@@ -118,9 +120,11 @@ async function removeOp(id: number): Promise<void> {
 /** Converte a fila em payload SyncRequest e faz POST /v1/custom/sync. */
 export async function flushOutbox(
   apiBase: string,
-  authHeaders: Record<string, string>,
+  authHeaders: Record<string, string> = currentAuthHeaders(),
 ): Promise<{ ok: boolean; applied?: number; conflicts?: number }> {
-  const ops = await listPending();
+  const session = getAuthSession();
+  if (!session) return { ok: false };
+  const ops = (await listPending()).filter(op => op.owner_email === session.user.email);
   if (ops.length === 0) return { ok: true, applied: 0, conflicts: 0 };
 
   // agrupa por collection (o contrato do sync é por coletânea).
@@ -194,7 +198,8 @@ export async function flushOutbox(
       applied: { created: number; updated: number };
       conflicts: unknown[];
     };
-    // sucesso: limpa a fila inteira (o servidor é a fonte da verdade agora;
+    if (getAuthSession()?.token !== session.token || getAuthSession()?.user.email !== session.user.email) return { ok: false };
+    // sucesso: limpa somente as operações desta conta (o servidor é a fonte da verdade agora;
     // próximos syncs pull o estado canônico)
     for (const op of ops) {
       if (op.id !== undefined) await removeOp(op.id);
@@ -216,4 +221,14 @@ export async function clearOutbox(): Promise<void> {
   } catch {
     /* silencioso */
   }
+}
+
+let flushing = false;
+export async function flushMediaOutbox(): Promise<void> {
+  if (flushing) return;
+  flushing = true;
+  try {
+    const base = import.meta.env.VITE_PALCO_API_URL?.replace(/\/$/, '') ?? '';
+    await flushOutbox(`${base}/v1/custom`);
+  } finally { flushing = false; }
 }
