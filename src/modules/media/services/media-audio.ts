@@ -32,6 +32,12 @@ export async function resolveMusicAudioUrl(
     return { ok: false, reason: 'missing' }
   }
 
+  // web#174: importações .slja locais chegam como blob: URL (IndexedDB) —
+  // usar NA ÍNTEGRA: prefixar base remota quebra o protocolo (NotSupportedError).
+  if (/^blob:/i.test(catalogPath)) {
+    return { ok: true, url: catalogPath, source: 'local' }
+  }
+
   return { ok: true, url: resolveRemoteFileUrl(catalogPath), source: 'remote' }
 }
 
@@ -40,6 +46,8 @@ export async function resolveSlideImageUrl(
   catalogPath: string | null,
 ): Promise<string | null> {
   if (!catalogPath?.trim()) return null
+  // web#174: capa local do .slja importado é blob: URL — usar na íntegra.
+  if (/^blob:/i.test(catalogPath)) return catalogPath
   return resolveRemoteFileUrl(catalogPath)
 }
 

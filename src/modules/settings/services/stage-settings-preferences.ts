@@ -1,3 +1,4 @@
+import { migrateLegacyLyricCustomization, type LegacyLyricCustomization } from './legacy-lyric-migration'
 import { USER_PREFERENCE_KEYS } from '@shared/constants/storage-keys'
 import {
   getUserPreference,
@@ -30,7 +31,15 @@ function keyFor(scope: StageScope): string {
 
 /** Override do escopo; null = herda o global (igual loadOptional do APK). */
 export function loadStageSettingsOptional(scope: StageScope): StageSettings | null {
-  const stored = getUserPreference<unknown>(keyFor(scope), null)
+  let stored = getUserPreference<unknown>(keyFor(scope), null)
+  if (scope === 'global' && stored == null) {
+    const legacy = getUserPreference<LegacyLyricCustomization | null>(USER_PREFERENCE_KEYS.projectionSettings, null)
+    if (legacy?.customTextFormat === true) {
+      const migrated = { ...DEFAULT_STAGE_SETTINGS, ...migrateLegacyLyricCustomization(legacy) }
+      saveStageSettings('global', migrated)
+      stored = serializeStageSettings(migrated)
+    }
+  }
   if (!stored || typeof stored !== 'object') return null
   return parseStageSettings(stored)
 }
