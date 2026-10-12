@@ -207,7 +207,7 @@ function isOnSavedScreen(targetWindow: Window, entry: PopupBounds): boolean {
 async function findSavedScreen(entry: PopupBounds): Promise<ScreenDetailed | null> {
   const getScreenDetails = window.getScreenDetails
   if (!getScreenDetails) return null
-  if (entry.screenLeft === undefined) return null
+  // Chamado somente quando isOnSavedScreen comprovou as coordenadas salvas.
 
   try {
     const details = await getScreenDetails()

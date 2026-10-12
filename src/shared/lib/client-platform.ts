@@ -1,6 +1,6 @@
 /** Identificação do web somente na origem local e nas APIs configuradas. */
 export const CLIENT_PLATFORM = 'web'
-export const CLIENT_VERSION: string = import.meta.env.VITE_APP_VERSION || (typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '')
+export const CLIENT_VERSION: string = import.meta.env.VITE_APP_VERSION || __APP_VERSION__
 let patched = false
 
 export function installClientPlatformHeader(): void {

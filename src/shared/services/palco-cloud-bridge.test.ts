@@ -577,3 +577,25 @@ describe('palco-cloud-bridge — última milha', () => {
     })
   })
 })
+it('não envia um background relativo desconhecido à TV', async () => {
+  stageByScope.bible = { backgroundImage: 'relative.png' }
+  const message = await mod.toReceiverMessage('bible', { text: 'Teste', reference: 'Jo 3:16' })
+  expect(message?.background).toBeUndefined()
+})
+it('rota ausente usa broadcast, inclusive para clock ativo', async () => {
+  const routing = await import('@shared/services/popup-routing')
+  vi.mocked(routing.getPopupRoute).mockReturnValueOnce(undefined as never)
+  mod.publishToStageRelay('bible', { text: 'Teste', reference: 'Jo 3:16' })
+  await vi.waitFor(() => expect(sendMock).toHaveBeenCalled())
+  vi.mocked(routing.getPopupRoute).mockReturnValueOnce(undefined as never).mockReturnValueOnce(undefined as never)
+  mod.publishToStageRelay('clock', {})
+  expect(sendMock).toHaveBeenCalledTimes(1)
+})
+it('publicação inválida antiga não apaga o módulo mais recente', async () => {
+  mod.publishToStageRelay('unknown', {})
+  mod.publishToStageRelay('bible', { text: 'Teste', reference: 'Jo 3:16' })
+  await vi.waitFor(() => expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'projection' }), undefined))
+  sendMock.mockClear()
+  mod.publishToStageRelay('media', { active: true, lyric: 'Hino' })
+  await vi.waitFor(() => expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'idle' })))
+})
