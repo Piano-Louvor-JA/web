@@ -55,7 +55,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Coverage com thresholds 100% (vitest.config) — falha se cobertura cair
+      # Coverage por destino: PR para staging 50%; main/publicação preservam 100%
       - run: npm run test -- --coverage
 
   build:

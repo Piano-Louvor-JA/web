@@ -120,6 +120,15 @@ export default {
       updateDesktopOnly: 'Las actualizaciones solo aplican a la app de escritorio.',
       checkUpdate: 'Buscar actualizaciones',
       checking: 'Buscando...',
+      syncTitle: 'Sincronización',
+      syncHint: 'Exporta o importa un paquete .louvorja con su liturgia. Úselo para transferir entre móvil, escritorio y web.',
+      syncExport: 'Exportar paquete',
+      syncImport: 'Importar paquete',
+      syncExported: 'Paquete exportado exitosamente.',
+      syncImported: 'Paquete importado: {applied}.',
+      syncNothingToApply: 'Nada que importar — los datos locales ya están actualizados (local: {localModified}; paquete: {packageModified}).',
+      syncInvalid: 'Archivo .louvorja inválido o de versión incompatible.',
+      syncCancelled: 'Operación cancelada.',
       desktopOnly: 'Solo disponible en la aplicación de escritorio.'
     },
     remote: {
@@ -282,6 +291,7 @@ export default {
       speedNormal: 'Normal',
       speedFast: 'Rápida',
     },
+
     palco: {
       tvsPlain: 'TVs del Palco',
       tv: 'TV',

@@ -67,9 +67,14 @@ export function publishToStageRelay(moduleId: string, payload: unknown): void {
     }
     lastRelayModule = moduleId
     void (async () => {
-      const msg = await toReceiverMessage(moduleId, payload)
-      if (msg) send(msg as unknown as Record<string, unknown>, to)
-      else if (moduleId === lastRelayModule) lastRelayModule = null
+      try {
+        const msg = await toReceiverMessage(moduleId, payload)
+        if (msg) send(msg as unknown as Record<string, unknown>, to)
+        else if (moduleId === lastRelayModule) lastRelayModule = null
+      } catch {
+        // send assíncrono falhou (ws caiu entre o broadcast e o publish):
+        // projeção local segue; próximo publish tenta de novo.
+      }
     })()
   } catch {
     // relay indisponível — projeção local segue
