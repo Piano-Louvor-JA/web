@@ -1,10 +1,16 @@
+import { coverageThreshold } from './scripts/coverage-policy'
 import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
 
+const minimumCoverage = coverageThreshold(process.env)
+
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify('0.0.0-test'),
+  },
   plugins: [vue()],
   resolve: {
     alias: {
@@ -24,17 +30,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'e2e/helpers/__tests__/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'lcov'],
       thresholds: {
-        lines: 100,
-        functions: 100,
-        statements: 100,
-        branches: 100,
+        lines: minimumCoverage,
+        functions: minimumCoverage,
+        statements: minimumCoverage,
+        branches: minimumCoverage,
       },
-      include: ['src/shared/composables/useWebUpdateChecker.ts'],
+      include: ['src/shared/**/*.ts'],
     },
   },
 })

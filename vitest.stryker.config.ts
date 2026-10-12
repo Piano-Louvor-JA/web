@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify('0.0.0-test') },
   plugins: [vue()],
   resolve: {
     alias: {
@@ -23,10 +24,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: [
-      'src/**/__tests__/**/*.test.ts',
-      'src/__tests__/**/*.test.ts',
-    ],
+    setupFiles: ['./src/test-setup-stryker.ts'],
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
+    include: ['src/**/*.test.ts'],
     exclude: [
       'node_modules/**',
       'site/**',

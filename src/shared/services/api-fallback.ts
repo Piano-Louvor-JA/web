@@ -58,7 +58,10 @@ export function apiCandidateBases(kind: ApiKind): string[] {
   const candidates: string[] = []
   if (primary) candidates.push(primary)
   for (const host of fallbackHosts()) {
-    if (host !== primaryHost) candidates.push(`${host}${path}`)
+    // dedup por ORIGEM: fallback no mesmo host da primária (mesmo com path
+    // diferente) não entra — o host caiu, os dois caminhos caem juntos.
+    if (baseToHost(host) === primaryHost) continue
+    candidates.push(`${host}${path}`)
   }
   return candidates
 }

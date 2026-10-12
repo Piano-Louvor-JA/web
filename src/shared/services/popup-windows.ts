@@ -61,7 +61,7 @@ function electronMonitorIdForSlot(slotId: string): number | null {
   const screenId = loadSlotAssignments()[slotId]
   if (!screenId) return null
   const [leftRaw, topRaw] = screenId.split(':')
-  const left = Number.parseInt(leftRaw ?? '', 10)
+  const left = Number.parseInt(leftRaw!, 10)
   const top = Number.parseInt(topRaw ?? '', 10)
   if (Number.isNaN(left) || Number.isNaN(top)) return null
   const display = electronDisplays.find((d) => d.bounds.x === left && d.bounds.y === top)
@@ -78,7 +78,6 @@ export type PopupActionPayload = {
 }
 
 let controlWindowRef: PopupWindowRef | null = null
-let closeScreensBridgeInstalled = false
 
 function broadcastPopupAction(action: PopupActionPayload['action']): void {
   try {
@@ -93,7 +92,7 @@ function broadcastPopupAction(action: PopupActionPayload['action']): void {
 /** Fecha refs locais de telas sem reabrir nem usar window.open('', name). */
 function closeLocalScreenRefs(): void {
   getPopupRefs().forEach((popup) => {
-    if (!popup || popup.closed) return
+    if (popup.closed) return
     try {
       const bounds = captureCurrentBounds(popup)
       const slot = popup.__popupSlot
@@ -239,7 +238,7 @@ function tagPopupSlot(popup: PopupWindowRef, fallbackIndex: number): number {
 }
 
 function requestBoundsReport(popup: PopupWindowRef): void {
-  if (!popup || popup.closed) return
+  if (popup.closed) return
   try {
     popup.postMessage(
       { action: 'report-bounds' } satisfies PopupActionPayload,
@@ -313,7 +312,8 @@ function ensurePopups(
   }
 
   popups = persistPopups(
-    [...popups].sort((a, b) => (a.__popupSlot ?? 0) - (b.__popupSlot ?? 0)),
+    // Janelas preservadas pertencem a targetSlots; as novas recebem slot ao abrir.
+    [...popups].sort((a, b) => a.__popupSlot! - b.__popupSlot!),
   )
 
   popups.forEach((popup) => {
@@ -461,7 +461,7 @@ export async function openPopupModule(
   // desfazendo o fullscreen do window.open. Só reporta bounds p/ layout.
   void windowManagementPermission.then(() => {
     popups.forEach((popup) => {
-      if (!popup || popup.closed) return
+      if (popup.closed) return
       requestBoundsReport(popup)
     })
   })
@@ -524,18 +524,15 @@ export function installPopupOpenerBridge(): void {
       closeLocalScreenRefs()
     }
   })
-
-  if (!closeScreensBridgeInstalled) {
-    closeScreensBridgeInstalled = true
-    try {
-      const channel = new BroadcastChannel(POPUP_STATE_CHANNEL)
-      channel.addEventListener('message', (event: MessageEvent<PopupActionPayload>) => {
-        if (event.data?.action !== 'close-screens') return
-        // Outra janela pediu para limpar/fechar telas (ex.: botão no controle).
-        closeLocalScreenRefs()
-      })
-    } catch {
-      closeScreensBridgeInstalled = false
-    }
+  // openerBridgeInstalled já garante uma única instalação de ambos os listeners.
+  try {
+    const channel = new BroadcastChannel(POPUP_STATE_CHANNEL)
+    channel.addEventListener('message', (event: MessageEvent<PopupActionPayload>) => {
+      if (event.data?.action !== 'close-screens') return
+      // Outra janela pediu para limpar/fechar telas (ex.: botão no controle).
+      closeLocalScreenRefs()
+    })
+  } catch {
+    // BroadcastChannel indisponível; o listener de window permanece ativo.
   }
 }

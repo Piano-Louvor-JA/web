@@ -18,10 +18,7 @@ function initMobileDetection() {
     })
   }
 }
-
-if (typeof window !== 'undefined') {
-  initMobileDetection()
-}
+initMobileDetection() // A própria função protege ambientes sem window.
 
 export interface MobileRouteGuardOptions {
   /** Chave única para esta rota (usada para persistir dismiss) */
