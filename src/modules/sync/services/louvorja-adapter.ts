@@ -1,3 +1,5 @@
+import { normalizeLiturgyState } from '@modules/liturgy/services/liturgy-preferences';
+import { enqueueOperatorState, scheduleOutboxFlush } from './sync-outbox-service';
 /**
  * Adaptador browser (web + Electron renderer) ↔ pacote `.louvorja`.
  *
@@ -16,7 +18,6 @@
 import {
 	LITURGY_WEEKDAYS,
 	type LiturgyPersistedState,
-	type LiturgyWeekday,
 } from "@modules/liturgy/types/liturgy";
 import { USER_PREFERENCE_KEYS } from "@shared/constants/storage-keys";
 import {
@@ -97,24 +98,27 @@ export function importLouvorjaIntoBrowser(
 						USER_PREFERENCE_KEYS.liturgyState,
 						null,
 					);
-					if (current == null) {
-						skipped.push("liturgy");
-						break;
-					}
+
 					// Não elimina custom liturgies, horários de sessão ou locks que o
 					// schema mobile ainda não representa. Só substitui os dias recebidos.
-					const next = structuredClone(current);
+					const next = normalizeLiturgyState(current);
 					let hasDay = false;
 					for (const day of LITURGY_WEEKDAYS) {
 						const payload = entity.data[day];
 						if (payload == null || typeof payload !== "object") continue;
 						const source = payload as Record<string, unknown>;
-						if (Array.isArray(source.items))
-							next.weekdays[day] =
-								source.items as LiturgyPersistedState["weekdays"][LiturgyWeekday];
-						if (typeof source.notes === "string")
-							next.dayNotes[day] = source.notes;
-						hasDay = true;
+						if (Array.isArray(source.items)) {
+                            const normalized = normalizeLiturgyState({ weekdays: { [day]: source.items } }).weekdays[day];
+                            if (normalized.length !== source.items.length) {
+                                throw new Error('Pacote .louvorja contém itens de liturgia inválidos');
+                            }
+                            next.weekdays[day] = normalized;
+                            hasDay = true;
+                        }
+                        if (typeof source.notes === 'string') {
+                            next.dayNotes[day] = source.notes;
+                            hasDay = true;
+                        }
 					}
 					if (hasDay) {
 						setUserPreference(USER_PREFERENCE_KEYS.liturgyState, next);
@@ -122,7 +126,11 @@ export function importLouvorjaIntoBrowser(
 							`${SYNC_MODIFIED_PREFIX}.liturgy`,
 							entity.modified,
 						);
-						applied.push("liturgy");
+						try {
+                            enqueueOperatorState('liturgy', 'week', next);
+                            scheduleOutboxFlush();
+                        } catch { /* a importação local permanece disponível */ }
+                        applied.push("liturgy");
 					} else {
 						skipped.push("liturgy");
 					}

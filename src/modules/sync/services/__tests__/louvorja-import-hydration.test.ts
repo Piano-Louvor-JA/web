@@ -1,3 +1,6 @@
+import { afterEach } from 'vitest';
+import { disposePinia } from 'pinia';
+import { outboxCount, clearOutbox } from '../sync-outbox-service';
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -100,11 +103,16 @@ function seedLocalState() {
 
 describe("import .louvorja hidrata o store de liturgia sem F5 (t_8bdaf97b)", () => {
 	let stored: unknown;
+    let pinia: ReturnType<typeof createPinia>;
+    afterEach(() => { disposePinia(pinia); vi.useRealTimers(); });
 
 	beforeEach(() => {
 		localStorage.clear();
 		vi.clearAllMocks();
-		setActivePinia(createPinia());
+		vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+        pinia = createPinia();
+        setActivePinia(pinia);
+        clearOutbox();
 		localStorage.setItem(
 			`${SYNC_MODIFIED_PREFIX}.liturgy`,
 			"2000-01-01T00:00:00.000Z",
@@ -117,6 +125,35 @@ describe("import .louvorja hidrata o store de liturgia sem F5 (t_8bdaf97b)", () 
 			stored = value;
 		});
 	});
+
+    it('recusa itens inválidos sem substituir o estado local', () => {
+        const before = stored;
+        const pkg = saturdayPackage();
+        pkg.entities.liturgy!.data.saturday = { items: [null] };
+        expect(() => importLouvorjaIntoBrowser(pkg)).toThrow('inválidos');
+        expect(stored).toBe(before);
+        expect(outboxCount()).toBe(0);
+    });
+
+    it('importa no primeiro uso e enfileira o estado para sincronização', () => {
+        stored = null;
+        const result = importLouvorjaIntoBrowser(saturdayPackage());
+        expect(result.applied).toEqual(['liturgy']);
+        expect((stored as ReturnType<typeof normalizeLiturgyState>).weekdays.saturday).toHaveLength(2);
+        expect(outboxCount()).toBe(1);
+        expect(localStorage.getItem(`${SYNC_MODIFIED_PREFIX}.liturgy`)).toBe(FUTURE);
+    });
+
+    it('preserva dias ausentes, horários e liturgias avulsas ao importar', () => {
+        const state = seedLocalState();
+        state.dayNotes.monday = 'Preservar';
+        state.daySessionTimes.monday = { startTime: '10:00', endTime: '11:00' };
+        stored = state;
+        importLouvorjaIntoBrowser(saturdayPackage());
+        const next = stored as typeof state;
+        expect(next.dayNotes.monday).toBe('Preservar');
+        expect(next.daySessionTimes.monday).toEqual(state.daySessionTimes.monday);
+    });
 
 	it("RED: evento liturgy:imported re-hidrata o store (itens novos visíveis sem F5)", async () => {
 		const store = useLiturgyStore();

@@ -60,12 +60,10 @@ function isProjectionPopupLocation(): boolean {
   const path = window.location.pathname
   return href.includes('#/popup') || path.includes('/popup') || href.includes('/popup?')
 }
-
 const mobileMediaQuery =
   typeof window !== 'undefined'
     ? window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`)
     : null
-
 const isMobileViewport = ref(mobileMediaQuery?.matches ?? false)
 
 function onMobileViewportChange(event: MediaQueryListEvent) {

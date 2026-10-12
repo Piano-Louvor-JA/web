@@ -35,6 +35,12 @@ import {
   saveLiturgyState,
   todayWeekday,
 } from '../services/liturgy-preferences'
+// sync v2 (web#183): toda mutação enfileira no outbox (local-first) e
+// agenda flush em bg — sem rede o item fica na fila (nada se perde).
+import {
+  enqueueOperatorState,
+  scheduleOutboxFlush,
+} from '@modules/sync/services/sync-outbox-service'
 import {
   clearLiturgyWebRuntime,
   readLiturgyWebRuntimeFromStorage,
@@ -351,15 +357,22 @@ export const useLiturgyStore = defineStore('liturgy', () => {
   })
 
   function persist(markModified = true) {
-    saveLiturgyState({
+    const state = {
       weekdays: weekdays.value,
       dayNotes: dayNotes.value,
       daySessionTimes: daySessionTimes.value,
       customLiturgies: customLiturgies.value,
       deletionLocks: deletionLocks.value,
-    })
+    }
+    saveLiturgyState(state)
     if (markModified) {
       localStorage.setItem('sync.modified.v1.liturgy', new Date().toISOString())
+    }
+    try {
+      enqueueOperatorState('liturgy', 'week', state)
+      scheduleOutboxFlush()
+    } catch {
+      // A fila remota não bloqueia a edição local.
     }
   }
 
@@ -1128,6 +1141,16 @@ export const useLiturgyStore = defineStore('liturgy', () => {
     }
   }
 
+  /** web#174 RF-1: recarrega SÓ o catálogo de músicas (após import .slja). */
+  async function refreshMusicCatalog() {
+    catalogLoading.value = true
+    try {
+      musicList.value = await loadLiturgyMusicOptions()
+    } finally {
+      catalogLoading.value = false
+    }
+  }
+
   function clearMusicPick() {
     itemDraft.value = {
       ...itemDraft.value,
@@ -1245,6 +1268,7 @@ export const useLiturgyStore = defineStore('liturgy', () => {
     closeCloneDialog,
     cloneLiturgyFromSelected,
     onMusicPick,
+    refreshMusicCatalog,
     clearMusicPick,
     onBookPick,
     clearActionMessage,

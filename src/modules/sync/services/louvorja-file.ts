@@ -126,7 +126,7 @@ function inputFallback(): Promise<string | null> {
 				.then(resolve)
 				.catch(() => resolve(null));
 		};
-		// Sem evento cancel confiável cross-browser — resolve null se nada escolhido
-		input.click();
+        input.addEventListener('cancel', () => resolve(null), { once: true });
+        input.click();
 	});
 }
