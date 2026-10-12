@@ -31,7 +31,7 @@ Este README cobre apenas a **versão Web**. A versão Electron é um projeto sep
 
 ## Qualidade
 
-CI em 4 portões: **Lint** (Biome) · **Type Check** · **Unit Tests** (Vitest) · **Build** — mais um **Regression Gate** anti-regressão. Security scan (gitleaks + npm audit) em todo PR.
+CI em 4 portões: **Lint** (Biome) · **Type Check** · **Unit Tests** (Vitest) · **Build** — mais um **Regression Gate** anti-regressão. Verificações de segurança (Gitleaks, npm audit e Semgrep) em todo PR.
 
 ---
 
@@ -152,10 +152,10 @@ Aliases: `version:bug` → patch · `version:min` → minor · `version:max` →
 
 ## Contribuir
 
-Branch default: `main`. PRs passam por lint, type-check, testes, build e regression gate antes do merge.
+Abra PRs de funcionalidades, correções e documentação para `staging`. A promoção para produção segue por PR de `staging` para `main`. Antes do merge, o CI valida lint, tipos, testes, build, contratos comuns app↔web, regressão e mutação do diff quando aplicável.
 
 ---
 
 ## Licença
 
-Licença [MIT](LICENSE.md) — LouvorJA - PIANO.
+Licença [MIT](LICENSE) — LouvorJA - PIANO.
