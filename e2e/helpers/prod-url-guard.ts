@@ -17,7 +17,7 @@
 // read-only do catálogo e não aceita writes.
 
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { loadEnv } from 'vite'
 
 /** Hosts cujo acesso por E2E é PROIBIDO (API de produção). */
 export const PROD_HOSTS = ['api.pianolouvorja.com.br'] as const
@@ -35,7 +35,7 @@ function hostnameOf(url: string | undefined): string | null {
   const trimmed = url.trim()
   if (!trimmed) return null
   try {
-    return new URL(trimmed).hostname.toLowerCase()
+    return new URL(trimmed).hostname.toLowerCase().replace(/\.+$/, '')
   } catch {
     const lowered = trimmed.toLowerCase()
     for (const host of PROD_HOSTS) {
@@ -175,8 +175,5 @@ export function resolveEffectiveApiUrls(
  * globalSetup foi transpilado para cache.
  */
 export function repoRootEnvLayers(): EnvLayer[] {
-  return [
-    readDotenvLayer(join(process.cwd(), '.env'), '.env'),
-    readDotenvLayer(join(process.cwd(), '.env.local'), '.env.local'),
-  ]
+  return [{ source: '.env Vite development', vars: loadEnv('development', process.cwd(), '') }]
 }

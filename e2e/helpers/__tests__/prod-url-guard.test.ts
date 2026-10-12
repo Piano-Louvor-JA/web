@@ -188,6 +188,10 @@ describe('resolveEffectiveApiUrls (env layers)', () => {
 describe('repoRootEnvLayers', () => {
   test('retorna camadas .env e .env.local (vazias se arquivos ausentes)', () => {
     const layers = repoRootEnvLayers()
-    expect(layers.map((l) => l.source)).toEqual(['.env', '.env.local'])
+    expect(layers.map((l) => l.source)).toEqual(['.env Vite development'])
   })
+})
+
+test('bloqueia hostname de produção com ponto final DNS', () => {
+  expect(() => assertNoProdApiUrl(['https://api.pianolouvorja.com.br./'], 'teste')).toThrow(/PRODUÇÃO/)
 })
