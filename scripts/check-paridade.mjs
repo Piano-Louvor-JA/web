@@ -30,7 +30,7 @@ export function compareContracts(local, remote, specs) {
  }
 }
 function peer(path) {
- return execFileSync('gh',['api',`repos/Piano-Louvor-JA/app/contents/${path}?ref=staging`,'-H','Accept: application/vnd.github.raw+json'], { encoding:'utf8' })
+ return execFileSync('gh',['api',`repos/Piano-Louvor-JA/app/contents/${path}?ref=${process.env.PARIDADE_BRANCH || "staging"}`,'-H','Accept: application/vnd.github.raw+json'], { encoding:'utf8' })
 }
 async function formatModule(source) {
  const js = ts.transpile(source, { module:ts.ModuleKind.ESNext, target:ts.ScriptTarget.ES2022 })

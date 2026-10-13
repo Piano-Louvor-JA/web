@@ -54,7 +54,7 @@ describe('stage-settings-runtime (projeção popup)', () => {
 
   it('lê defaults quando storage vazio', () => {
     const s = readEffectiveStageSettings('bible')
-    expect(s.backgroundColor).toBe('#0A0E1A')
+    expect(s.backgroundColor).toBeNull()
     expect(s.bibleFontSize).toBe(84)
   })
 

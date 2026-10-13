@@ -274,7 +274,7 @@ const hasDraft = computed(() => draft.value !== null)
           <i class="ti ti-color-picker" aria-hidden="true" />
           <input
             type="color"
-            :value="effectiveSettings.backgroundColor"
+            :value="effectiveSettings.backgroundColor ?? '#000000'"
             :aria-label="t('settings.stage.backgroundColor')"
             @input="draftPatch({ backgroundColor: ($event.target as HTMLInputElement).value })"
           >

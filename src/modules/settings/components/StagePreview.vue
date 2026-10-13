@@ -27,7 +27,7 @@ const footer = computed(() =>
 const containerStyle = computed(() => {
   const s = props.settings
   return {
-    backgroundColor: s.backgroundColor,
+    backgroundColor: s.backgroundColor ?? 'transparent',
     backgroundImage: resolveBackgroundImage(s.backgroundImage)
       ? `url(${resolveBackgroundImage(s.backgroundImage)})`
       : undefined,

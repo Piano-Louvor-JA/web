@@ -117,7 +117,7 @@ describe('toReceiverMessage — bíblia: aceite de personalização do palco', (
     localStorage.removeItem('user_data')
     const msg = await toReceiverMessage('bible', { reference: 'Sl 23:1', text: 'x' })
     expect(msg).not.toHaveProperty('background')
-    expect(msg).toMatchObject({ backgroundColor: '#0A0E1A' }) // default do palco
+    expect(msg).not.toHaveProperty('backgroundColor') // fundo não definido deixa a imagem/receiver controlar
   })
 
   it('C3: alinhamentos + footerRef (cor/peso) do escopo bible chegam na TV', async () => {
@@ -144,8 +144,7 @@ describe('toReceiverMessage — bíblia: aceite de personalização do palco', (
       fontWeight: 500,
       textColor: '#FFFFFF',
       textShadow: true,
-      textBox: false,
-      backgroundColor: '#0A0E1A',
+      textBox: true,
       textAlign: 'center',
       textVerticalAlign: 'middle',
     })

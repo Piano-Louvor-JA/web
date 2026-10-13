@@ -69,7 +69,7 @@ onUnmounted(() => {
 
 // ===== Estilos derivados da personalização =====
 const stageStyle = computed(() => ({
-  backgroundColor: stage.value.backgroundColor,
+  backgroundColor: stage.value.backgroundColor ?? 'transparent',
 }))
 
 // BG custom do Palco tem prioridade sobre a capa do álbum (como o APK:
