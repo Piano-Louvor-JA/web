@@ -1,6 +1,6 @@
 {
-  "version": "1.20.0",
-  "changelog": "## Novidades\n- feat: gerenciamento de playlists no web (criar, adicionar faixas, tocar e excluir)\n- feat: fila de reprodução com auto-scroll no player\n- feat: ação tocar tudo por coletânea de álbuns",
-  "date": "2026-08-28",
+  "version": "1.24.1",
+  "changelog": "## Correções e manutenção\n- Atualização das dependências do web e das Actions de CI\n- Preservação da compatibilidade da suíte de testes e do TypeScript",
+  "date": "2026-10-12",
   "platform": "web"
 }
