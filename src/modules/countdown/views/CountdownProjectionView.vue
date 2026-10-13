@@ -110,7 +110,7 @@ unsubStage = null
 })
 
 const stageStyle = computed(() => ({
-  backgroundColor: stage.value.backgroundColor,
+  backgroundColor: stage.value.backgroundColor ?? 'transparent',
   backgroundImage: resolveBackgroundImage(stage.value.backgroundImage)
     ? `url(${resolveBackgroundImage(stage.value.backgroundImage)})`
     : undefined,

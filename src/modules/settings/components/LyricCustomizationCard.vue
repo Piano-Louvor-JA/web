@@ -230,7 +230,7 @@ async function onFileSelected(event: Event) {
             <i class="ti ti-color-picker" aria-hidden="true" />
             <input
               type="color"
-              :value="settings.backgroundColor"
+              :value="settings.backgroundColor ?? '#000000'"
               :aria-label="t('settings.projection.lyrics.backgroundColor')"
               @input="setBackgroundColor(($event.target as HTMLInputElement).value)"
             >

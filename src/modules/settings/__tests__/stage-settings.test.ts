@@ -9,7 +9,7 @@ import {
 
 describe('stage-settings (paridade APK)', () => {
   it('defaults idênticos ao APK', () => {
-    expect(DEFAULT_STAGE_SETTINGS.backgroundColor).toBe('#0A0E1A')
+    expect(DEFAULT_STAGE_SETTINGS.backgroundColor).toBeNull()
     expect(DEFAULT_STAGE_SETTINGS.textColor).toBe('#FFFFFF')
     expect(DEFAULT_STAGE_SETTINGS.fontSize).toBe(96)
     expect(DEFAULT_STAGE_SETTINGS.shadowBlur).toBeCloseTo(2.2)
@@ -108,3 +108,11 @@ describe('stage-settings (paridade APK)', () => {
     expect(s.backgroundImage).toBe('official:bg-01')
   })
 })
+
+ it('fundo ausente sobrevive ao round-trip sem impor uma cor à imagem', () => {
+  const defaults = parseStageSettings({})
+  expect(defaults.backgroundColor).toBeNull()
+  expect(serializeStageSettings(defaults)).not.toHaveProperty('bg')
+  expect(parseStageSettings(serializeStageSettings(defaults)).backgroundColor).toBeNull()
+  expect(parseStageSettings({bg:'#0A0E1A'}).backgroundColor).toBe('#0A0E1A')
+ })

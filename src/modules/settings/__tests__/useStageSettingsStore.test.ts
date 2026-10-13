@@ -57,7 +57,7 @@ describe('useStageSettingsStore', () => {
 
   it('inicializa com defaults quando storage vazio', () => {
     expect(store.activeScope).toBe('global')
-    expect(store.settings.backgroundColor).toBe('#0A0E1A')
+    expect(store.settings.backgroundColor).toBeNull()
     expect(store.settings.bibleFontSize).toBe(84)
   })
 
@@ -144,8 +144,8 @@ describe('useStageSettingsStore', () => {
 
     store.resetScope()
 
-    expect(mockPrefs[KEY_GLOBAL].bg).toBe('#0A0E1A') // default serializado
-    expect(store.settings.backgroundColor).toBe('#0A0E1A')
+    expect(mockPrefs[KEY_GLOBAL]).not.toHaveProperty('bg') // default serializado
+    expect(store.settings.backgroundColor).toBeNull()
   })
 
   it('effective retorna override > global > defaults', () => {
@@ -165,7 +165,7 @@ describe('useStageSettingsStore', () => {
 
   it('effective sem nada storage → defaults', () => {
     const s = store.effective('bible')
-    expect(s.backgroundColor).toBe('#0A0E1A')
+    expect(s.backgroundColor).toBeNull()
     expect(s.bibleFontSize).toBe(84)
   })
 })
