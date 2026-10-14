@@ -58,7 +58,7 @@ describe('teste-gêmeo web↔app: mesma tabela de configs → mesmo estilo', () 
     expect(effectiveLyricStyle(CONFIG_TABLE.herdaTudo)).toEqual({
       fontSizePx: 96,
       fontWeight: 600,
-      color: '#FFFFFF',
+      color: null,
       textShadow: true,
       textTransform: 'none',
     })
@@ -83,7 +83,7 @@ describe('teste-gêmeo web↔app: mesma tabela de configs → mesmo estilo', () 
     const s = parseStageSettings(CONFIG_TABLE.forasDeFaixa)
     expect(s.lyricFontSize).toBe(160)
     expect(s.lyricFontWeight).toBeNull() // peso inválido → herda
-    expect(s.lyricTextColor).toBe('#FFFFFF') // cor inválida → fallback do estilo geral
+    expect(s.lyricTextColor).toBeNull() // cor inválida → null (render usa o padrão)
   })
 
   it('serialize↔parse roundtrip preserva os lyric*', () => {

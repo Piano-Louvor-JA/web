@@ -17,7 +17,7 @@ describe('toReceiverMessage', () => {
     expect(msg).toHaveProperty('fontSize')
     expect(msg).toHaveProperty('textShadow')
     expect(msg).toHaveProperty('textBox')
-    expect(msg).toHaveProperty('footerRefColor')
+    expect(msg).not.toHaveProperty('footerRefColor')
   })
 
   it('serializa hino ativo: letra no text, título no footer (paridade receiver TV)', async () => {
@@ -142,11 +142,12 @@ describe('toReceiverMessage — bíblia: aceite de personalização do palco', (
     expect(msg).toMatchObject({
       fontSize: 84, // DEFAULT_STAGE_SETTINGS.bibleFontSize
       fontWeight: 500,
-      textColor: '#FFFFFF',
       textShadow: true,
       textBox: true,
       textAlign: 'center',
       textVerticalAlign: 'middle',
     })
+    expect(msg).not.toHaveProperty('textColor')
+    expect(msg).not.toHaveProperty('backgroundColor')
   })
 })
