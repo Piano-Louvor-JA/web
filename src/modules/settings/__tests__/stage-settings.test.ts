@@ -10,12 +10,13 @@ import {
 describe('stage-settings (paridade APK)', () => {
   it('defaults idênticos ao APK', () => {
     expect(DEFAULT_STAGE_SETTINGS.backgroundColor).toBeNull()
-    expect(DEFAULT_STAGE_SETTINGS.textColor).toBe('#FFFFFF')
+    expect(DEFAULT_STAGE_SETTINGS.textColor).toBeNull()
     expect(DEFAULT_STAGE_SETTINGS.fontSize).toBe(96)
     expect(DEFAULT_STAGE_SETTINGS.shadowBlur).toBeCloseTo(2.2)
     expect(DEFAULT_STAGE_SETTINGS.shadowIntensity).toBeCloseTo(0.8)
     expect(DEFAULT_STAGE_SETTINGS.boxOpacity).toBeCloseTo(0.45)
-    expect(DEFAULT_STAGE_SETTINGS.footerRefColor).toBe('#FCCE02')
+    expect(DEFAULT_STAGE_SETTINGS.footerRefColor).toBeNull()
+    expect(DEFAULT_STAGE_SETTINGS.bibleTextColor).toBeNull()
     expect(DEFAULT_STAGE_SETTINGS.bibleFontSize).toBe(84)
     expect(DEFAULT_STAGE_SETTINGS.textAlign).toBe('center')
     expect(DEFAULT_STAGE_SETTINGS.textVerticalAlign).toBe('middle')

@@ -86,7 +86,7 @@ jobs:
       - name: Check paridade
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PARIDADE_BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref == 'fix/stage-background-parity-app435' && github.base_ref == 'staging' && 'fix/diagnostics-glitchtip-send' || 'staging' }}
+          PARIDADE_BRANCH: ${{ github.event_name == 'pull_request' && github.base_ref == 'staging' && (github.head_ref == 'feat/stage-settings-parity-app458' && 'dev-tudo' || github.head_ref == 'fix/stage-background-parity-app435' && 'fix/diagnostics-glitchtip-send') || 'staging' }}
         run: node scripts/check-paridade.mjs
 
   regression-gate:

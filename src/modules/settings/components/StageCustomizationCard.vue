@@ -374,7 +374,7 @@ const hasDraft = computed(() => draft.value !== null)
           <i class="ti ti-color-picker" aria-hidden="true" />
           <input
             type="color"
-            :value="effectiveSettings.textColor"
+            :value="effectiveSettings.textColor ?? '#FFFFFF'"
             :aria-label="t('settings.stage.textColor')"
             @input="draftPatch({ textColor: ($event.target as HTMLInputElement).value })"
           >
@@ -439,7 +439,7 @@ const hasDraft = computed(() => draft.value !== null)
             <i class="ti ti-color-picker" aria-hidden="true" />
             <input
               type="color"
-              :value="settings.bibleTextColor"
+              :value="settings.bibleTextColor ?? '#FFFFFF'"
               :aria-label="t('settings.stage.bibleTextColor')"
               @input="draftPatch({ bibleTextColor: ($event.target as HTMLInputElement).value })"
             >
@@ -529,7 +529,7 @@ const hasDraft = computed(() => draft.value !== null)
             <i class="ti ti-color-picker" aria-hidden="true" />
             <input
               type="color"
-              :value="effectiveSettings.footerRefColor"
+              :value="effectiveSettings.footerRefColor ?? '#FCCE02'"
               :aria-label="t('settings.stage.footerRefColor')"
               @input="draftPatch({ footerRefColor: ($event.target as HTMLInputElement).value })"
             >
