@@ -144,8 +144,8 @@ function stageFields(moduleId: string, s: StageSettings): Partial<ReceiverMessag
     textBox: s.textBox,
     boxOpacity: s.boxOpacity,
     boxBorder: s.boxBorder,
-    textColor: s.textColor,
   }
+  if (s.textColor) out.textColor = s.textColor
   if (s.backgroundColor) out.backgroundColor = s.backgroundColor
   return out
 }
@@ -169,9 +169,8 @@ export async function toReceiverMessage(moduleId: string, payload: unknown): Pro
       ...stageFields(moduleId, st),
       fontSize: st.bibleFontSize,
       fontWeight: st.bibleFontWeight,
-      textColor: st.bibleTextColor,
-      footerRefColor: st.footerRefColor,
-      footerColor: st.footerRefColor,
+      ...(st.bibleTextColor ? { textColor: st.bibleTextColor } : {}),
+      ...(st.footerRefColor ? { footerRefColor: st.footerRefColor, footerColor: st.footerRefColor } : {}),
       footerWeight: st.footerRefWeight,
       // Paridade popup: alinhamentos do palco (o receiver aplica no layout).
       textAlign: st.textAlign,
