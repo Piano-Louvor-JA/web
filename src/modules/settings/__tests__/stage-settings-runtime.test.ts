@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { JSDOM } from 'jsdom'
 
 import { readEffectiveStageSettings, subscribeStageSettings } from '../services/stage-settings-runtime'
 
@@ -36,13 +35,7 @@ class MockBroadcastChannel {
   }
 }
 
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-  url: 'http://localhost',
-  pretendToBeVisual: true,
-})
-globalThis.window = dom.window as unknown as Window & typeof globalThis
-globalThis.document = dom.window.document
-globalThis.localStorage = dom.window.localStorage
+// O ambiente jsdom configurado pelo Vitest já fornece window, document e localStorage.
 globalThis.BroadcastChannel = MockBroadcastChannel as unknown as BroadcastChannelConstructor
 
 describe('stage-settings-runtime (projeção popup)', () => {
