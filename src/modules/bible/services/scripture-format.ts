@@ -104,6 +104,43 @@ export function parseVerseQuery(
   return Array.from(all).sort((a, b) => a - b)
 }
 
+/**
+ * Paridade app (R4+): valida lista/intervalos mistos ("1-4, 6") como filtro
+ * de passagem — normaliza travessões tipográficos e qualquer parte inválida
+ * anula tudo (entrada torta NÃO filtra parcialmente). Independente do
+ * capítulo carregado (usado antes do parse final por versículos existentes).
+ */
+export function parseVerseFilter(query: string): number[] {
+  // U+2010–U+2015 (hyphens/dashes tipográficos) → hífen ASCII
+  const normalized = query.replace(/[\u2010-\u2015]/g, '-').trim()
+  if (!normalized) return []
+
+  const result: number[] = []
+  for (const part of normalized.split(',')) {
+    const trimmed = part.trim()
+    if (!trimmed) return []
+
+    const range = /^(\d+)-(\d+)$/.exec(trimmed)
+    if (range) {
+      const from = Number(range[1])
+      const to = Number(range[2])
+      if (from < 1 || to < 1) return []
+      const lo = Math.min(from, to)
+      const hi = Math.max(from, to)
+      for (let i = lo; i <= hi; i += 1) result.push(i)
+      continue
+    }
+
+    const single = /^\d+$/.exec(trimmed)
+    if (!single) return []
+    const num = Number(trimmed)
+    if (num < 1) return []
+    result.push(num)
+  }
+
+  return Array.from(new Set(result)).sort((a, b) => a - b)
+}
+
 export function emptySelection(): BibleSelection {
   return {
     versionId: null,
