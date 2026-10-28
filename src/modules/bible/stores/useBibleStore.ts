@@ -29,6 +29,7 @@ import {
   buildProjectionText,
   emptySelection,
   formatScripturalReference,
+  parseVerseFilter,
   parseVerseQuery,
 } from '../services/scripture-format'
 import type {
@@ -165,6 +166,22 @@ export const useBibleStore = defineStore('bible', () => {
 
   function clearError() {
     lastErrorKey.value = null
+  }
+
+  /** Paridade app (R4+): filtro ativo de passagem — a lista mostra SÓ estes
+   *  versículos e a navegação fica restrita a eles. Limpa ao trocar
+   *  livro/capítulo (navegação manual). */
+  const filteredVerseSet = ref<Set<number> | null>(null)
+
+  const visibleVerseEntries = computed(() => {
+    if (!filteredVerseSet.value) return verseEntries.value
+    return verseEntries.value.filter((entry) =>
+      filteredVerseSet.value!.has(entry.number),
+    )
+  })
+
+  function clearFilteredVerses() {
+    filteredVerseSet.value = null
   }
 
   function setError(key: string) {
@@ -356,6 +373,7 @@ export const useBibleStore = defineStore('bible', () => {
     const book = books.value.find((item) => item.id === bookId)
     if (!book) return
 
+    filteredVerseSet.value = null
     selectedBookId.value = bookId
     setUserPreference(USER_PREFERENCE_KEYS.bibleSelectedBook, bookId)
     testamentFilter.value = resolveTestament(book.bookNumber)
@@ -375,6 +393,7 @@ export const useBibleStore = defineStore('bible', () => {
     const next = Math.min(chapter, max)
     if (selectedChapter.value === next) return
 
+    filteredVerseSet.value = null
     selectedChapter.value = next
     setUserPreference(USER_PREFERENCE_KEYS.bibleSelectedChapter, next)
     selectedVerses.value = []
@@ -414,11 +433,24 @@ export const useBibleStore = defineStore('bible', () => {
   }
 
   function applyVerseSearch() {
-    const parsed = parseVerseQuery(verseSearchQuery.value, verses.value)
-    if (parsed.length === 0) return
+    // Paridade app (R4+): Enter valida lista/intervalos ("1-4, 6"), ativa o
+    // filtro de lista (só os versículos da passagem) e NADA vem selecionado —
+    // o operador escolhe o primeiro e navega (setas) restrito ao filtro.
+    const filter = parseVerseFilter(verseSearchQuery.value)
+    if (filter.length === 0) {
+      // sem padrão de referência → cai na busca textual existente
+      const parsed = parseVerseQuery(verseSearchQuery.value, verses.value)
+      if (parsed.length === 0) return
+      filteredVerseSet.value = null
+      selectedVerses.value = parsed
+      lastVerseAnchor.value = parsed[parsed.length - 1] // NOSONAR
+      verseSearchQuery.value = ''
+      syncProjection()
+      return
+    }
 
-    selectedVerses.value = parsed
-    lastVerseAnchor.value = parsed[parsed.length - 1] // NOSONAR
+    filteredVerseSet.value = new Set(filter)
+    selectedVerses.value = []
     verseSearchQuery.value = ''
     syncProjection()
   }
@@ -452,6 +484,27 @@ export const useBibleStore = defineStore('bible', () => {
     if (Number.isFinite(last)) selectVerse(last)
   }
   async function goToAdjacentVerse(direction: -1 | 1) {
+    // Paridade app (R4+): com filtro de passagem ativo, navegação fica
+    // RESTITA aos versículos renderizados — nada fora do filtro projeta e
+    // nunca cruza capítulo/livro enquanto o filtro existir.
+    if (filteredVerseSet.value) {
+      const ordered = visibleVerseEntries.value.map((entry) => entry.number)
+      if (ordered.length === 0) return
+      if (selectedVerses.value.length === 0) {
+        selectVerse(direction > 0 ? ordered[0] : ordered[ordered.length - 1])
+        return
+      }
+      const current =
+        direction < 0
+          ? Math.min(...selectedVerses.value)
+          : Math.max(...selectedVerses.value)
+      const position = ordered.indexOf(current)
+      const fallback = direction < 0 ? ordered.length - 1 : 0
+      const next = position === -1 ? ordered[fallback] : ordered[position + direction]
+      if (next != null) selectVerse(next)
+      return
+    }
+
     const isForward = direction > 0
     if (selectedVerses.value.length === 0) {
       isForward ? selectFirstValidVerse() : selectLastValidVerse()
@@ -522,6 +575,8 @@ export const useBibleStore = defineStore('bible', () => {
     locationLabel,
     chapterTitle,
     verseEntries,
+    visibleVerseEntries,
+    clearFilteredVerses,
     clearError,
     bootstrap,
     selectVersion,

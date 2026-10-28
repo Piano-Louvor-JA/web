@@ -19,6 +19,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:verseSearchQuery': [value: string]
+  verseSearchSubmit: []
   selectVerse: [verseNumber: number, event: MouseEvent]
   previousVerse: []
   nextVerse: []
@@ -137,6 +138,7 @@ function isSelected(verseNumber: number): boolean {
           :placeholder="t('bible.searchVerse')"
           :aria-label="t('bible.searchVerse')"
           @input="emit('update:verseSearchQuery', ($event.target as HTMLInputElement).value)"
+          @keydown.enter.prevent="emit('verseSearchSubmit')"
         >
       </div>
     </header>
