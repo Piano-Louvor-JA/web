@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
