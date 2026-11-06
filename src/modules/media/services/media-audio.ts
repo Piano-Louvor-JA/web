@@ -14,7 +14,7 @@ export function resolveRemoteFileUrl(urlPath: string): string {
   // (fetch 200 ok, mas Audio/Image disparam onerror); via proxy renderiza.
   const proxyTarget = import.meta.env.VITE_DEV_MEDIA_PROXY
   if (proxyTarget) return `/tunnel-file/${cleanPath}`
-  const base = import.meta.env.VITE_URL_FILES ?? 'https://api.louvorja.com.br/file'
+  const base = import.meta.env.VITE_URL_FILES ?? 'https://files.louvorja.com.br'
   // Base relativa (ex: /tunnel-file no dev via proxy): absolutizar contra a
   // origem atual. O runtime publicado via relay é consumido por janelas em
   // OUTRA origem (TV/receiver) — URL relativa quebraria o bg/audio lá.

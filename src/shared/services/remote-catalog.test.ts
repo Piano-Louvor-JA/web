@@ -14,6 +14,14 @@ import {
   resolveDatabaseUrl,
 } from './remote-catalog'
 
+// bundle-first: stub do módulo bundle-sync (cache persistente)
+const bundleCache: Record<string, unknown> = {}
+vi.mock('./bundle-sync', () => ({
+  readCachedBundleJson: vi.fn((_kind: string, key: string) => bundleCache[key] ?? null),
+  checkForUpdates: vi.fn(async () => ({ ok: true, checked: [], applied: [] })),
+  databaseOrigin: vi.fn(() => ''),
+}))
+
 const mockedFetch = vi.fn()
 vi.stubGlobal('fetch', mockedFetch)
 
@@ -116,6 +124,38 @@ describe('remote-catalog — caudas', () => {
     mockedFetch.mockRejectedValue('falha-pura-string')
     const data = await fetchRemoteCatalogJson('string-erro.json', 0)
     expect(data).toEqual({ from: 'fallback-default' })
+  })
+})
+
+describe('remote-catalog — bundle-first (RF-03/RF-06)', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+    for (const k of Object.keys(bundleCache)) delete bundleCache[k]
+    mockedFetch.mockReset()
+    mockedFallback.mockReset()
+    mockedFallback.mockResolvedValue({ data: { from: 'fallback-default' }, base: 'x' })
+  })
+
+  it('bundle persistente presente → leitura SEM request item-a-item', async () => {
+    bundleCache['music_7'] = [{ id_music: 7 }]
+    const res = await readOrFetchCatalogJson('music_7')
+    expect(res).toEqual([{ id_music: 7 }])
+    expect(mockedFetch).not.toHaveBeenCalled()
+    expect(mockedFallback).not.toHaveBeenCalled()
+  })
+
+  it('bundle ausente + session cache ausente → fluxo legado atual (lazy, individual)', async () => {
+    mockedFetch.mockResolvedValue(reply(200, { id_music: 9 }))
+    const res = await readOrFetchCatalogJson('music_9')
+    expect(res).toEqual({ id_music: 9 })
+    expect(mockedFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('legado sessionStorage não é apagado pelo bundle sync', async () => {
+    sessionStorage.setItem('db:legado.json', JSON.stringify({ v: 1 }))
+    const res = await readOrFetchCatalogJson('legado.json')
+    expect(res).toEqual({ v: 1 })
+    expect(sessionStorage.getItem('db:legado.json')).not.toBeNull()
   })
 })
 
