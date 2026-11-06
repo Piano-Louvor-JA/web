@@ -13,6 +13,7 @@ import { APP_PRODUCT_NAME } from '@shared/constants/app'
 import { initUiZoom } from '@shared/composables/useUiZoom'
 import { installPopupOpenerBridge } from '@shared/services/popup-windows'
 import { startTelemetry } from '@shared/services/telemetry'
+import { checkForUpdates as checkBundleUpdates } from '@shared/services/bundle-sync'
 
 registerBibleRuntimeSink((state) => publishToStageRelay('bible', state))
 
@@ -22,6 +23,7 @@ useThemeManager()
 initUiZoom()
 installPopupOpenerBridge()
 void startTelemetry()
+void checkBundleUpdates()
 
 installClientPlatformHeader()
 const app = createApp(App)

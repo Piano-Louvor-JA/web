@@ -1,13 +1,14 @@
 import { BROWSER_STORAGE_KEYS } from '@shared/constants/storage-keys'
 import { getBrowserItem, setBrowserItem } from '@shared/services/browser-storage'
 import { fetchWithApiFallback } from '@shared/services/api-fallback'
+import { readCachedBundleJson } from '@shared/services/bundle-sync'
 
 function sessionCacheKey(filename: string): string {
   return `${BROWSER_STORAGE_KEYS.catalogSessionPrefix}${filename}`
 }
 
 export function resolveDatabaseUrl(relativePath: string): string {
-  const base = import.meta.env.VITE_URL_DATABASE ?? 'https://api.louvorja.com.br/json_db'
+  const base = import.meta.env.VITE_URL_DATABASE ?? 'https://api.pianolouvorja.com.br/json_db'
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`
   return `${base}${path}`
 }
@@ -55,17 +56,22 @@ export async function fetchRemoteCatalogJson<T = unknown>(
       return fetchRemoteCatalogJson(file, retries - 1, delayMs * 1.5)
     }
 
-    // Primária esgotada → cascata: pianolouvorja → louvorja → workers.dev
     const { data } = await fetchWithApiFallback<T>('database', file, { retries, delayMs })
     setBrowserItem(sessionCacheKey(file), data, 'session')
     return data
   }
 }
 
-/** Lê do sessionStorage; se ausente, busca na API remota. */
+/** Lê cache bundle persistente, sessão, então legado lazy individual. */
 export async function readOrFetchCatalogJson<T = unknown>(
   filename: string,
 ): Promise<T | null> {
+  const bundleKind = filename.startsWith('bible_') || filename.startsWith('pt_bible_')
+    ? 'bible'
+    : 'catalog'
+  const bundled = readCachedBundleJson<T>(bundleKind, filename)
+  if (bundled != null) return bundled
+
   const cached = getBrowserItem<T>(sessionCacheKey(filename), null, 'session')
   if (cached != null) return cached
 

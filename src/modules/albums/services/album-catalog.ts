@@ -32,7 +32,7 @@ function resolveRemoteCoverUrl(urlPath: string): string {
   // img onerror); proxy local renderiza. Prod: URL absoluta da API.
   const proxyTarget = import.meta.env.VITE_DEV_MEDIA_PROXY
   if (proxyTarget) return `/tunnel-file/${cleanPath}`
-  const base = import.meta.env.VITE_URL_FILES ?? 'https://api.louvorja.com.br/file'
+  const base = import.meta.env.VITE_URL_FILES ?? 'https://files.louvorja.com.br'
   return `${base}/${cleanPath}`
 }
 
