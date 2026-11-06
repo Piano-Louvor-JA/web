@@ -59,7 +59,11 @@ export default {
       nothingToImport: 'Nothing new to import.',
       invalidFile: 'Invalid playlists file.',
       newLists: '{count} new playlist(s)',
-      addedTracks: '{count} track(s) added'
+      addedTracks: '{count} track(s) added',
+      rename: 'Rename playlist {name}',
+      newName: 'New playlist name',
+      saveName: 'Save',
+      emptyPlaylistFeedback: 'Empty playlist — add tracks before playing.',
     },
     custom: {
       title: 'My Collections',

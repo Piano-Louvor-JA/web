@@ -19,6 +19,7 @@ import {
   deletePlaylist,
   listPlaylists,
   removePlaylistItem,
+  renamePlaylist,
   savePlaylists,
   type Playlist,
 } from '../services/playlist-storage'
@@ -126,6 +127,26 @@ function addPlaylist() {
   newPlaylistName.value = ''
 }
 
+// --- Renomear playlist (paridade com o painel do app) ---
+const editingPlaylistId = ref<string | null>(null)
+const editingPlaylistName = ref('')
+
+function beginRenamePlaylist(playlist: Playlist) {
+  editingPlaylistId.value = playlist.id
+  editingPlaylistName.value = playlist.name
+}
+
+function savePlaylistName() {
+  const id = editingPlaylistId.value
+  const name = editingPlaylistName.value.trim()
+  if (id && name) {
+    renamePlaylist(id, name)
+    playlists.value = listPlaylists()
+  }
+  editingPlaylistId.value = null
+  editingPlaylistName.value = ''
+}
+
 // --- Minhas Coletâneas (custom, via API /v1/custom) ---
 import {
   createCustomCollection,
@@ -219,7 +240,10 @@ function togglePlaylist(id: string) {
 }
 
 async function playPlaylist(playlist: Playlist) {
-  if (playlist.items.length === 0) return
+  if (playlist.items.length === 0) {
+    showImportFeedback(t('albums.playlists.emptyPlaylistFeedback'))
+    return
+  }
   await mediaStore.playQueue(playlist.items, 0)
   void router.push({ name: 'media' })
 }
@@ -513,11 +537,21 @@ async function runAction(
                   <button
                     type="button"
                     class="albums-view__playlist-play"
-                    :disabled="playlist.items.length === 0"
+                    data-testid="playlist-play"
                     :aria-label="`Tocar ${playlist.name}`"
                     @click="playPlaylist(playlist)"
                   >
                     <i class="ti ti-player-play" aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    class="albums-view__playlist-rename"
+                    data-testid="playlist-rename"
+                    :aria-label="t('albums.playlists.rename', { name: playlist.name })"
+                    :title="t('albums.playlists.rename', { name: playlist.name })"
+                    @click="beginRenamePlaylist(playlist)"
+                  >
+                    <i class="ti ti-pencil" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
@@ -529,6 +563,21 @@ async function runAction(
                   </button>
                 </div>
               </div>
+              <form
+                v-if="editingPlaylistId === playlist.id"
+                class="albums-view__rename-form"
+                @submit.prevent="savePlaylistName"
+                @keydown.esc.stop="editingPlaylistId = null"
+              >
+                <input
+                  v-model="editingPlaylistName"
+                  data-testid="playlist-rename-input"
+                  required
+                  :placeholder="t('albums.playlists.newName')"
+                  :aria-label="t('albums.playlists.newName')"
+                >
+                <button type="submit">{{ t('albums.playlists.saveName') }}</button>
+              </form>
               <Transition name="playlist-tracks">
                 <ul
                   v-if="expandedPlaylistId === playlist.id && playlist.items.length > 0"

@@ -59,7 +59,11 @@ export default {
       nothingToImport: 'Nada nuevo para importar.',
       invalidFile: 'Archivo de playlists inválido.',
       newLists: '{count} playlist(s) nueva(s)',
-      addedTracks: '{count} pista(s) añadida(s)'
+      addedTracks: '{count} pista(s) añadida(s)',
+      rename: 'Renombrar playlist {name}',
+      newName: 'Nuevo nombre de la playlist',
+      saveName: 'Guardar',
+      emptyPlaylistFeedback: 'Playlist vacía — añade pistas antes de reproducir.',
     },
     custom: {
           title: 'Mis Colecciones',
