@@ -13,6 +13,7 @@ import { syncPopupWindows } from '@shared/services/popup-windows'
 
 import LiturgyWebControlBar from '../components/LiturgyWebControlBar.vue'
 import { toggleLiturgyScreensFromControl } from '../services/liturgy-web-projection'
+import { youtubeEmbedPlayerVars, youtubeVeilAfter } from '../services/youtube-embed'
 import { useLiturgyVideoAutoclose } from '../composables/useLiturgyVideoAutoclose'
 import {
   captureCurrentSurface,
@@ -60,6 +61,7 @@ const screenReloadToken = ref(0)
 
 const videoEl = ref<HTMLVideoElement | HTMLAudioElement | null>(null)
 const ytHostEl = ref<HTMLElement | null>(null)
+const ytVeiled = ref(true)
 const siteFrameEl = ref<HTMLIFrameElement | null>(null)
 const stageEl = ref<HTMLElement | null>(null)
 const mirrorVideoEl = ref<HTMLVideoElement | null>(null)
@@ -511,6 +513,7 @@ async function mountYtPlayer() {
 
   const host = ytHostEl.value
   host.replaceChildren()
+  ytVeiled.value = true
   const mountNode = document.createElement('div')
   mountNode.className = 'liturgy-web-projection__yt-host'
   host.appendChild(mountNode)
@@ -518,17 +521,7 @@ async function mountYtPlayer() {
   const videoId = runtime.value.videoId
   ytPlayer = new window.YT!.Player(mountNode, {
     videoId,
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      rel: 0,
-      fs: 0,
-      playsinline: 1,
-      modestbranding: 1,
-      enablejsapi: 1,
-      origin: window.location.origin,
-      mute: isControl.value ? 0 : 1,
-    },
+    playerVars: youtubeEmbedPlayerVars({ origin: window.location.origin, muted: !isControl.value }),
     events: {
       onReady: (event) => {
         if (!isControl.value) {
@@ -549,6 +542,7 @@ async function mountYtPlayer() {
         publishSyncFromLocal()
       },
       onStateChange: (event) => {
+        ytVeiled.value = youtubeVeilAfter(ytVeiled.value, event.data)
         if (applyingRemoteSync) return
         const playing = event.data === window.YT!.PlayerState.PLAYING
         const paused = event.data === window.YT!.PlayerState.PAUSED
@@ -991,9 +985,17 @@ onUnmounted(() => {
       </template>
       <div
         v-else-if="showContent && runtime.kind === 'youtube'"
-        ref="ytHostEl"
-        class="liturgy-web-projection__yt"
-      />
+        class="liturgy-web-projection__yt-wrap"
+      >
+        <div
+          ref="ytHostEl"
+          class="liturgy-web-projection__yt"
+        />
+        <div
+          class="liturgy-web-projection__yt-veil"
+          :class="{ 'is-hidden': !ytVeiled }"
+        />
+      </div>
       <img
         v-else-if="showContent && runtime.kind === 'image' && currentImage"
         :key="currentImage"
@@ -1147,6 +1149,26 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.liturgy-web-projection__yt-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.liturgy-web-projection__yt-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  pointer-events: none;
+  transition: opacity 0.3s;
+
+  &.is-hidden {
+    opacity: 0;
+  }
 }
 
 .liturgy-web-projection__blocker {
