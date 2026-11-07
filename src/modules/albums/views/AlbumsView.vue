@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -223,6 +223,10 @@ function openCustomCollection(id: number) {
 
 onMounted(() => {
   void hydrateCustomCollections()
+})
+
+onBeforeUnmount(() => {
+  if (importFeedbackTimer) clearTimeout(importFeedbackTimer)
 })
 
 function removePlaylist(id: string) {
