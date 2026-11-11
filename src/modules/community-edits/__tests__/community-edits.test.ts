@@ -206,15 +206,18 @@ describe('publish-edit (RF-03)', () => {
 });
 
 describe('applied-edits (RF-08)', () => {
-  it('retorna o edit applied da música', async () => {
+  it('retorna o edit applied da música (contrato camelCase da API)', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          edits: [{ music_id: 42, lyrics: '[{"text":"aprovado"}]', timing: null }],
-        }),
-      } as Response),
+      vi.fn().mockImplementation((url: string) => {
+        expect(url).toContain('musicIds=42');
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            applied: [{ musicId: 42, lyrics: '[{"text":"aprovado"}]', timing: null }],
+          }),
+        } as Response);
+      }),
     );
     const applied = await fetchAppliedEdit(42);
     expect(applied?.lyrics).toBe('[{"text":"aprovado"}]');

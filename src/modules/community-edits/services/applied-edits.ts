@@ -9,14 +9,14 @@ import type { AppliedEdit } from './edit-resolver';
 
 export async function fetchAppliedEdit(musicId: number): Promise<AppliedEdit | null> {
   try {
-    const res = await fetch(customApiUrl(`/edits/applied?music_ids=${musicId}`), {
+    const res = await fetch(customApiUrl(`/edits/applied?musicIds=${musicId}`), {
       headers: authHeaders(),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as {
-      edits?: { music_id: number; lyrics: string | null; timing: string | null }[];
+      applied?: { musicId: number; lyrics: string | null; timing: string | null }[];
     };
-    const hit = data.edits?.find((e) => e.music_id === musicId);
+    const hit = data.applied?.find((e) => e.musicId === musicId);
     if (!hit) return null;
     return { lyrics: hit.lyrics ?? null, timing: hit.timing ?? null };
   } catch {
