@@ -41,6 +41,19 @@ export default {
     zoomIn: 'Aumentar zoom',
     zoomOut: 'Disminuir zoom'
   },
+  community: {
+    edits: {
+      title: 'Mis ediciones',
+      empty: 'Aún no has editado ninguna canción del catálogo.',
+      musicLabel: 'Canción #{id}',
+      publish: 'Publicar corrección',
+      delete: 'Eliminar',
+      published: 'Corrección publicada — esperando el concilio.',
+      publishFailed: 'No se pudo publicar: {error}',
+      statusPublished: 'Publicada',
+      statusDraft: 'Borrador',
+    },
+  },
   nav: {
       home: 'Inicio',
       albums: 'Centro de Medios',

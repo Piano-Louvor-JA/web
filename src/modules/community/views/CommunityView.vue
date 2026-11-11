@@ -23,6 +23,7 @@ import {
   getNotifications,
 } from "../services/notifications";
 import NotificationsDropdown from "../components/NotificationsDropdown.vue";
+import MyEditsPanel from "@/modules/community-edits/views/MyEditsPanel.vue";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -157,6 +158,8 @@ onMounted(load);
           {{ t("community.ranking") }}
         </button>
       </div>
+
+      <MyEditsPanel v-if="isLogged" class="community-view__my-edits" />
     </header>
 
     <div
