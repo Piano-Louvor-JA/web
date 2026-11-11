@@ -9,6 +9,19 @@ export default {
     cancel: 'Cancelar',
     apply: 'Aplicar',
   },
+  community: {
+    edits: {
+      title: 'Minhas Edições',
+      empty: 'Você ainda não editou nenhuma música do catálogo.',
+      musicLabel: 'Música #{id}',
+      publish: 'Publicar correção',
+      delete: 'Excluir',
+      published: 'Correção publicada — aguardando o concilio.',
+      publishFailed: 'Não foi possível publicar: {error}',
+      statusPublished: 'Publicada',
+      statusDraft: 'Rascunho',
+    },
+  },
   nav: {
       home: 'Início',
       albums: 'Central de Mídia',

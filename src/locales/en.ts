@@ -41,6 +41,19 @@ export default {
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out'
   },
+  community: {
+    edits: {
+      title: 'My Edits',
+      empty: "You haven't edited any catalog song yet.",
+      musicLabel: 'Song #{id}',
+      publish: 'Publish correction',
+      delete: 'Delete',
+      published: 'Correction published — awaiting the council.',
+      publishFailed: 'Could not publish: {error}',
+      statusPublished: 'Published',
+      statusDraft: 'Draft',
+    },
+  },
   nav: {
       home: 'Home',
       albums: 'Media Center',
