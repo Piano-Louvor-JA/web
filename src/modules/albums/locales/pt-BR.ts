@@ -50,6 +50,13 @@ export default {
         'Não foi possível abrir a projeção nas telas configuradas.',
     },
     playlists: {
+      rename: 'Renomear playlist {name}',
+      renamed: 'Playlist renomeada',
+      emptyPlayback: 'A playlist está vazia.',
+      save: 'Salvar',
+      play: 'Tocar {name}',
+      remove: 'Excluir playlist {name}',
+      removeTrack: 'Remover {name} da playlist',
       title: 'Playlists',
       newPlaceholder: 'Nome da nova playlist...',
       create: 'Criar',

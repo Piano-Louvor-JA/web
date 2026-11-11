@@ -49,6 +49,13 @@ export default {
       edition1996Subtitle: 'Historic - {count} traditional hymns'
     },
     playlists: {
+      rename: 'Rename playlist {name}',
+      renamed: 'Playlist renamed',
+      emptyPlayback: 'The playlist is empty.',
+      save: 'Save',
+      play: 'Play {name}',
+      remove: 'Delete playlist {name}',
+      removeTrack: 'Remove {name} from playlist',
       title: 'Playlists',
       newPlaceholder: 'New playlist name...',
       create: 'Create',

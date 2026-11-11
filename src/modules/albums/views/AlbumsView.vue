@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -19,6 +19,7 @@ import {
   deletePlaylist,
   listPlaylists,
   removePlaylistItem,
+  renamePlaylist,
   savePlaylists,
   type Playlist,
 } from '../services/playlist-storage'
@@ -32,9 +33,14 @@ import PopupRouteSelect from '../../settings/components/PopupRouteSelect.vue'
 const mediaStore = useMediaStore()
 const playlists = ref<Playlist[]>(listPlaylists())
 const newPlaylistName = ref('')
+const renamingPlaylistId = ref<string | null>(null)
+const renamingPlaylistName = ref('')
 const expandedPlaylistId = ref<string | null>(null)
 const importFeedback = ref('')
 let importFeedbackTimer: ReturnType<typeof setTimeout> | null = null
+onUnmounted(() => {
+  if (importFeedbackTimer) clearTimeout(importFeedbackTimer)
+})
 
 function showImportFeedback(message: string) {
   importFeedback.value = message
@@ -207,6 +213,33 @@ onMounted(() => {
 function removePlaylist(id: string) {
   deletePlaylist(id)
   playlists.value = listPlaylists()
+
+  if (expandedPlaylistId.value === id) {
+    expandedPlaylistId.value = null
+  }
+
+  if (renamingPlaylistId.value === id) {
+    renamingPlaylistId.value = null
+    renamingPlaylistName.value = ''
+  }
+}
+
+function startRenamePlaylist(playlist: Playlist) {
+  renamingPlaylistId.value = playlist.id
+  renamingPlaylistName.value = playlist.name
+}
+
+function confirmRenamePlaylist(id: string, newName: string) {
+  const name = newName.trim()
+  if (!name) return
+
+  const updated = renamePlaylist(id, name)
+  if (!updated) return
+
+  playlists.value = listPlaylists()
+  renamingPlaylistId.value = null
+  renamingPlaylistName.value = ''
+  showImportFeedback(t('albums.playlists.renamed'))
 }
 
 function removePlaylistTrack(id: string, index: number) {
@@ -219,7 +252,11 @@ function togglePlaylist(id: string) {
 }
 
 async function playPlaylist(playlist: Playlist) {
-  if (playlist.items.length === 0) return
+  if (playlist.items.length === 0) {
+    showImportFeedback(t('albums.playlists.emptyPlayback'))
+    return
+  }
+
   await mediaStore.playQueue(playlist.items, 0)
   void router.push({ name: 'media' })
 }
@@ -501,7 +538,7 @@ async function runAction(
                   </span>
                   <span class="albums-view__playlist-name">
                     <strong>{{ playlist.name }}</strong>
-                    <small>{{ playlist.items.length }} faixa(s)</small>
+                    <small>{{ t('albums.trackCount', { count: playlist.items.length }) }}</small>
                   </span>
                   <i
                     class="ti albums-view__playlist-chevron"
@@ -509,12 +546,41 @@ async function runAction(
                     aria-hidden="true"
                   />
                 </button>
+                <input
+                  v-if="renamingPlaylistId === playlist.id"
+                  v-model="renamingPlaylistName"
+                  data-testid="playlist-rename-input"
+                  class="albums-view__playlist-rename-input"
+                  :aria-label="t('albums.playlists.rename', { name: playlist.name })"
+                  @keydown.enter.prevent="confirmRenamePlaylist(playlist.id, renamingPlaylistName)"
+                  @keydown.esc.prevent="renamingPlaylistId = null"
+                />
                 <div class="albums-view__playlist-actions">
                   <button
                     type="button"
+                    class="albums-view__playlist-rename"
+                    data-testid="playlist-rename"
+                    :aria-label="t('albums.playlists.rename', { name: playlist.name })"
+                    @click="startRenamePlaylist(playlist)"
+                  >
+                    <i class="ti ti-pencil" aria-hidden="true" />
+                  </button>
+
+                  <button
+                    v-if="renamingPlaylistId === playlist.id"
+                    type="button"
+                    class="albums-view__playlist-rename"
+                    data-testid="playlist-rename-save"
+                    :aria-label="t('albums.playlists.save')"
+                    @click="confirmRenamePlaylist(playlist.id, renamingPlaylistName)"
+                  >
+                    <i class="ti ti-check" aria-hidden="true" />
+                  </button>
+
+                  <button
+                    type="button"
                     class="albums-view__playlist-play"
-                    :disabled="playlist.items.length === 0"
-                    :aria-label="`Tocar ${playlist.name}`"
+                    :aria-label="t('albums.playlists.play', { name: playlist.name })"
                     @click="playPlaylist(playlist)"
                   >
                     <i class="ti ti-player-play" aria-hidden="true" />
@@ -522,7 +588,8 @@ async function runAction(
                   <button
                     type="button"
                     class="albums-view__playlist-remove"
-                    :aria-label="`Remover playlist ${playlist.name}`"
+                    data-testid="playlist-delete"
+                    :aria-label="t('albums.playlists.remove', { name: playlist.name })"
                     @click="removePlaylist(playlist.id)"
                   >
                     <i class="ti ti-trash" aria-hidden="true" />
@@ -543,7 +610,7 @@ async function runAction(
                     <button
                       type="button"
                       class="albums-view__playlist-track-remove"
-                      :aria-label="`Remover ${item.title} da playlist`"
+                      :aria-label="t('albums.playlists.removeTrack', { name: item.title })"
                       @click="removePlaylistTrack(playlist.id, index)"
                     >
                       <i class="ti ti-x" aria-hidden="true" />
@@ -1570,6 +1637,7 @@ async function runAction(
   flex-shrink: 0;
 }
 
+.albums-view__playlist-rename,
 .albums-view__playlist-play,
 .albums-view__playlist-remove {
   display: inline-flex;
@@ -1686,5 +1754,13 @@ async function runAction(
 .playlist-tracks-enter-from,
 .playlist-tracks-leave-to {
   opacity: 0;
+}
+.albums-view__playlist-rename-input {
+  min-width: 0;
+  width: 100%;
+  padding: 8px;
+  color: inherit;
+  border: 1px solid currentColor;
+  border-radius: 8px;
 }
 </style>

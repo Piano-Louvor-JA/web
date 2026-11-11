@@ -49,6 +49,13 @@ export default {
       edition1996Subtitle: 'Histórico - {count} himnos tradicionales'
     },
     playlists: {
+      rename: 'Renombrar playlist {name}',
+      renamed: 'Playlist renombrada',
+      emptyPlayback: 'La playlist está vacía.',
+      save: 'Guardar',
+      play: 'Reproducir {name}',
+      remove: 'Eliminar playlist {name}',
+      removeTrack: 'Quitar {name} de la playlist',
       title: 'Playlists',
       newPlaceholder: 'Nombre de la nueva playlist...',
       create: 'Crear',
