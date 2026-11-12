@@ -61,7 +61,7 @@ const emit = defineEmits<{
 .app-confirm {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;

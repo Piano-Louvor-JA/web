@@ -15,6 +15,7 @@ const emit = defineEmits<{
   instrumental: []
   slides: []
   lyric: []
+  playlist: []
 }>()
 
 const { t } = useI18n()
@@ -50,6 +51,8 @@ const rowHovered = ref(false)
 
     <div class="album-search-hit__actions">
       <MusicTrackActions
+        :show-playlist-action="true"
+        @playlist="emit('playlist')"
         :music-id="hit.musicId"
         :track-name="hit.name"
         :has-instrumental="hit.hasInstrumental"

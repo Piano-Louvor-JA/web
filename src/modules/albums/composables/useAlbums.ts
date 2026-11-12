@@ -15,6 +15,7 @@ export function useAlbums() {
 
   const {
     categories,
+    musicIndex,
     activeCollection,
     tracks,
     searchQuery,
@@ -85,6 +86,7 @@ export function useAlbums() {
 
   return {
     categories,
+    musicIndex,
     activeCollection,
     playAllInActiveCollection,
     tracks,

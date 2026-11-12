@@ -101,3 +101,38 @@ export function removePlaylistItem(id: string, index: number): Playlist | null {
   save(playlists)
   return playlist
 }
+
+export function movePlaylistItem(
+  id: string,
+  fromIndex: number,
+  toIndex: number,
+): Playlist | null {
+  const playlists = read()
+  const playlist = playlists.find((entry) => entry.id === id)
+
+  if (!playlist) return null
+
+  const items = playlist.items
+
+  if (
+    fromIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex < 0 ||
+    toIndex >= items.length
+  ) {
+    return null
+  }
+
+  if (fromIndex === toIndex) return playlist
+
+  const [movedItem] = items.splice(fromIndex, 1)
+
+  if (!movedItem) return null
+
+  items.splice(toIndex, 0, movedItem)
+
+  playlist.updatedAt = now()
+  save(playlists)
+
+  return playlist
+}
