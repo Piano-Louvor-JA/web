@@ -102,6 +102,13 @@ describe('AlbumsView — painel de playlists', () => {
     expect(document.querySelectorAll('[aria-expanded="true"]')).toHaveLength(1)
     document.querySelectorAll<HTMLButtonElement>('[data-testid="playlist-delete"]')[1]!.click()
     await flushPromises()
+
+    // Confirma a exclusão no modal
+    document.querySelector<HTMLButtonElement>('.app-confirm__btn--primary')!.click()
+
+    // Aguarda a animação de fechamento do modal
+    await new Promise(resolve => setTimeout(resolve, 70))
+    await flushPromises()
     expect(document.querySelectorAll('.albums-view__playlist')).toHaveLength(2)
     expect(document.querySelectorAll('[aria-expanded="true"]')).toHaveLength(0)
     expect(listPlaylists().map(p => p.id)).toEqual(['A', 'C'])
@@ -119,7 +126,7 @@ describe('AlbumsView — painel de playlists', () => {
     const wrapper = mount(AlbumsView, { attachTo: document.body, global: { plugins: [i18n, createPinia()] } })
     await flushPromises()
     await wrapper.get('.albums-view__toolbar-btn').trigger('click')
-    document.querySelector<HTMLButtonElement>('.albums-view__playlist-play')!.click()
+    document.querySelector<HTMLButtonElement>('[data-testid="playlist-play"]')!.click()
     await flushPromises()
     expect(playQueue).toHaveBeenCalledWith(items, 0)
     expect(push).toHaveBeenCalledWith({ name: 'media' })
@@ -216,6 +223,18 @@ describe('AlbumsView — painel de playlists', () => {
     expect(deleteButton).not.toBeNull()
 
     deleteButton?.click()
+    await flushPromises()
+
+    // Confirma a exclusão da playlist no modal
+    const confirmButton =
+      document.querySelector<HTMLButtonElement>('.app-confirm__btn--primary')
+
+    expect(confirmButton).not.toBeNull()
+
+    confirmButton?.click()
+
+    // Aguarda o fechamento do modal antes de verificar a exclusão
+    await new Promise(resolve => setTimeout(resolve, 70))
     await flushPromises()
 
     expect(document.body.textContent).not.toContain('Louvores de Sábado')

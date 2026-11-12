@@ -13,6 +13,7 @@ withDefaults(
     musicId?: number | null
     trackName?: string
     rowHovered?: boolean
+    showPlaylistAction?: boolean
   }>(),
   {
     busy: false,
@@ -20,6 +21,7 @@ withDefaults(
     musicId: null,
     trackName: '',
     rowHovered: false,
+    showPlaylistAction: false,
   },
 )
 
@@ -28,6 +30,7 @@ const emit = defineEmits<{
   instrumental: []
   slides: []
   lyric: []
+  playlist: []
   downloadProgress: [progress: number | null]
 }>()
 
@@ -42,6 +45,22 @@ const SHOW_LYRIC_ACTION = false
     class="music-track-actions"
     :class="`music-track-actions--${variant}`"
   >
+
+    <button
+      v-if="showPlaylistAction"
+      type="button"
+      class="music-track-actions__btn"
+      :disabled="busy"
+      :title="t('albums.playlists.addMusicButton')"
+      :aria-label="t('albums.playlists.addMusicButton')"
+      @click.stop="emit('playlist')"
+    >
+      <i
+        class="ti ti-list-plus"
+        aria-hidden="true"
+      />
+    </button>
+
     <button
       type="button"
       class="music-track-actions__btn"
@@ -55,6 +74,8 @@ const SHOW_LYRIC_ACTION = false
         aria-hidden="true"
       />
     </button>
+
+
 
     <button
       type="button"
