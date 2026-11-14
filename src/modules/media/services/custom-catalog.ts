@@ -26,6 +26,38 @@ import {
 import { isLocalSljaMusicId } from '@modules/liturgy/services/local-slja-store'
 
 /**
+ * MIME de áudio pelo magic bytes (SPEC-audio-removal v1.2.0 RF-05 —
+ * paridade app↔web: mp3, wav, ogg, flac, aac, m4a). Base64 sem cabeçalho
+ * reconhecível cai em audio/mpeg (legacy).
+ */
+export function audioMimeFromBytes(bytes: Uint8Array): string {
+  const ascii = (n: number): string =>
+    String.fromCharCode(...bytes.slice(0, Math.min(n, bytes.length)))
+  if (bytes.length >= 8 && ascii(8) === '\u0000\u0000\u0000\u0018ftyp') {
+    return 'audio/mp4' // m4a/mp4 (ftyp M4A/isom/mp42…)
+  }
+  if (ascii(4) === 'fLaC') return 'audio/flac'
+  if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1]! & 0xe0) === 0xe0) {
+    return 'audio/aac' // ADTS sync
+  }
+  if (ascii(4) === 'RIFF') return 'audio/wav'
+  if (ascii(4) === 'OggS') return 'audio/ogg'
+  return 'audio/mpeg'
+}
+
+export function audioDataUrlFromBase64(b64: string): string {
+  try {
+    const bin = atob(b64.slice(0, 24))
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    return `data:${audioMimeFromBytes(bytes)};base64,${b64}`
+  } catch {
+    /* base64 inválido/truncado — cai no default */
+  }
+  return `data:audio/mpeg;base64,${b64}`
+}
+
+/**
  * Catálogo de músicas customizadas (Minhas Coletâneas) via API /v1/custom
  *
  * Formato de resposta do GET /v1/custom/musics/{id}:
@@ -209,7 +241,7 @@ export async function loadCustomMusicTrack(
       name: local.name,
       durationLabel: '0:00',
       audioUrl: local.audioBase64
-        ? `data:audio/mpeg;base64,${local.audioBase64}`
+        ? audioDataUrlFromBase64(local.audioBase64)
         : null,
       instrumentalUrl: null,
       coverUrl: local.image_url ?? null,
@@ -398,7 +430,7 @@ function localMusicToSummary(m: LocalMusic): CustomMusicSummary {
     duration: null,
     hasAudio: Boolean(m.audioBase64) || Boolean(m.officialMusicId),
     hasImage: Boolean(m.image_url),
-    audioUrl: m.audioBase64 ? `data:audio/mpeg;base64,${m.audioBase64}` : null,
+    audioUrl: m.audioBase64 ? audioDataUrlFromBase64(m.audioBase64) : null,
     officialMusicId: m.officialMusicId ?? null,
   }
 }
