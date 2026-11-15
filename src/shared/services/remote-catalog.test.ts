@@ -5,6 +5,7 @@ vi.mock('@shared/services/api-fallback', () => ({
 }))
 
 import * as apiFallback from '@shared/services/api-fallback'
+import { readCachedBundleJson } from './bundle-sync'
 
 const mockedFallback = vi.mocked(apiFallback.fetchWithApiFallback)
 
@@ -134,6 +135,15 @@ describe('remote-catalog — bundle-first (RF-03/RF-06)', () => {
     mockedFetch.mockReset()
     mockedFallback.mockReset()
     mockedFallback.mockResolvedValue({ data: { from: 'fallback-default' }, base: 'x' })
+  })
+
+  it('metadados da Bíblia usam o bundle catalog; capítulos usam bible', async () => {
+    for (const key of ['pt_bible_book', 'pt_bible_version', 'es_bible_book', 'es_bible_version', 'bible_10_100_1']) {
+      bundleCache[key] = [{ id: 1 }]
+      await readOrFetchCatalogJson(key)
+      expect(readCachedBundleJson).toHaveBeenLastCalledWith(key.startsWith('bible_') ? 'bible' : 'catalog', key)
+    }
+    expect(mockedFetch).not.toHaveBeenCalled()
   })
 
   it('bundle persistente presente → leitura SEM request item-a-item', async () => {

@@ -66,7 +66,7 @@ export async function fetchRemoteCatalogJson<T = unknown>(
 export async function readOrFetchCatalogJson<T = unknown>(
   filename: string,
 ): Promise<T | null> {
-  const bundleKind = filename.startsWith('bible_') || filename.startsWith('pt_bible_')
+  const bundleKind = filename.startsWith('bible_')
     ? 'bible'
     : 'catalog'
   const bundled = readCachedBundleJson<T>(bundleKind, filename)
