@@ -18,6 +18,7 @@ const emit = defineEmits<{
   slides: []
   lyric: []
   playlist: []
+  suggestEdit: []
 }>()
 
 const rowHovered = ref(false)
@@ -83,6 +84,15 @@ const { t } = useI18n()
     </span>
 
     <div class="album-track-row__actions">
+      <button
+        type="button"
+        class="album-track-row__suggest-edit-btn"
+        :aria-label="`Sugerir correção em ${track.name}`"
+        :title="`Sugerir correção em ${track.name}`"
+        @click.stop="emit('suggestEdit')"
+      >
+        <i class="ti ti-pencil" aria-hidden="true" />
+      </button>
       <button
         type="button"
         class="album-track-row__playlist-btn"
@@ -330,6 +340,22 @@ const { t } = useI18n()
 }
 
 .album-track-row__playlist-btn:hover {
+  color: rgb(251, 140, 0);
+  background: rgba(251, 140, 0, 0.08);
+}
+
+.album-track-row__suggest-edit-btn {
+  border: 0;
+  background: transparent;
+  color: rgba(125, 137, 155, 1);
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 6px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.album-track-row__suggest-edit-btn:hover {
   color: rgb(251, 140, 0);
   background: rgba(251, 140, 0, 0.08);
 }
