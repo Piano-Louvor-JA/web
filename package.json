@@ -66,7 +66,7 @@
     "vue-tsc": "^3.3.14"
   },
   "engines": {
-    "node": "^22.18.0 || >=24.12.0"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   },
   "description": "LouvorJA - PIANO — versão web para gerenciamento de culto",
   "author": "Ezequias Fonseca",
