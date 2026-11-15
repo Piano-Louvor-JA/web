@@ -1,6 +1,6 @@
-/** Apenas PRs destinadas a staging usam 50%; main, tags e outros eventos mantêm 100%. */
+/** Staging usa 50%; main, tags e demais eventos preservam 100%. */
 export function coverageThreshold(env: Record<string, string | undefined>): number {
-  return env.GITHUB_EVENT_NAME === 'pull_request' && env.GITHUB_BASE_REF === 'staging'
-    ? 50
-    : 100
+  const stagingPr = env.GITHUB_EVENT_NAME === 'pull_request' && env.GITHUB_BASE_REF === 'staging'
+  const stagingPush = env.GITHUB_EVENT_NAME === 'push' && env.GITHUB_REF === 'refs/heads/staging'
+  return stagingPr || stagingPush ? 50 : 100
 }

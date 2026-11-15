@@ -92,6 +92,9 @@ export default {
       addToPlaylistButton: 'Add {name} to playlist',
       addSongsToPlaylist: 'Add songs to playlist {name}',
       playShuffle: 'Shuffle play {name}',
+      newName: 'New playlist name',
+      saveName: 'Save',
+      emptyPlaylistFeedback: 'Empty playlist — add tracks before playing.',
     },
     custom: {
       title: 'My Collections',

@@ -93,6 +93,9 @@ export default {
       addToPlaylistButton: 'Adicionar {name} à playlist',
       addSongsToPlaylist: 'Adicionar músicas à playlist {name}',
       playShuffle: 'Tocar {name} aleatoriamente',
+      newName: 'Novo nome da playlist',
+      saveName: 'Salvar',
+      emptyPlaylistFeedback: 'Playlist vazia — adicione faixas antes de tocar.',
     },
     custom: {
       title: 'Minhas Coletâneas',

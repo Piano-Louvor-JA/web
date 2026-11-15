@@ -92,6 +92,9 @@ export default {
       addToPlaylistButton: 'Añadir {name} a la lista de reproducción',
       addSongsToPlaylist: 'Añadir canciones a la lista de reproducción {name}',
       playShuffle: 'Reproducir {name} aleatoriamente',
+      newName: 'Nuevo nombre de la playlist',
+      saveName: 'Guardar',
+      emptyPlaylistFeedback: 'Playlist vacía — añade pistas antes de reproducir.',
     },
     custom: {
           title: 'Mis Colecciones',

@@ -846,5 +846,11 @@ export async function resolveMediaTrack(
   if (isCustomMusicId(musicId)) {
     return loadCustomMusicTrack(fromCustomMusicId(musicId))
   }
-  return loadMediaTrack(musicId)
+  const official = await loadMediaTrack(musicId)
+  if (!official) return null
+  const [{ resolveEditOverride }, { fetchAppliedEdit }] = await Promise.all([
+    import('@modules/community-edits/services/edit-resolver'),
+    import('@modules/community-edits/services/applied-edits'),
+  ])
+  return resolveEditOverride(musicId, official, fetchAppliedEdit)
 }
