@@ -48,6 +48,7 @@ export type StageVerticalAlign = 'top' | 'middle' | 'bottom'
 
 /** Peso da fonte do texto principal (mesmos passos do APK). */
 export type StageFontWeight = 400 | 600 | 800
+export type StageTextTransform = 'none' | 'uppercase' | 'capitalize'
 
 export type StageSettings = {
   /**
@@ -78,6 +79,9 @@ export type StageSettings = {
   textVerticalAlign: StageVerticalAlign
   footerRefColor: string | null
   footerRefWeight: number
+  /** null = 40% do tamanho do versículo (proporção visual de fábrica). */
+  refFontSize: number | null
+  refTextTransform: StageTextTransform
   /**
    * Título (1º slide / capa): personalização própria. `null`/`undefined`
    * = herda o estilo geral da letra (compatibilidade com salvos antigos).
@@ -103,7 +107,12 @@ export type StageSettings = {
   bibleFontWeight: 400 | 500 | 700
   bibleTextColor: string | null
   /** Capitalização do versículo (paridade web — mesmo campo/serde `bTransform`). */
-  bibleTextTransform: 'none' | 'uppercase' | 'capitalize'
+  bibleTextTransform: StageTextTransform
+  /** Referência: abaixo da caixa do texto (esquerda/centro/direita) ou no canto inferior direito da tela. */
+  bibleRefPosition: 'below-left' | 'below-center' | 'below-right' | 'corner'
+  /** Transição ao trocar o versículo projetado. */
+  bibleTransition: 'none' | 'fade' | 'slide' | 'zoom'
+  bibleTransitionSpeed: 'fast' | 'normal' | 'slow'
   /** Data URL da imagem de fundo do escopo (1 ativa por escopo). */
   backgroundImage: string | null
   /**
@@ -188,11 +197,16 @@ export const DEFAULT_STAGE_SETTINGS: StageSettings = {
   textVerticalAlign: 'middle',
   footerRefColor: null,
   footerRefWeight: 600,
+  refFontSize: null,
+  refTextTransform: 'none',
   showBibleVersion: true,
   bibleFontSize: 84,
   bibleFontWeight: 500,
   bibleTextColor: null,
   bibleTextTransform: 'none',
+  bibleRefPosition: 'below-right',
+  bibleTransition: 'fade',
+  bibleTransitionSpeed: 'normal',
   titleFontSize: null,
   titleFontWeight: null,
   titleTextColor: null,
@@ -323,6 +337,28 @@ export const BIBLE_TEXT_TRANSFORM_OPTIONS: StageSettings['bibleTextTransform'][]
   'capitalize',
 ]
 
+export const BIBLE_REF_POSITION_OPTIONS: StageSettings['bibleRefPosition'][] = [
+  'below-left',
+  'below-center',
+  'below-right',
+  'corner',
+]
+
+export const BIBLE_TRANSITION_OPTIONS: StageSettings['bibleTransition'][] = ['none', 'fade', 'slide', 'zoom']
+
+export const BIBLE_TRANSITION_SPEED_OPTIONS: StageSettings['bibleTransitionSpeed'][] = ['fast', 'normal', 'slow']
+
+const BIBLE_TRANSITION_MS: Record<StageSettings['bibleTransitionSpeed'], number> = {
+  fast: 150,
+  normal: 250,
+  slow: 450,
+}
+
+/** Duração de cada fase (saída e entrada) da transição do versículo. */
+export function bibleTransitionMs(speed: StageSettings['bibleTransitionSpeed'] | undefined): number {
+  return BIBLE_TRANSITION_MS[speed ?? 'normal'] ?? BIBLE_TRANSITION_MS.normal
+}
+
 function asColor(value: unknown, fallback: string): string {
   return typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)
     ? value
@@ -373,6 +409,10 @@ export function parseStageSettings(raw: unknown): StageSettings {
       s['tVAlign'] === 'top' || s['tVAlign'] === 'bottom' ? s['tVAlign'] : 'middle',
     footerRefColor: asColorOrNull(s['refColor']),
     footerRefWeight: clamp(Math.round(asNumber(s['refWeight'], 600)), 100, 900),
+    refFontSize: s['rSize'] == null ? null : clamp(asNumber(s['rSize'], 50), 50, 140),
+    refTextTransform: BIBLE_TEXT_TRANSFORM_OPTIONS.includes(s['rUpper'] as StageTextTransform)
+      ? (s['rUpper'] as StageTextTransform)
+      : 'none',
     showBibleVersion: typeof s['showVer'] === 'boolean' ? s['showVer'] : true,
     bibleFontSize: clamp(asNumber(s['bSize'], 84), 50, 140),
     bibleFontWeight: BIBLE_WEIGHTS.includes(bibleWeight) ? bibleWeight : 500,
@@ -382,6 +422,15 @@ export function parseStageSettings(raw: unknown): StageSettings {
     )
       ? (s['bTransform'] as StageSettings['bibleTextTransform'])
       : 'none',
+    bibleRefPosition: BIBLE_REF_POSITION_OPTIONS.includes(s['refPos'] as StageSettings['bibleRefPosition'])
+      ? (s['refPos'] as StageSettings['bibleRefPosition'])
+      : DEFAULT_STAGE_SETTINGS.bibleRefPosition,
+    bibleTransition: BIBLE_TRANSITION_OPTIONS.includes(s['bTrans'] as StageSettings['bibleTransition'])
+      ? (s['bTrans'] as StageSettings['bibleTransition'])
+      : DEFAULT_STAGE_SETTINGS.bibleTransition,
+    bibleTransitionSpeed: BIBLE_TRANSITION_SPEED_OPTIONS.includes(s['bTransSpd'] as StageSettings['bibleTransitionSpeed'])
+      ? (s['bTransSpd'] as StageSettings['bibleTransitionSpeed'])
+      : DEFAULT_STAGE_SETTINGS.bibleTransitionSpeed,
     titleFontSize:
       s['tSize'] == null ? null : clamp(asNumber(s['tSize'], 96), 60, 160),
     titleFontWeight: s['tWeight'] == null ? null : (WEIGHTS.includes(asNumber(s['tWeight'], 600) as StageFontWeight) ? (asNumber(s['tWeight'], 600) as StageFontWeight) : null),
@@ -486,11 +535,16 @@ export function serializeStageSettings(s: StageSettings): Record<string, unknown
     tVAlign: s.textVerticalAlign,
     ...(s.footerRefColor ? { refColor: s.footerRefColor } : {}),
     refWeight: s.footerRefWeight,
+    ...(s.refFontSize != null ? { rSize: s.refFontSize } : {}),
+    rUpper: s.refTextTransform,
     showVer: s.showBibleVersion,
     bSize: s.bibleFontSize,
     bWeight: s.bibleFontWeight,
     ...(s.bibleTextColor ? { bFg: s.bibleTextColor } : {}),
     bTransform: s.bibleTextTransform,
+    refPos: s.bibleRefPosition,
+    bTrans: s.bibleTransition,
+    bTransSpd: s.bibleTransitionSpeed,
     ...(s.titleFontSize != null ? { tSize: s.titleFontSize } : {}),
     ...(s.titleFontWeight != null ? { tWeight: s.titleFontWeight } : {}),
     ...(s.titleTextColor != null ? { tFg: s.titleTextColor } : {}),
