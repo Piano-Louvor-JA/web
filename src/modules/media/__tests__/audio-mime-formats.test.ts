@@ -14,6 +14,14 @@ describe("audioMimeFromBytes — allowlist 6 formatos (web)", () => {
       "audio/flac",
     );
   });
+  it("MP3 sem ID3 preserva MIME MPEG", () => {
+    for (const second of [0xfb, 0xfa, 0xf3, 0xf2, 0xe3]) {
+      expect(audioMimeFromBytes(new Uint8Array([0xff, second]))).toBe("audio/mpeg");
+    }
+  });
+  it("m4a aceita ftyp com tamanho diferente de 24", () => {
+    expect(audioMimeFromBytes(new Uint8Array([0, 0, 0, 32, 0x66, 0x74, 0x79, 0x70]))).toBe("audio/mp4");
+  });
   it("aac ADTS", () => {
     expect(audioMimeFromBytes(new Uint8Array([0xff, 0xf1]))).toBe("audio/aac");
   });

@@ -33,11 +33,11 @@ import { isLocalSljaMusicId } from '@modules/liturgy/services/local-slja-store'
 export function audioMimeFromBytes(bytes: Uint8Array): string {
   const ascii = (n: number): string =>
     String.fromCharCode(...bytes.slice(0, Math.min(n, bytes.length)))
-  if (bytes.length >= 8 && ascii(8) === '\u0000\u0000\u0000\u0018ftyp') {
+  if (bytes.length >= 8 && String.fromCharCode(...bytes.slice(4, 8)) === 'ftyp') {
     return 'audio/mp4' // m4a/mp4 (ftyp M4A/isom/mp42…)
   }
   if (ascii(4) === 'fLaC') return 'audio/flac'
-  if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1]! & 0xe0) === 0xe0) {
+  if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1]! & 0xf6) === 0xf0) {
     return 'audio/aac' // ADTS sync
   }
   if (ascii(4) === 'RIFF') return 'audio/wav'
