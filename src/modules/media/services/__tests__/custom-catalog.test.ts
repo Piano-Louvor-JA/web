@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { saveSession } from '../../../auth/services/auth-client'
 import {
   createCustomCollection,
+  createCustomMusic,
   loadCustomMusicTrack,
+  resolveMediaTrack,
+  toCustomMusicId,
 } from '../custom-catalog'
 
 describe('custom-catalog', () => {
@@ -96,4 +99,24 @@ describe('custom-catalog', () => {
     expect(result).toEqual({ id: 5 })
     vi.unstubAllGlobals()
   })
+  it('mantém IDs locais negativos ao criar e resolver uma faixa anônima', async () => {
+    const storage = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn((key: string) => storage.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+      removeItem: vi.fn((key: string) => storage.delete(key)),
+    })
+
+    const collection = await createCustomCollection('Local')
+    expect(collection?.id).toBeLessThan(0)
+    const music = await createCustomMusic(collection!.id, { name: 'Hino local', lyric: 'estrofe local' })
+    expect(music?.id).toBeLessThan(0)
+    expect(toCustomMusicId(music!.id)).toBe(music!.id)
+
+    const track = await resolveMediaTrack(toCustomMusicId(music!.id))
+    expect(track?.name).toBe('Hino local')
+    expect(track?.lyrics[0]?.lyric).toBe('estrofe local')
+    vi.unstubAllGlobals()
+  })
+
 })

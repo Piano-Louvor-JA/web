@@ -1,17 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { JSDOM } from 'jsdom'
 import { createPinia, setActivePinia } from 'pinia'
 
 import { useStageSettingsStore } from '../stores/useStageSettingsStore'
 
 // Setup jsdom environment
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-  url: 'http://localhost',
-  pretendToBeVisual: true,
-})
-globalThis.window = dom.window as unknown as Window & typeof globalThis
-globalThis.document = dom.window.document
-globalThis.localStorage = dom.window.localStorage
+// Usa o ambiente jsdom isolado fornecido pelo Vitest.
 
 // Mock da camada de persistência (user-preferences) — o serviço real
 // stage-settings-preferences roda por cima, testando a lógica de verdade.
