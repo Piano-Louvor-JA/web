@@ -48,7 +48,7 @@ export async function writeBundleSnapshot(key: string, snapshot: Snapshot): Prom
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction(STORE, 'readwrite')
       transaction.oncomplete = () => resolve()
-      transaction.onerror = () => reject(transaction.error)
+      // Erros de requests abortam a transação; onabort fornece a causa definitiva.
       transaction.onabort = () => reject(transaction.error ?? new Error('bundle-cache-aborted'))
       transaction.objectStore(STORE).put(snapshot, key)
     })

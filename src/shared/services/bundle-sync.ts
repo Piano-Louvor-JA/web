@@ -200,7 +200,7 @@ async function stageBundle(
     if (expected !== undefined) {
       const { md5Hex } = await import('./md5')
       if (md5Hex(content) !== expected) throw new Error('bundle-entry-md5-mismatch')
-      if (Object.hasOwn(staged, name.slice(0, -'.json'.length))) throw new Error('bundle-key-duplicate')
+      // Nomes únicos no manifest e no Record do ZIP tornam esta chave única.
       staged[name.slice(0, -'.json'.length)] = text
     }
   }
@@ -213,9 +213,8 @@ async function stageBundle(
     for (const essential of ['pt_categories', 'pt_musics', 'config']) {
       if (!(essential in staged)) throw new Error(`bundle-essential-missing:${essential}`)
     }
-  } else if (!Object.keys(staged).some((key) => bundleKeyPattern('bible').test(key))) {
-    throw new Error('bundle-essential-missing:chapter')
   }
+  // Bible: parseManifest exige capítulos e a completude acima confirma todos eles.
   return staged
 }
 

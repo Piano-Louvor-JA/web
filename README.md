@@ -115,7 +115,7 @@ Fluxo: **módulo exporta rotas** → **router agrega** → **layout renderiza vi
 
 ## Começar
 
-Requisito: Node.js `^22.18.0` ou `>=24.12.0`
+Requisito: Node.js `^22.22.2`, `^24.15.0` ou `>=26.0.0`
 
 ```bash
 npm install
