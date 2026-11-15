@@ -55,7 +55,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Coverage por destino: PR para staging 50%; main/publicação preservam 100%
+      - name: Valida limites de cobertura por evento e destino
+        run: node --test scripts/__tests__/coverage-policy.test.mjs
+      # Coverage por destino: PR/push em staging 50%; main/publicação preservam 100%
       - run: npm run test -- --coverage
 
   build:

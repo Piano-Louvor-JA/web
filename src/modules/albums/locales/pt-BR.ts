@@ -61,6 +61,10 @@ export default {
       invalidFile: 'Arquivo de playlists inválido.',
       newLists: '{count} playlist(s) nova(s)',
       addedTracks: '{count} faixa(s) adicionada(s)',
+      rename: 'Renomear playlist {name}',
+      newName: 'Novo nome da playlist',
+      saveName: 'Salvar',
+      emptyPlaylistFeedback: 'Playlist vazia — adicione faixas antes de tocar.',
     },
     custom: {
       title: 'Minhas Coletâneas',
