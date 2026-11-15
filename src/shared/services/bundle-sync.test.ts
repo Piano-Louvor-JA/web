@@ -99,7 +99,7 @@ class MemoryStorage implements Storage {
 }
 
 let localStorageMock: MemoryStorage
-let fetchMock: ReturnType<typeof vi.fn>
+let fetchMock: ReturnType<typeof vi.fn<(input: string | URL, init?: RequestInit) => Promise<Response>>>
 let warnSpy: ReturnType<typeof vi.spyOn>
 
 type BundleSync = typeof import('./bundle-sync')
@@ -145,7 +145,7 @@ beforeEach(() => {
   vi.unstubAllGlobals()
   localStorageMock = new MemoryStorage()
   vi.stubGlobal('localStorage', localStorageMock)
-  fetchMock = vi.fn()
+  fetchMock = vi.fn<(input: string | URL, init?: RequestInit) => Promise<Response>>()
   vi.stubGlobal('fetch', fetchMock)
   warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 })
@@ -329,14 +329,15 @@ describe('bundle-sync — cold/changed e validação entry-wise (ADR-10 / RF-21)
   })
 
   it('essenciais ausentes no catalog ZIP (config) → invalida', async () => {
-    const { manifest, bibleZip } = await scenario(MIN_CATALOG, MIN_BIBLE)
-    const noConfig = await makeZip({ 'pt_musics.json': [], 'pt_categories.json': [] }, 'catalog')
-    const reduced = manifest.filter((e) => e.file !== 'config.json')
-    wireFetch(reduced, noConfig, bibleZip)
+    const { manifest, catalogZip: noConfig, bibleZip } = await scenario(
+      { 'pt_musics.json': [], 'pt_categories.json': [] }, MIN_BIBLE,
+    )
+    wireFetch(manifest, noConfig, bibleZip)
     const bs = await load()
     const result = await bs.checkForUpdates({ force: true })
     expect(result.ok).toBe(false)
     expect(localStorageMock.getItem('piano:bundle:catalog')).toBeNull()
+    expect(warnSpy).toHaveBeenCalledWith('[bundle-sync] catalog indisponível', expect.objectContaining({ message: 'bundle-essential-missing:config' }))
   })
 
   it('ZIP truncado → bundle rejeitado, cache anterior intacto (ADR-03)', async () => {
@@ -469,5 +470,107 @@ describe('bundle-sync — chaves bible 3 segmentos e paridade de leitura (RF-03/
     expect(await bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'vers' })
     expect(await bs.readCachedBundleJson('catalog', 'missing')).toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('bundle-sync — proteção de dados e recuperação de falhas', () => {
+  it.each([
+    { file: 4, hash: 'a'.repeat(32), table: 'x', path: '/x' },
+    { file: 'pt_musics.json', hash: 4, table: 'x', path: '/x' },
+    { file: 'pt_musics.json', hash: 'a'.repeat(32), table: 'x', path: 4 },
+    null,
+    [],
+  ])('rejeita campos inválidos do manifest sem baixar ZIP', async (entry) => {
+    const bs = await load()
+    fetchMock.mockResolvedValue(new Response(JSON.stringify([entry])))
+    expect((await bs.checkForUpdates({ force: true })).ok).toBe(false)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('manifest sem capítulos é rejeitado, arquivos fora dos subsets são ignorados', async () => {
+    const { manifest } = await scenario(MIN_CATALOG, MIN_BIBLE)
+    const bs = await load()
+    expect(bs.parseManifest(manifest.filter((e) => !e.file.startsWith('bible_')))).toBeNull()
+    expect(bs.parseManifest([...manifest, { file: 'unused.json', hash: 'a'.repeat(32), table: 'unused', path: '/unused' }])).toEqual(bs.parseManifest(manifest))
+  })
+
+  it('digest contabiliza todas as linhas recebidas, inclusive entradas iguais', async () => {
+    const bs = await load()
+    const entry = { file: 'config.json', hash: 'a'.repeat(32) }
+    expect(await bs.manifestDigest([entry, entry])).toBe(createHash('sha256').update(`config.json\t${entry.hash}\nconfig.json\t${entry.hash}\n`).digest('hex'))
+  })
+
+  it('estado e conteúdo corrompidos são recuperáveis sem quebrar a leitura', async () => {
+    const bs = await load()
+    localStorageMock.setItem('piano:bundle-sync:state:catalog', '{')
+    localStorageMock.setItem('piano:bundle:catalog', JSON.stringify({ pt_musics: '{' }))
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).toBeNull()
+    const { manifest, catalogZip, bibleZip } = await scenario(MIN_CATALOG, MIN_BIBLE)
+    wireFetch(manifest, catalogZip, bibleZip)
+    expect((await bs.checkForUpdates()).ok).toBe(true)
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 1 }])
+  })
+
+  it('falha de rede sem Error preserva digest aplicado e registra tentativa', async () => {
+    const bs = await load()
+    await prime(bs, { state: { catalog: SCHEMA_2('a'.repeat(64), 1, 1) }, cache: { config: { version: 1 } } })
+    fetchMock.mockRejectedValue('offline')
+    expect(await bs.checkForUpdates({ force: true })).toEqual({ ok: false, reason: 'manifest-network-error' })
+    const state = JSON.parse(localStorageMock.getItem('piano:bundle-sync:state:catalog')!)
+    expect(state.manifestDigest).toBe('a'.repeat(64))
+    expect(state.appliedAtEpochMs).toBe(1)
+    expect(state.checkedAtEpochMs).toBeGreaterThan(1)
+  })
+
+  it('envia Api-Token somente quando configurado', async () => {
+    vi.stubEnv('VITE_API_TOKEN', 'test-bundle-token')
+    fetchMock.mockResolvedValue(jsonStatusResponse(503))
+    const bs = await load()
+    await bs.checkForUpdates({ force: true })
+    expect(fetchMock).toHaveBeenCalledWith(expect.any(String), { headers: { 'Api-Token': 'test-bundle-token' } })
+    vi.stubEnv('VITE_API_TOKEN', '')
+    fetchMock.mockClear()
+    await bs.checkForUpdates({ force: true })
+    expect(fetchMock).toHaveBeenCalledWith(expect.any(String), { headers: undefined })
+  })
+
+  it.each(['status', 'missing-type', 'wrong-type'])('resposta de ZIP inválida (%s) preserva cache', async (variant) => {
+    const bs = await load()
+    await prime(bs, { cache: { config: { version: 0 } } })
+    const { manifest, catalogZip, bibleZip } = await scenario(MIN_CATALOG, MIN_BIBLE)
+    wireFetch(manifest, catalogZip, bibleZip)
+    const normal = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation((input, init) => String(input).endsWith('/db/catalog-bundle')
+      ? Promise.resolve(variant === 'status' ? jsonStatusResponse(503) : new Response(catalogZip as unknown as ArrayBuffer, { headers: variant === 'wrong-type' ? { 'Content-Type': 'text/plain' } : {} }))
+      : normal(input, init))
+    expect((await bs.checkForUpdates({ force: true })).ok).toBe(false)
+    expect(await bs.readCachedBundleJson('catalog', 'config')).toEqual({ version: 0 })
+  })
+
+  it.each(['missing-manifest', 'invalid-manifest', 'wrong-schema', '/unsafe.json', '../unsafe.json', 'unsafe\\file.json', 'invalid-json'])('ZIP rejeitado (%s) mantém snapshot anterior', async (variant) => {
+    const { strToU8, zipSync } = await import('fflate')
+    const bs = await load()
+    await prime(bs, { cache: { config: { version: 0 } } })
+    const { manifest, bibleZip } = await scenario(MIN_CATALOG, MIN_BIBLE)
+    const files: Record<string, Uint8Array> = Object.fromEntries(Object.entries(MIN_CATALOG).map(([name, value]) => [name, strToU8(JSON.stringify(value))]))
+    if (variant !== 'missing-manifest') files['_bundle_manifest.json'] = strToU8(variant === 'invalid-manifest' ? '{' : JSON.stringify({ schema_version: variant === 'wrong-schema' ? 2 : 1, kind: 'catalog' }))
+    if (variant.endsWith('unsafe.json') || variant.includes('\\')) files[variant] = strToU8('{}')
+    if (variant === 'invalid-json') files['pt_musics.json'] = strToU8('{')
+    wireFetch(manifest, new Uint8Array(zipSync(files)), bibleZip)
+    expect((await bs.checkForUpdates({ force: true })).ok).toBe(false)
+    expect(await bs.readCachedBundleJson('catalog', 'config')).toEqual({ version: 0 })
+  })
+
+  it('arquivos extras válidos não substituem os itens verificados do manifest', async () => {
+    const { strToU8, unzipSync, zipSync } = await import('fflate')
+    const { manifest, catalogZip, bibleZip } = await scenario(MIN_CATALOG, MIN_BIBLE)
+    const files = unzipSync(catalogZip)
+    files['readme.txt'] = strToU8('informativo')
+    files['unused.json'] = strToU8('{"ignored":true}')
+    wireFetch(manifest, new Uint8Array(zipSync(files)), bibleZip)
+    const bs = await load()
+    expect((await bs.checkForUpdates({ force: true })).ok).toBe(true)
+    expect(await bs.readCachedBundleJson('catalog', 'unused')).toBeNull()
+    expect(await bs.readCachedBundleJson('catalog', 'config')).toEqual({ version: 1 })
   })
 })
