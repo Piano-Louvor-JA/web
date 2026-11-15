@@ -65,6 +65,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_MODE?: string
   readonly VITE_URL_FILES?: string
   readonly VITE_URL_DATABASE?: string
+  /** Origem upstream que publica /db/* (manifest + bundles) — SPEC v1.2.0 ADR-11. */
+  readonly VITE_URL_BUNDLES?: string
   readonly VITE_API_TOKEN?: string
 }
 
