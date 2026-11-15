@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseVerseFilter } from '../scripture-format'
+import { parseVerseFilter, parseVerseQuery } from '../scripture-format'
 
 describe('parseVerseFilter — listas e intervalos mistos (paridade app R4+)', () => {
+  it('rejeita números inseguros e intervalos que travariam a interface', () => {
+    expect(parseVerseFilter('9007199254740992-9007199254740992')).toEqual([])
+    expect(parseVerseFilter('9007199254740992')).toEqual([])
+    expect(parseVerseFilter('1-1000000000')).toEqual([])
+    // O fallback também só percorre os versículos existentes no capítulo.
+    expect(parseVerseQuery('1-1000000000', { '1': 'A', '2': 'B' })).toEqual([1, 2])
+  })
+
   it('aceita intervalo simples', () => {
     expect(parseVerseFilter('1-4')).toEqual([1, 2, 3, 4])
   })

@@ -76,8 +76,9 @@ function addVerseRange(
 ): void {
   const lo = Math.min(from, to)
   const hi = Math.max(from, to)
-  for (let i = lo; i <= hi; i += 1) {
-    if (verses[String(i)]) selected.add(i)
+  for (const key of Object.keys(verses)) {
+    const verse = Number(key)
+    if (Number.isSafeInteger(verse) && verse >= lo && verse <= hi && verses[key]) selected.add(verse)
   }
 }
 
@@ -136,9 +137,11 @@ export function parseVerseFilter(query: string): number[] {
     if (range) {
       const from = Number(range[1])
       const to = Number(range[2])
-      if (from < 1 || to < 1) return []
+      if (!Number.isSafeInteger(from) || !Number.isSafeInteger(to) || from < 1 || to < 1) return []
       const lo = Math.min(from, to)
       const hi = Math.max(from, to)
+      // Nenhum capítulo bíblico chega a mil versículos; limita expansão de entrada livre.
+      if (hi - lo >= 1000 || result.length + hi - lo + 1 > 1000) return []
       for (let i = lo; i <= hi; i += 1) result.push(i)
       continue
     }
@@ -146,7 +149,7 @@ export function parseVerseFilter(query: string): number[] {
     const single = /^\d+$/.exec(trimmed)
     if (!single) return []
     const num = Number(trimmed)
-    if (num < 1) return []
+    if (!Number.isSafeInteger(num) || num < 1 || result.length >= 1000) return []
     result.push(num)
   }
 
