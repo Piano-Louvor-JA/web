@@ -7,11 +7,11 @@ import { parsePlaylistsImport, serializePlaylists } from '../playlist-io'
 
 /**
  * PW-3: teste de compatibilidade do formato de intercâmbio de playlists.
- * Fixture de DADOS compartilhada com o produto irmão (mesma versão do arquivo
- * em ambos os repos — se um lado mudar o schema, o gate de paridade expõe).
+ * Fixture de DADOS compartilhada com o produto irmão: `tests/fixtures/playlists/v1.json`
+ * é byte-idêntica à fixture v1 do app (canônico). Schema congelado pelo campo `version`.
  */
 const fixtureRaw = readFileSync(
-  join(dirname(__filename), 'fixtures', 'playlists-fixture-v1.json'),
+  join(dirname(__filename), '../../../../../tests/fixtures/playlists/v1.json'),
   'utf-8',
 )
 
