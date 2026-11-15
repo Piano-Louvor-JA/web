@@ -34,9 +34,11 @@ const {
   locationLabel,
   chapterTitle,
   verseEntries,
+  visibleVerseEntries,
   hasProjection,
   previewSnippet,
   clearError,
+  applyVerseSearch,
   selectVersion,
   selectBook,
   selectChapter,
@@ -155,7 +157,7 @@ const navAllCollapsed = computed(() => isMobile.value && booksCollapsed.value &&
         v-if="selectedBookId !== null && selectedChapter !== null"
         class="bible-view__reader"
         :chapter-title="chapterTitle"
-        :verses="verseEntries"
+        :verses="visibleVerseEntries"
         :selected-verses="selectedVerses"
         :verse-search-query="verseSearchQuery"
         :is-loading="isLoadingVerses"
@@ -163,6 +165,7 @@ const navAllCollapsed = computed(() => isMobile.value && booksCollapsed.value &&
         :preview-snippet="previewSnippet"
         :has-projection="hasProjection"
         @update:verse-search-query="verseSearchQuery = $event"
+        @verse-search-submit="applyVerseSearch"
         @select-verse="selectVerse"
         @previous-verse="onPreviousVerse"
         @next-verse="onNextVerse"
