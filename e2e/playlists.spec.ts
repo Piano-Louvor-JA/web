@@ -1,70 +1,61 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-// E2E PW-1: painel de playlists no hub Albums — criar → renomear → tocar (vazia) → excluir.
-// API mockada por page.route (regra dura: E2E nunca contra produção).
-
-async function login(page: Page) {
+test('playlists: criar → adicionar → renomear → tocar → excluir', async ({ page }) => {
+  // All external requests are mocked: no production or staging writes.
+  await page.route('**/*', async route => {
+    const url = new URL(route.request().url())
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') return route.continue()
+    const file = url.pathname.split('/').pop()
+    if (file?.endsWith('_categories')) return route.fulfill({ json: [
+      { id_category: 1, name: 'Álbuns', albums: [{ id_album: 900, name: 'Álbum de teste' }] },
+    ] })
+    if (file === 'album_900') return route.fulfill({ json: {
+      name: 'Álbum de teste', musics: [{ id_music: 901, name: 'Faixa de teste', track: 1 }],
+    } })
+    if (file === 'music_901') return route.fulfill({ json: {
+      id_music: 901, name: 'Faixa de teste', url_music: null,
+      lyric: [{ order: 1, lyric: 'Louvor', show_slide: 1 }],
+    } })
+    return route.fulfill({ json: [] })
+  })
   await page.addInitScript(() => {
     localStorage.setItem('eula_accepted_v1', 'true')
-    localStorage.setItem(
-      'louvorja.custom.auth',
-      JSON.stringify({
-        token: 'test-token',
-        user: { id_user: 1, email: 'test@test.com', displayName: 'TestUser' },
-      }),
-    )
+    localStorage.setItem('language', 'pt-BR')
   })
-  await page.route('**/v1/**', async (route) => {
-    await route.fulfill({ json: [] })
-  })
-}
-
-async function openPlaylistsModal(page: Page) {
-  await page.getByRole('button', { name: /playlists/i }).first().click()
-  await expect(page.getByRole('dialog', { name: 'Playlists' })).toBeVisible()
-}
-
-test.describe('Playlists — painel do hub Albums', () => {
-  test.beforeEach(async ({ page }) => {
-    await login(page)
-    await page.goto('/albums')
-  })
-
-  test('criar → renomear → feedback de vazia → excluir', async ({ page }) => {
-    await openPlaylistsModal(page)
-
-    // 1. Criar playlist
-    await page.getByLabel('Nome da nova playlist...').fill('Culto Especial')
-    await page.getByRole('button', { name: 'Criar' }).click()
-    await expect(page.getByText('Culto Especial')).toBeVisible()
-
-    // 2. Renomear no painel
-    await page.getByTestId('playlist-rename').click()
-    const renameInput = page.getByTestId('playlist-rename-input')
-    await expect(renameInput).toBeVisible()
-    await renameInput.fill('Culto Renomeado')
-    await renameInput.press('Enter')
-    await expect(page.getByText('Culto Renomeado')).toBeVisible()
-
-    // Storage reflete o rename (playlist-storage / updatedAt)
-    const stored = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('louvorja-playlists-v1') ?? '[]'),
-    )
-    const names = (stored as { name: string }[]).map((p) => p.name)
-    expect(names).toContain('Culto Renomeado')
-
-    // 3. Tocar playlist vazia → feedback, sem navegar
-    await page.getByTestId('playlist-play').click()
-    await expect(page.getByText(/Playlist vazia/i)).toBeVisible()
-    expect(page.url()).not.toContain('/media')
-
-    // 4. Excluir
-    await page.getByRole('button', { name: /Remover playlist Culto Renomeado/i }).click()
-    await expect(page.getByText('Culto Renomeado')).toBeHidden()
-
-    const after = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('louvorja-playlists-v1') ?? '[]'),
-    )
-    expect((after as unknown[]).length).toBe(0)
-  })
+  await page.goto('/albums')
+  const openPanel = () => page.locator('.albums-view__toolbar-btn').first().click()
+  await openPanel()
+  await page.getByPlaceholder('Nome da nova playlist...').fill('Culto')
+  await page.getByRole('button', { name: 'Criar', exact: true }).click()
+  await page.getByRole('button', { name: 'Tocar Culto', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('A playlist está vazia.')
+  await expect(page).toHaveURL(/\/albums$/)
+  await page.locator('.albums-view__modal-header button').click()
+  await page.locator('.album-collection-card').filter({ hasText: 'Álbum de teste' }).hover()
+  await page.getByRole('button', { name: 'Abrir Álbum de teste', exact: true }).click()
+  await page.getByRole('button', { name: 'Adicionar Faixa de teste à playlist' }).click()
+  await page.locator('.playlist-picker__option').filter({ hasText: 'Culto' }).click()
+  await page.goto('/albums')
+  await openPanel()
+  await page.getByTestId('playlist-rename').click()
+  await page.getByTestId('playlist-rename-input').fill('Culto Jovem')
+  await page.getByTestId('playlist-rename-save').click()
+  await expect(page.getByRole('status')).toHaveText('Playlist renomeada')
+  await expect(page.locator('.albums-view__playlist-name')).toContainText('Culto Jovem')
+  await page.getByRole('button', { name: 'Tocar Culto Jovem', exact: true }).click()
+  await expect(page).toHaveURL(/\/media/)
+  await page.goto('/albums')
+  await openPanel()
+  await page.getByTestId('playlist-delete').click()
+  const confirmation = page.getByRole('dialog', { name: 'Excluir playlist “Culto Jovem”?' })
+  await expect(confirmation).toBeVisible()
+  await confirmation.getByRole('button', { name: 'Cancelar', exact: true }).click()
+  await expect(page.locator('.albums-view__playlist')).toHaveCount(1)
+  await page.getByTestId('playlist-delete').click()
+  await confirmation.getByRole('button', { name: 'Excluir playlist', exact: true }).click()
+  await expect(page.locator('.albums-view__playlist')).toHaveCount(0)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('louvorja-playlists-v1') ?? '[]'))).toEqual([])
+  await page.reload()
+  await openPanel()
+  await expect(page.locator('.albums-view__playlist')).toHaveCount(0)
 })

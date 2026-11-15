@@ -62,6 +62,7 @@ const i18n = createI18n({
           newName: 'Novo nome da playlist',
           saveName: 'Salvar',
           emptyPlaylistFeedback: 'Playlist vazia — adicione faixas antes de tocar.',
+          emptyPlayback: 'Playlist vazia — adicione faixas antes de tocar.',
         },
         trackCount: '{count} faixa(s)',
         dismiss: 'Descartar',
@@ -131,7 +132,7 @@ describe('AlbumsView — painel de playlists: renomear', () => {
     expect(input).toBeTruthy()
     input!.value = 'Culto Especial'
     input!.dispatchEvent(new Event('input', { bubbles: true }))
-    input!.form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    input!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await flushPromises()
 
     expect(listPlaylists()[0]?.name).toBe('Culto Especial')
