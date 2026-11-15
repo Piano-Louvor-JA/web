@@ -119,6 +119,7 @@ const addMusicFeedback = ref('')
 let importFeedbackTimer: ReturnType<typeof setTimeout> | null = null
 onUnmounted(() => {
   if (importFeedbackTimer) clearTimeout(importFeedbackTimer)
+  if (addMusicFeedbackTimer) clearTimeout(addMusicFeedbackTimer)
 })
 
 function showImportFeedback(message: string) {
