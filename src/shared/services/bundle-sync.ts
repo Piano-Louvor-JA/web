@@ -1,3 +1,5 @@
+import { readBundleSnapshot, writeBundleSnapshot } from './bundle-cache'
+
 /**
  * Bundle-first sync — SPEC piano-bundle-sync v1.2.0 (ADR-09/10/11; ADR-02/03 v1.0.0 intactos).
  *
@@ -152,10 +154,10 @@ function shouldCheck(kind: BundleKind): boolean {
   return !state || Date.now() - state.checkedAtEpochMs >= CHECK_INTERVAL_MS
 }
 
-/** Leitura offline do snapshot completo, um commit localStorage por artifact. */
-export function readCachedBundleJson<T = unknown>(kind: BundleKind, key: string): T | null {
+/** Leitura offline do snapshot completo, um commit IndexedDB por artifact. */
+export async function readCachedBundleJson<T = unknown>(kind: BundleKind, key: string): Promise<T | null> {
   try {
-    const snapshot: unknown = JSON.parse(localStorage.getItem(CACHE_KEY[kind]) ?? 'null')
+    const snapshot: unknown = await readBundleSnapshot(CACHE_KEY[kind])
     if (!isPlainObject(snapshot) || typeof snapshot[key] !== 'string') return null
     return JSON.parse(snapshot[key]) as T
   } catch { return null }
@@ -274,14 +276,14 @@ export async function checkForUpdates(options: { force?: boolean } = {}): Promis
       const type = response.headers.get('Content-Type') ?? ''
       if (!type.toLowerCase().includes('zip')) throw new Error('bundle-content-type')
       const snapshot = await stageBundle(kind, await response.arrayBuffer(), manifest[kind])
-      // ADR-10: aplicação atômica — snapshot novo numa única operação; estado novo só depois.
-      localStorage.setItem(CACHE_KEY[kind], JSON.stringify(snapshot))
+      // ADR-10: aplicação atômica — snapshot novo numa única transação IndexedDB; estado novo só depois.
+      await writeBundleSnapshot(CACHE_KEY[kind], snapshot)
       putState(kind, digests[kind], true)
       applied.push(kind)
     } catch (error) {
       failed = true
       const prior = readState(kind)
-      if (prior) putState(kind, prior.manifestDigest, false)
+      putState(kind, prior?.manifestDigest ?? '', false)
       console.warn(`[bundle-sync] ${kind} indisponível`, error)
     }
   }

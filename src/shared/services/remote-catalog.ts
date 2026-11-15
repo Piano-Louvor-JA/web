@@ -69,7 +69,7 @@ export async function readOrFetchCatalogJson<T = unknown>(
   const bundleKind = filename.startsWith('bible_')
     ? 'bible'
     : 'catalog'
-  const bundled = readCachedBundleJson<T>(bundleKind, filename)
+  const bundled = await readCachedBundleJson<T>(bundleKind, filename)
   if (bundled != null) return bundled
 
   const cached = getBrowserItem<T>(sessionCacheKey(filename), null, 'session')

@@ -188,9 +188,9 @@ describe('bundle-sync — parseManifest entry-wise (ADR-09 / RF-19)', () => {
     const result = await bs.checkForUpdates({ force: true })
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.applied.sort()).toEqual(['bible', 'catalog'])
-    expect(bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 1 }])
-    expect(bs.readCachedBundleJson('catalog', 'config')).toEqual({ version: 1 })
-    expect(bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'No princípio' })
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 1 }])
+    expect(await bs.readCachedBundleJson('catalog', 'config')).toEqual({ version: 1 })
+    expect(await bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'No princípio' })
   })
 
   it.each([
@@ -289,7 +289,7 @@ describe('bundle-sync — cold/changed e validação entry-wise (ADR-10 / RF-21)
     expect(state.manifestDigest).toMatch(/^[a-f0-9]{64}$/)
     expect(state.appliedAtEpochMs).toBeGreaterThan(0)
     expect(state.schema).toBe(2)
-    expect(bs.readCachedBundleJson('catalog', 'pt_musics')).not.toBeNull()
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).not.toBeNull()
   })
 
   it('um arquivo com MD5 divergente do manifest → invalida o ZIP INTEIRO', async () => {
@@ -301,7 +301,7 @@ describe('bundle-sync — cold/changed e validação entry-wise (ADR-10 / RF-21)
     expect(localStorageMock.getItem('piano:bundle:catalog')).toBeNull()
     const state = JSON.parse(localStorageMock.getItem('piano:bundle-sync:state:catalog') ?? '{}')
     expect(state.appliedAtEpochMs ?? 0).toBe(0)
-    expect(bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'No princípio' }) // bible ok
+    expect(await bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'No princípio' }) // bible ok
   })
 
   it('entry do subset ausente no ZIP (incompleto) → invalida', async () => {
@@ -350,7 +350,7 @@ describe('bundle-sync — cold/changed e validação entry-wise (ADR-10 / RF-21)
     })
     const result = await bs.checkForUpdates({ force: true })
     expect(result.ok).toBe(false)
-    expect(bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 42 }])
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 42 }])
   })
 
   it('crash antes do commit → versão anterior e digest antigos sobrevivem', async () => {
@@ -366,7 +366,7 @@ describe('bundle-sync — cold/changed e validação entry-wise (ADR-10 / RF-21)
     spy.mockRestore()
     expect(result.ok).toBe(false)
     expect(JSON.parse(localStorageMock.getItem('piano:bundle-sync:state:catalog') ?? '')).toEqual(old)
-    expect(bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 1 }])
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).toEqual([{ id_music: 1 }])
   })
 })
 
@@ -378,7 +378,17 @@ describe('bundle-sync — erros e fallback lazy (ADR-03)', () => {
     const result = await bs.checkForUpdates({ force: true })
     expect(result.ok).toBe(false)
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(bs.readCachedBundleJson('catalog', 'pt_musics')).not.toBeNull()
+    expect(await bs.readCachedBundleJson('catalog', 'pt_musics')).not.toBeNull()
+  })
+
+  it('primeiro ZIP inválido também inibe retry automático', async () => {
+    const { manifest, bibleZip } = await scenario(MIN_CATALOG, MIN_BIBLE)
+    wireFetch(manifest, new Uint8Array([0]), bibleZip)
+    const bs = await load()
+    expect((await bs.checkForUpdates({ force: true })).ok).toBe(false)
+    fetchMock.mockClear()
+    await bs.checkForUpdates()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('tentativa com falha inibe retry automático antes de 24h', async () => {
@@ -448,16 +458,16 @@ describe('bundle-sync — chaves bible 3 segmentos e paridade de leitura (RF-03/
     const bs = await load()
     const result = await bs.checkForUpdates({ force: true })
     expect(result.ok).toBe(true)
-    expect(bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'No princípio' })
-    expect(bs.readCachedBundleJson('catalog', 'pt_bible_book')).toEqual([{ id_bible_book: 1, name: 'Gênesis' }])
+    expect(await bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'No princípio' })
+    expect(await bs.readCachedBundleJson('catalog', 'pt_bible_book')).toEqual([{ id_bible_book: 1, name: 'Gênesis' }])
   })
 
   it('cache de bundle persistente alimenta a leitura sem request', async () => {
     const bs = await load()
     await prime(bs, { cache: { music_7: [{ id_music: 7 }], bible_10_100_1: { 1: 'vers' } } })
-    expect(bs.readCachedBundleJson('catalog', 'music_7')).toEqual([{ id_music: 7 }])
-    expect(bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'vers' })
-    expect(bs.readCachedBundleJson('catalog', 'missing')).toBeNull()
+    expect(await bs.readCachedBundleJson('catalog', 'music_7')).toEqual([{ id_music: 7 }])
+    expect(await bs.readCachedBundleJson('bible', 'bible_10_100_1')).toEqual({ 1: 'vers' })
+    expect(await bs.readCachedBundleJson('catalog', 'missing')).toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })
