@@ -99,8 +99,7 @@ export function importLouvorjaIntoBrowser(
 						null,
 					);
 
-					// Não elimina custom liturgies, horários de sessão ou locks que o
-					// schema mobile ainda não representa. Só substitui os dias recebidos.
+					// Fresh install cria o estado canônico completo; existente preserva campos não serializados.
 					const next = normalizeLiturgyState(current);
 					let hasDay = false;
 					for (const day of LITURGY_WEEKDAYS) {
