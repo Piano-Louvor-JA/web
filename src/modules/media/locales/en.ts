@@ -1,5 +1,12 @@
 export default {
   media: {
+    hotkeys: {
+      help: 'Player shortcuts',
+      previous: '← — Previous slide',
+      next: '→ — Next slide',
+      toggle: 'Space — Play / pause',
+      editing: 'Shortcuts are available outside editing fields and controls.',
+    },
     publishRules: {
       title: 'Community rules',
       visibleToAll: 'Public collections appear to the whole PIANO network.',

@@ -1,4 +1,5 @@
 import { createPinia, setActivePinia } from 'pinia'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils'
 
@@ -113,7 +114,8 @@ describe('HK-1: teclado do operador com store real', () => {
   ])('preserva edição e teclado nativo de %s', (html) => {
     const { store } = setup()
     document.body.innerHTML = html
-    const target = document.querySelector('span') ?? document.body.firstElementChild!
+    const target = document.querySelector('span') ?? document.body.firstElementChild
+    if (!target) throw new Error('Elemento de teste ausente')
     for (const name of ['ArrowRight', ' ']) expect(key(name, {}, target).defaultPrevented).toBe(false)
     expect(store.slideIndex).toBe(0)
     expect(store.status).toBe('playing')
@@ -140,10 +142,12 @@ describe('HK-1: teclado do operador com store real', () => {
 
   it('não captura sem sessão; Espaço também não captura sem áudio ou em modo sem áudio', () => {
     const { store } = setup()
-    store.session!.mode = 'no_audio'
+    const session = store.session
+    if (!session) throw new Error('Sessão de teste ausente')
+    session.mode = 'no_audio'
     expect(key(' ').defaultPrevented).toBe(false)
-    store.session!.mode = 'audio'
-    store.session!.audioUrl = ''
+    session.mode = 'audio'
+    session.audioUrl = ''
     expect(key(' ').defaultPrevented).toBe(false)
     store.session = null
     expect(key('ArrowRight').defaultPrevented).toBe(false)

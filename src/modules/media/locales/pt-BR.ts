@@ -1,5 +1,12 @@
 export default {
   media: {
+    hotkeys: {
+      help: 'Atalhos do player',
+      previous: '← — Slide anterior',
+      next: '→ — Próximo slide',
+      toggle: 'Espaço — Reproduzir / pausar',
+      editing: 'Os atalhos ficam disponíveis fora dos campos de edição e controles.',
+    },
     publishRules: {
       title: 'Regras da Comunidade',
       visibleToAll: 'Coletâneas públicas aparecem para toda a rede PIANO.',
