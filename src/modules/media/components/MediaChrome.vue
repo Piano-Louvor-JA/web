@@ -7,6 +7,7 @@ import { useDisplay } from 'vuetify'
 import { useMediaPlayer } from '../composables/useMediaPlayer'
 import MediaProjectFab from './MediaProjectFab.vue'
 import MediaStatusPreview from './MediaStatusPreview.vue'
+import MediaHotkeyHelp from './MediaHotkeyHelp.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -17,6 +18,8 @@ const {
   minimized,
   isProjecting,
   isPlaying,
+  hasAudio,
+  playbackMode,
   previewSnippet,
   previewReference,
   toggleProjection,
@@ -58,11 +61,12 @@ async function onToggleAudio() {
     />
 
     <div class="media-chrome__actions">
+      <MediaHotkeyHelp :has-audio="hasAudio && playbackMode !== 'no_audio'" />
       <button
         type="button"
         class="media-chrome__icon-btn"
         :aria-label="isPlaying ? t('media.pause') : t('media.play')"
-        :title="isPlaying ? t('media.pause') : t('media.play')"
+        :title="hasAudio && playbackMode !== 'no_audio' ? t('media.hotkeys.toggle') : (isPlaying ? t('media.pause') : t('media.play'))"
         @click="onToggleAudio"
       >
         <i

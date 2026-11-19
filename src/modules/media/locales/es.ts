@@ -1,5 +1,12 @@
 export default {
   media: {
+    hotkeys: {
+      help: 'Atajos del reproductor',
+      previous: '← — Diapositiva anterior',
+      next: '→ — Diapositiva siguiente',
+      toggle: 'Espacio — Reproducir / pausar',
+      editing: 'Los atajos están disponibles fuera de los campos de edición y controles.',
+    },
     publishRules: {
       title: 'Reglas de la Comunidad',
       visibleToAll: 'Las colecciones públicas aparecen para toda la red PIANO.',

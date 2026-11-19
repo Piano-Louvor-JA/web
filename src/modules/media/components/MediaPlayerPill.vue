@@ -89,7 +89,7 @@ function selectMode(mode: MediaPlaybackMode) {
         type="button"
         class="media-player-pill__icon-btn"
         :aria-label="t('media.previousSlide')"
-        :title="t('media.previousSlide')"
+        :title="t('media.hotkeys.previous')"
         @click="emit('previousSlide')"
       >
         <i
@@ -102,7 +102,7 @@ function selectMode(mode: MediaPlaybackMode) {
         type="button"
         class="media-player-pill__play"
         :aria-label="isPlaying ? t('media.pause') : t('media.play')"
-        :title="isPlaying ? t('media.pause') : t('media.play')"
+        :title="hasAudio && mode !== 'no_audio' ? t('media.hotkeys.toggle') : (isPlaying ? t('media.pause') : t('media.play'))"
         :disabled="!hasAudio"
         @click="emit('togglePlay')"
       >
@@ -117,7 +117,7 @@ function selectMode(mode: MediaPlaybackMode) {
         type="button"
         class="media-player-pill__icon-btn"
         :aria-label="t('media.nextSlide')"
-        :title="t('media.nextSlide')"
+        :title="t('media.hotkeys.next')"
         @click="emit('nextSlide')"
       >
         <i
