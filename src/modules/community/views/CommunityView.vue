@@ -3,6 +3,9 @@ import { GlassCard } from "@design-system/index";
 import { getAuthSession } from "@/modules/auth/services/auth-client";
 
 import ReportDialog from "../components/ReportDialog.vue";
+import BlockedAuthorsDialog from "../components/BlockedAuthorsDialog.vue";
+import { blockAuthor } from "../services/blocks";
+import { appConfirm } from "@/shared/composables/useAppConfirm";
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -56,6 +59,49 @@ const reportTarget = ref<CommunityCollectionSummary | null>(null);
 const notifications = ref<AppNotification[]>([]);
 const showNotifications = ref(false);
 const isLogged = ref(false);
+
+/* ---------- App Store 1.2: bloquear autor (paridade app desktop/apk) ---------- */
+const blockedDialogOpen = ref(false);
+const moderationMsg = ref<{ text: string; error: boolean } | null>(null);
+let moderationTimer: ReturnType<typeof setTimeout> | null = null;
+
+function notifyModeration(text: string, error = false): void {
+  moderationMsg.value = { text, error };
+  if (moderationTimer) clearTimeout(moderationTimer);
+  moderationTimer = setTimeout(() => (moderationMsg.value = null), 4000);
+}
+
+function isMine(collection: CommunityCollectionSummary): boolean {
+  const me = getAuthSession()?.user?.id_user;
+  return me != null && collection.authorId === me;
+}
+
+async function requestBlock(collection: CommunityCollectionSummary): Promise<void> {
+  const token = getAuthSession()?.token ?? null;
+  if (!token) {
+    notifyModeration(t("community.loginToModerate"), true);
+    return;
+  }
+  const name = collection.authorName || t("community.blockedNoName");
+  const ok = await appConfirm({
+    title: t("community.blockConfirmTitle", { name }),
+    message: t("community.blockConfirmMessage"),
+    confirmLabel: t("community.blockConfirm"),
+    danger: true,
+  });
+  if (!ok) return;
+  if (await blockAuthor(collection.id, token)) {
+    notifyModeration(t("community.blockDone", { name }));
+    await load(); // a API já filtra o autor bloqueado
+  } else {
+    notifyModeration(t("community.blockFailed"), true);
+  }
+}
+
+async function closeBlockedDialog(changed: boolean): Promise<void> {
+  blockedDialogOpen.value = false;
+  if (changed) await load();
+}
 const seasonalEvent = ref<SeasonalEventBanner | null>(null);
 
 async function load() {
@@ -231,7 +277,28 @@ onMounted(load);
           <i class="ti ti-x" aria-hidden="true" />
         </button>
       </div>
+      <button
+        v-if="isLogged"
+        type="button"
+        class="community-view__report-btn"
+        data-test="community-blocked-users"
+        :aria-label="t('community.blockedUsers')"
+        :title="t('community.blockedUsers')"
+        @click="blockedDialogOpen = true"
+      >
+        <i class="ti ti-user-off" aria-hidden="true" />
+      </button>
     </div>
+
+    <p
+      v-if="moderationMsg"
+      class="community-view__status"
+      :class="{ 'community-view__status--error': moderationMsg.error }"
+      role="status"
+      data-test="community-moderation-msg"
+    >
+      {{ moderationMsg.text }}
+    </p>
 
     <div
       v-if="!isLoading && filteredCollections.length > 0"
@@ -296,13 +363,26 @@ onMounted(load);
               }}
             </button>
             <button
+              v-if="!isMine(collection)"
               type="button"
               class="community-view__report-btn"
+              data-test="community-report"
               :aria-label="t('ranking.report')"
               :title="t('ranking.report')"
               @click="openReport(collection)"
             >
               <i class="ti ti-flag" aria-hidden="true" />
+            </button>
+            <button
+              v-if="!isMine(collection) && collection.authorId != null"
+              type="button"
+              class="community-view__report-btn"
+              data-test="community-block-author"
+              :aria-label="t('community.blockAuthor')"
+              :title="t('community.blockAuthor')"
+              @click="requestBlock(collection)"
+            >
+              <i class="ti ti-user-off" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -359,10 +439,16 @@ onMounted(load);
       @close="reportTarget = null"
       @submit="submitReport"
     />
+
+    <BlockedAuthorsDialog :open="blockedDialogOpen" @close="closeBlockedDialog" />
   </section>
 </template>
 
 <style scoped>
+.community-view__status--error {
+  color: var(--ds-color-error);
+}
+
 .community-view {
   display: flex;
   flex-direction: column;
