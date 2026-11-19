@@ -54,6 +54,35 @@ export function authHeaders(): Record<string, string> {
   return { authorization: `Bearer ${session.token}` }
 }
 
+export type DeleteAccountResult = 'ok' | 'password-required' | 'wrong-password' | 'unauthorized' | 'failed'
+
+/**
+ * Exclui a conta (DELETE /auth/me). Sessão legado manda a senha; sessão
+ * Firebase passa o ID token fresco e não manda senha (o cliente já
+ * reautenticou). Sucesso limpa a sessão local.
+ */
+export async function deleteAccount(password?: string, token?: string | null): Promise<DeleteAccountResult> {
+  const bearer = token ?? getAuthSession()?.token
+  if (!bearer) return 'unauthorized'
+  try {
+    const response = await fetch(`${authBaseUrl()}/me`, {
+      method: 'DELETE',
+      headers: { 'X-Tenant': 'piano', authorization: `Bearer ${bearer}`, 'content-type': 'application/json' },
+      body: JSON.stringify(password ? { password } : {}),
+    })
+    if (response.ok) {
+      saveSession(null)
+      return 'ok'
+    }
+    if (response.status === 400) return 'password-required'
+    if (response.status === 403) return 'wrong-password'
+    if (response.status === 401) return 'unauthorized'
+    return 'failed'
+  } catch {
+    return 'failed'
+  }
+}
+
 async function authRequest(
   path: 'register' | 'login',
   body: Record<string, string>,
