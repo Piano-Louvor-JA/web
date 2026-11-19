@@ -382,7 +382,8 @@ export const useBibleStore = defineStore('bible', () => {
     selectedVerses.value = []
     lastVerseAnchor.value = 1
 
-    syncProjection()
+    // Navegar não mexe na projeção: o versículo que está na tela fica até o
+    // operador clicar no próximo (selectVerse publica). Paridade com o app.
     // Versiculos so carregam apos selecionar capitulo
     verses.value = {}
   }
@@ -398,7 +399,7 @@ export const useBibleStore = defineStore('bible', () => {
     setUserPreference(USER_PREFERENCE_KEYS.bibleSelectedChapter, next)
     selectedVerses.value = []
     lastVerseAnchor.value = 1
-    syncProjection()
+    // Mantém o versículo projetado até escolher o próximo (ver selectBook).
     await refreshChapter()
   }
 
