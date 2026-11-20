@@ -1,6 +1,6 @@
 {
-  "version": "1.27.0",
-  "changelog": "## Novidades da versão 1.27.0\n\n### Conta\n- Exclua sua conta pelo diálogo da conta, com confirmação e reautenticação quando necessário.\n\n### Comunidade\n- A comunidade volta a carregar pelo contrato correto da API.\n- Denuncie coletâneas e bloqueie autores; gerencie a lista de bloqueados.\n- Salvar cópia de coletânea da comunidade cria a versão local com as músicas.\n\n### Bíblia e projeção\n- Navegar pelos versículos não apaga o versículo que está sendo projetado.\n\n### Player\n- Atalhos do player funcionam entre rotas, com ajuda no miniplayer.\n- Configurações de palco alinhadas ao app (transições e tela de retorno).\n\n### Atenção\n- Atualizações internas para mais estabilidade e segurança.\n",
+  "version": "1.28.0",
+  "changelog": "## Novidades da versão 1.28.0\n\n### Central de Mídia\n- A seção Minhas Coletâneas fica oculta enquanto o recurso é preparado para a Comunidade.\n\nAtualizações internas para mais estabilidade e segurança.\n",
   "date": "2026-11-20",
   "platform": "web"
 }
