@@ -1,5 +1,6 @@
 import { ref, computed, type ComputedRef } from 'vue'
 import {
+  deleteAccount,
   getAuthSession,
   login,
   logout,
@@ -9,10 +10,14 @@ import {
   type AuthSession,
 } from '../services/auth-client'
 import {
+  currentAccountProvider,
+  firebaseIdToken,
   firebaseLogin,
   firebaseLoginGoogle,
   firebaseLogout,
+  firebaseReauthenticate,
   firebaseRegister,
+  type AccountProvider,
 } from '../services/firebase-client'
 
 /** Estado reativo da sessão de autenticação. */
@@ -40,6 +45,10 @@ interface UseAuthReturn {
   logout: () => Promise<void>
   forgotPassword: (email: string) => Promise<boolean>
   resetPassword: (token: string, password: string) => Promise<boolean>
+  /** Como a conta logada confirma a identidade (senha ou Google). */
+  accountProvider: () => AccountProvider
+  /** Exclui a conta (irreversível). Senha vazia só para conta Google. */
+  deleteAccount: (password: string) => Promise<boolean>
 }
 
 export function useAuth(): UseAuthReturn {
@@ -146,6 +155,37 @@ export function useAuth(): UseAuthReturn {
     return false
   }
 
+  /**
+   * Exclusão de conta (paridade app — App Store 5.1.1(v)): Firebase
+   * reautentica (senha ou Google) antes; sessão legado manda a senha à API.
+   */
+  async function doDeleteAccount(password: string): Promise<boolean> {
+    const provider = currentAccountProvider()
+    let token: string | null = null
+    if (provider !== 'legacy') {
+      const reauth = await firebaseReauthenticate(provider === 'password' ? password : undefined)
+      if (reauth !== 'ok') {
+        notify(reauth === 'wrong-password' ? 'Senha incorreta' : 'Não foi possível confirmar sua identidade', true)
+        return false
+      }
+      token = await firebaseIdToken()
+    }
+    const result = await deleteAccount(provider === 'legacy' ? password : undefined, token)
+    if (result === 'ok') {
+      await firebaseLogout()
+      session.value = null
+      notify('Conta excluída')
+      return true
+    }
+    const messages: Record<string, string> = {
+      'wrong-password': 'Senha incorreta',
+      'password-required': 'Digite sua senha para confirmar',
+      unauthorized: 'Sessão expirada — entre de novo para excluir a conta',
+    }
+    notify(messages[result] ?? 'Não foi possível excluir a conta', true)
+    return false
+  }
+
   return {
     session,
     isLoggedIn,
@@ -157,5 +197,7 @@ export function useAuth(): UseAuthReturn {
     logout: doLogout,
     forgotPassword: doForgotPassword,
     resetPassword: doResetPassword,
+    accountProvider: () => currentAccountProvider(),
+    deleteAccount: doDeleteAccount,
   }
 }

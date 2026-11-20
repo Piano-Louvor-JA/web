@@ -14,6 +14,7 @@ import { useCountdownStore } from '@modules/countdown/stores/useCountdownStore'
 import { useLiturgyStore } from '@modules/liturgy/stores/useLiturgyStore'
 import MediaChrome from '@modules/media/components/MediaChrome.vue'
 import { useMediaPlayer } from '@modules/media/composables/useMediaPlayer'
+import { useMediaPlayerHotkeys } from '@modules/media/composables/useMediaPlayerHotkeys'
 import { useRandomStore } from '@modules/random/stores/useRandomStore'
 import { useTimerStore } from '@modules/timer/stores/useTimerStore'
 import { mainNavRoutes } from '@shared/constants/navigation'
@@ -35,6 +36,7 @@ const { smAndDown } = useDisplay()
 
 // ESC no operador fecha TODAS as projeções ativas (com confirmação) — paridade app.
 useOperatorEscapeToCloseAllProjections()
+useMediaPlayerHotkeys()
 
 // WT-5G: reconexão do relay do palco GLOBAL, não só no mount do ScreensCard.
 // Antes: reload na /bible deixava o operador desconectado da sessão cloud

@@ -1,20 +1,31 @@
+import { communityBaseUrl, communityRequest } from "./community-http";
+
 export type SeasonalEventBanner = {
   name: string;
   description: string | null;
   multiplier: number;
 } | null;
 
-function communityBaseUrl(): string {
-  const base = import.meta.env.VITE_PALCO_API_URL;
-  if (base) return `${base.replace(/\/$/, '')}/v1/community`;
-  return '/v1/community';
-}
-
+/** Evento sazonal ativo (GET /seasonal-event). Sem evento/falha → null. */
 export async function getSeasonalEvent(): Promise<SeasonalEventBanner> {
   try {
-    const res = await fetch(`${communityBaseUrl()}/seasonal-event`);
+    const res = await fetch(
+      `${communityBaseUrl()}/seasonal-event`,
+      communityRequest(),
+    );
     if (!res.ok) return null;
-    return (await res.json()) as SeasonalEventBanner;
+    const json = (await res.json()) as {
+      active?: boolean;
+      name?: string;
+      description?: string | null;
+      multiplier?: number;
+    };
+    if (json.active !== true || !json.name) return null;
+    return {
+      name: json.name,
+      description: json.description ?? null,
+      multiplier: Number(json.multiplier ?? 1),
+    };
   } catch {
     return null;
   }

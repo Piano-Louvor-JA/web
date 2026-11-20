@@ -1,181 +1,107 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  listCommunityCollectionsPage,
-  saveCommunityCopy,
-  type CommunityCollectionSummary,
-} from '../community-catalog'
-import { getAuthSession } from '@/modules/auth/services/auth-client'
-
-vi.mock('@/modules/auth/services/auth-client', () => ({
-  getAuthSession: vi.fn(),
+const mocks = vi.hoisted(() => ({
+  session: vi.fn(),
+  createCollection: vi.fn(() => ({ id: -5 })),
+  createMusic: vi.fn(),
+}))
+vi.mock('@/modules/auth/services/auth-client', () => ({ getAuthSession: mocks.session }))
+vi.mock('@/modules/media/services/local-custom-store', () => ({
+  createLocalCollection: mocks.createCollection,
+  createLocalMusic: mocks.createMusic,
 }))
 
-const mockedSession = vi.mocked(getAuthSession)
+import { listCommunityCollectionsPage, saveCommunityCopy } from '../community-catalog'
 
-const sampleCollection: CommunityCollectionSummary = {
-  id: 7,
-  name: 'Hinos de louvor',
-  authorName: 'Rafael',
-  authorId: 1,
-  musicsCount: 12,
-  coverUrl: null,
-  createdAt: '2026-09-01T00:00:00Z',
+function respond(body: unknown, ok = true) {
+  return vi.fn().mockResolvedValue({ ok, json: async () => body })
 }
 
-describe('community-catalog service', () => {
+const row = {
+  id_collection: 7,
+  name: 'Hinos de louvor',
+  description: 'Sábado',
+  author_name: 'Rafael',
+  owner_id: 2,
+  musics_count: 12,
+  cover_url: null,
+  created_at: '2026-09-01 00:00:00',
+}
+
+describe('community-catalog — contrato /v1/custom', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn())
-    mockedSession.mockReset()
+    mocks.session.mockReturnValue(null)
     delete import.meta.env.VITE_PALCO_API_URL
   })
-
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.clearAllMocks()
   })
 
-  describe('listCommunityCollectionsPage', () => {
-    it('retorna a página quando a API responde ok', async () => {
-      const payload = {
-        items: [sampleCollection],
-        page: 1,
-        lastPage: 3,
-        total: 30,
-      }
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify(payload), { status: 200 }),
-      )
-
-      await expect(listCommunityCollectionsPage(1, 20)).resolves.toEqual(payload)
-      expect(fetch).toHaveBeenCalledWith(
-        '/v1/community/collections?page=1&per_page=20',
-      )
-    })
-
-    it('retorna página vazia quando a API responde erro 500 (não tenta parsear JSON)', async () => {
-      // body válido — se mutant remover if (!res.ok), parseia e retorna items, não página vazia
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ items: [{ id: 99 }] }), { status: 500 }),
-      )
-
-      await expect(listCommunityCollectionsPage(2, 20)).resolves.toEqual({
-        items: [],
-        page: 2,
-        lastPage: 1,
-        total: 0,
-      })
-    })
-
-    it('retorna página vazia quando a API responde erro 404 (não tenta parsear JSON)', async () => {
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ items: [{ id: 99 }] }), { status: 404 }),
-      )
-
-      await expect(listCommunityCollectionsPage(2, 20)).resolves.toEqual({
-        items: [],
-        page: 2,
-        lastPage: 1,
-        total: 0,
-      })
-    })
-
-    it('usa VITE_PALCO_API_URL quando definida (com barra final)', async () => {
-      import.meta.env.VITE_PALCO_API_URL = 'https://api.example.com/'
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ items: [], page: 1, lastPage: 1, total: 0 }), { status: 200 }),
-      )
-
-      const result = await listCommunityCollectionsPage(1, 24)
-      expect(result.items).toEqual([])
-      expect(fetch).toHaveBeenCalledWith('https://api.example.com/v1/community/collections?page=1&per_page=24')
-    })
-
-    it('usa VITE_PALCO_API_URL quando definida (sem barra final)', async () => {
-      import.meta.env.VITE_PALCO_API_URL = 'https://api.example.com'
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ items: [], page: 1, lastPage: 1, total: 0 }), { status: 200 }),
-      )
-
-      const result = await listCommunityCollectionsPage(1, 24)
-      expect(result.items).toEqual([])
-      expect(fetch).toHaveBeenCalledWith('https://api.example.com/v1/community/collections?page=1&per_page=24')
-    })
-
-    it('retorna página vazia quando VITE_PALCO_API_URL é string vazia (falsy)', async () => {
-      import.meta.env.VITE_PALCO_API_URL = ''
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ items: [sampleCollection] }), { status: 200 }),
-      )
-
-      const result = await listCommunityCollectionsPage(1, 24)
-      expect(result.items).toEqual([sampleCollection])
-      expect(fetch).toHaveBeenCalledWith('/v1/community/collections?page=1&per_page=24')
+  it('lista GET /v1/custom/collections e mapeia {data, meta}', async () => {
+    const f = respond({ data: [row], meta: { page: 2, last_page: 3, total: 50 } })
+    vi.stubGlobal('fetch', f)
+    const page = await listCommunityCollectionsPage(2, 24)
+    expect(f.mock.calls[0][0]).toBe('/v1/custom/collections?page=2&per_page=24')
+    expect(f.mock.calls[0][1].headers).toMatchObject({ 'x-tenant': 'piano' })
+    expect(page).toEqual({
+      items: [{
+        id: 7, name: 'Hinos de louvor', description: 'Sábado', authorName: 'Rafael',
+        authorId: 2, musicsCount: 12, coverUrl: null, createdAt: '2026-09-01 00:00:00',
+      }],
+      page: 2, lastPage: 3, total: 50,
     })
   })
 
-  describe('saveCommunityCopy', () => {
-    it('retorna null quando não há sessão', async () => {
-      mockedSession.mockReturnValueOnce(null)
+  it('com sessão manda Bearer (a API esconde autores bloqueados)', async () => {
+    mocks.session.mockReturnValue({ token: 'tok' })
+    const f = respond({ data: [] })
+    vi.stubGlobal('fetch', f)
+    await listCommunityCollectionsPage(1, 24)
+    expect(f.mock.calls[0][1].headers).toMatchObject({ authorization: 'Bearer tok' })
+  })
 
-      await expect(saveCommunityCopy(sampleCollection)).resolves.toBeNull()
-      expect(fetch).not.toHaveBeenCalled()
+  it('usa VITE_PALCO_API_URL sem barra dupla e trata dono ausente/campos inválidos', async () => {
+    import.meta.env.VITE_PALCO_API_URL = 'https://api.test/'
+    const f = respond({ data: [{ id_collection: 1, owner_id: null, musics_count: 'x' }] })
+    vi.stubGlobal('fetch', f)
+    const page = await listCommunityCollectionsPage(1, 10)
+    expect(f.mock.calls[0][0]).toBe('https://api.test/v1/custom/collections?page=1&per_page=10')
+    expect(page.items[0]).toMatchObject({ authorId: null, musicsCount: 0, name: '', authorName: null })
+    expect(page.total).toBe(1)
+  })
+
+  it.each([
+    ['HTTP de erro', () => respond({}, false)],
+    ['sem data', () => respond({ meta: {} })],
+    ['rede caiu', () => vi.fn().mockRejectedValue(new Error('x'))],
+  ])('%s → página vazia', async (_label, make) => {
+    vi.stubGlobal('fetch', make())
+    expect(await listCommunityCollectionsPage(3, 24)).toEqual({ items: [], page: 3, lastPage: 1, total: 0 })
+  })
+
+  it('salvar cópia: busca as músicas e cria coletânea + músicas locais', async () => {
+    const f = respond({ data: [{ name: 'Santo', official_music_id: 12 }, { name: 'Livre', official_music_id: null }] })
+    vi.stubGlobal('fetch', f)
+    const id = await saveCommunityCopy({
+      id: 7, name: 'Hinos', description: null, authorName: null, authorId: 2,
+      musicsCount: 2, coverUrl: null, createdAt: null,
     })
+    expect(id).toBe(-5)
+    expect(f.mock.calls[0][0]).toBe('/v1/custom/collections/7/musics')
+    expect(mocks.createCollection).toHaveBeenCalledWith('Hinos', undefined)
+    expect(mocks.createMusic).toHaveBeenNthCalledWith(1, -5, { name: 'Santo', officialMusicId: 12 })
+    expect(mocks.createMusic).toHaveBeenNthCalledWith(2, -5, { name: 'Livre', officialMusicId: undefined })
+  })
 
-    it('retorna o id da cópia quando a API responde ok (valida headers e body exatos)', async () => {
-      mockedSession.mockReturnValueOnce({
-        token: 'tok',
-        user: { id_user: 1, email: 'a@b.c', displayName: 'A' },
-      })
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 42 }), { status: 201 }),
-      )
-
-      await expect(saveCommunityCopy(sampleCollection)).resolves.toBe(42)
-      expect(fetch).toHaveBeenCalledWith(
-        '/v1/community/collections/copy',
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'content-type': 'application/json',
-            authorization: 'Bearer tok',
-          }),
-          body: JSON.stringify({ sourceCollectionId: sampleCollection.id }),
-        }),
-      )
-    })
-
-    it('retorna null quando a API responde erro 403 (não tenta parsear JSON)', async () => {
-      mockedSession.mockReturnValueOnce({
-        token: 'tok',
-        user: { id_user: 1, email: 'a@b.c', displayName: 'A' },
-      })
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 999 }), { status: 403 }),
-      )
-
-      await expect(saveCommunityCopy(sampleCollection)).resolves.toBeNull()
-    })
-
-    it('retorna null quando a API responde erro 500 (não tenta parsear JSON)', async () => {
-      mockedSession.mockReturnValueOnce({
-        token: 'tok',
-        user: { id_user: 1, email: 'a@b.c', displayName: 'A' },
-      })
-      vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 999 }), { status: 500 }),
-      )
-
-      await expect(saveCommunityCopy(sampleCollection)).resolves.toBeNull()
-    })
-
-    it('retorna null quando o fetch lança (rede)', async () => {
-      mockedSession.mockReturnValueOnce({
-        token: 'tok',
-        user: { id_user: 1, email: 'a@b.c', displayName: 'A' },
-      })
-      vi.mocked(fetch).mockRejectedValueOnce(new Error('offline'))
-
-      await expect(saveCommunityCopy(sampleCollection)).resolves.toBeNull()
-    })
+  it.each([
+    ['HTTP de erro', () => respond({}, false)],
+    ['sem data', () => respond({})],
+    ['rede caiu', () => vi.fn().mockRejectedValue(new Error('x'))],
+  ])('salvar cópia com %s → null e nada local', async (_label, make) => {
+    vi.stubGlobal('fetch', make())
+    const c = { id: 7, name: 'H', description: 'd', authorName: null, authorId: null, musicsCount: 0, coverUrl: null, createdAt: null }
+    expect(await saveCommunityCopy(c)).toBeNull()
+    expect(mocks.createCollection).not.toHaveBeenCalled()
   })
 })
