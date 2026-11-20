@@ -39,6 +39,26 @@ vi.mock('../../services/notifications', () => ({
 vi.mock('../../services/weekly-tasks', () => ({
   getWeeklyTasks: vi.fn(),
 }))
+const moderation = vi.hoisted(() => ({
+  block: vi.fn(),
+  confirm: vi.fn(),
+}))
+vi.mock('../../services/blocks', () => ({
+  blockAuthor: moderation.block,
+  listBlockedAuthors: vi.fn(async () => []),
+  unblockAuthor: vi.fn(async () => true),
+}))
+vi.mock('@/shared/composables/useAppConfirm', () => ({
+  appConfirm: moderation.confirm,
+}))
+vi.mock('../../components/BlockedAuthorsDialog.vue', () => ({
+  default: {
+    name: 'BlockedAuthorsDialog',
+    props: ['open'],
+    emits: ['close'],
+    template: '<div v-if="open" data-test="blocked-dialog-mock" />',
+  },
+}))
 
 const mockedCatalog = vi.mocked(listCommunityCollectionsPage)
 const mockedSaveCopy = vi.mocked(saveCommunityCopy)
@@ -53,7 +73,7 @@ const collection = {
   id: 7,
   name: 'Hinos de louvor',
   authorName: 'Rafael',
-  authorId: 1,
+  authorId: 2, // outro autor: o usuário logado (id 1) pode denunciar/bloquear
   musicsCount: 12,
   coverUrl: null,
   createdAt: '2026-09-01T00:00:00Z',
@@ -232,7 +252,7 @@ describe('CommunityView — integração', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    await wrapper.find('.community-view__report-btn').trigger('click')
+    await wrapper.find('[data-test="community-report"]').trigger('click')
     await wrapper.vm.$nextTick()
 
     const textarea = document.body.querySelector(
@@ -291,5 +311,82 @@ describe('CommunityView — integração', () => {
     expect(
       (buttons[buttons.length - 1].element as HTMLButtonElement).disabled,
     ).toBe(false)
+  })
+})
+
+describe('CommunityView — denunciar e bloquear (App Store 1.2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockedCatalog.mockResolvedValue({ items: [collection], page: 1, lastPage: 1, total: 1 })
+    mockedTasks.mockResolvedValue(null)
+    mockedNotifs.mockResolvedValue([])
+    mockedSeasonal.mockResolvedValue(null)
+    mockedSession.mockReturnValue({
+      token: 'tok',
+      user: { id_user: 1, email: 'a@b.c', displayName: 'Rafael' },
+    })
+    moderation.confirm.mockResolvedValue(true)
+    moderation.block.mockResolvedValue({ id: 2, name: 'Rafael' })
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('coletânea própria não mostra denunciar nem bloquear', async () => {
+    mockedCatalog.mockResolvedValue({ items: [{ ...collection, authorId: 1 }], page: 1, lastPage: 1, total: 1 })
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.find('[data-test="community-report"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="community-block-author"]').exists()).toBe(false)
+  })
+
+  it('bloquear: confirma, chama a API com o token e recarrega', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    const loads = mockedCatalog.mock.calls.length
+    await wrapper.find('[data-test="community-block-author"]').trigger('click')
+    await flushPromises()
+    expect(moderation.confirm).toHaveBeenCalledWith(expect.objectContaining({ danger: true }))
+    expect(moderation.block).toHaveBeenCalledWith(7, 'tok')
+    expect(mockedCatalog.mock.calls.length).toBeGreaterThan(loads)
+    expect(wrapper.find('[data-test="community-moderation-msg"]').text()).toContain('community.blockDone')
+  })
+
+  it('cancelar não bloqueia; falha avisa erro', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    moderation.confirm.mockResolvedValueOnce(false)
+    await wrapper.find('[data-test="community-block-author"]').trigger('click')
+    await flushPromises()
+    expect(moderation.block).not.toHaveBeenCalled()
+
+    moderation.block.mockResolvedValueOnce(null)
+    await wrapper.find('[data-test="community-block-author"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.community-view__status--error').exists()).toBe(true)
+  })
+
+  it('sem login: pede para entrar e não abre confirmação', async () => {
+    mockedSession.mockReturnValue(null)
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('[data-test="community-block-author"]').trigger('click')
+    await flushPromises()
+    expect(moderation.confirm).not.toHaveBeenCalled()
+    expect(wrapper.find('[data-test="community-moderation-msg"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="community-blocked-users"]').exists()).toBe(false)
+  })
+
+  it('usuários bloqueados abre o diálogo e recarrega ao fechar com mudança', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+    await wrapper.find('[data-test="community-blocked-users"]').trigger('click')
+    expect(wrapper.find('[data-test="blocked-dialog-mock"]').exists()).toBe(true)
+    const loads = mockedCatalog.mock.calls.length
+    wrapper.findComponent({ name: 'BlockedAuthorsDialog' }).vm.$emit('close', true)
+    await flushPromises()
+    expect(wrapper.find('[data-test="blocked-dialog-mock"]').exists()).toBe(false)
+    expect(mockedCatalog.mock.calls.length).toBeGreaterThan(loads)
   })
 })

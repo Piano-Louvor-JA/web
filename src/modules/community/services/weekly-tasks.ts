@@ -1,28 +1,26 @@
 import { getAuthSession } from "@/modules/auth/services/auth-client";
 
+import { bearer, communityBaseUrl, communityRequest } from "./community-http";
+
 export type WeeklyTask = {
-  id: number;
+  id: string;
   description: string;
   bonus: number;
   done: boolean;
 };
 
-function communityBaseUrl(): string {
-  const base = import.meta.env.VITE_PALCO_API_URL;
-  if (base) return `${base.replace(/\/$/, '')}/v1/community`;
-  return '/v1/community';
-}
-
+/** Tarefas da semana (GET /weekly-tasks). Sem sessão/falha → null. */
 export async function getWeeklyTasks(): Promise<WeeklyTask[] | null> {
-  const session = getAuthSession();
-  if (!session) return null;
-  const token = session.token;
+  const token = getAuthSession()?.token;
+  if (!token) return null;
   try {
-    const res = await fetch(`${communityBaseUrl()}/weekly-tasks`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      `${communityBaseUrl()}/weekly-tasks`,
+      communityRequest({ headers: bearer(token) }),
+    );
     if (!res.ok) return null;
-    return (await res.json()) as WeeklyTask[];
+    const json = (await res.json()) as { data?: unknown };
+    return Array.isArray(json.data) ? (json.data as WeeklyTask[]) : null;
   } catch {
     return null;
   }
