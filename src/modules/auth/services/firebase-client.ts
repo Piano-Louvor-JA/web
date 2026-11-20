@@ -10,10 +10,13 @@
  */
 import { initializeApp } from 'firebase/app'
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
   getRedirectResult,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
@@ -163,6 +166,53 @@ export async function handleRedirectResult(): Promise<AuthSession | null> {
     return null
   } catch (e) {
     console.error('[auth] handleRedirectResult ERRO:', e)
+    return null
+  }
+}
+
+/** Como a conta logada entra: senha no Firebase, Google, ou sessão legado da API. */
+export type AccountProvider = 'password' | 'google' | 'legacy'
+
+export function currentAccountProvider(): AccountProvider {
+  try {
+    const user = getFirebaseAuth().currentUser
+    if (!user) return 'legacy'
+    return user.providerData.some(p => p.providerId === 'password') ? 'password' : 'google'
+  } catch {
+    return 'legacy'
+  }
+}
+
+export type ReauthResult = 'ok' | 'wrong-password' | 'failed'
+
+const WRONG_PASSWORD_CODES = new Set(['auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials'])
+
+/**
+ * Exclusão de conta (paridade app): confirma a identidade antes da ação
+ * irreversível. Com senha → credencial de e-mail; sem senha (Google) → popup.
+ */
+export async function firebaseReauthenticate(password?: string): Promise<ReauthResult> {
+  try {
+    const user = getFirebaseAuth().currentUser
+    if (!user) return 'failed'
+    if (password && user.email) {
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password))
+    } else {
+      await reauthenticateWithPopup(user, new GoogleAuthProvider())
+    }
+    return 'ok'
+  } catch (e) {
+    const code = e && typeof e === 'object' && 'code' in e ? String((e as { code: unknown }).code) : ''
+    return WRONG_PASSWORD_CODES.has(code) ? 'wrong-password' : 'failed'
+  }
+}
+
+/** ID token fresco do Firebase (null sem usuário Firebase). */
+export async function firebaseIdToken(): Promise<string | null> {
+  try {
+    const user = getFirebaseAuth().currentUser
+    return user ? await user.getIdToken() : null
+  } catch {
     return null
   }
 }
