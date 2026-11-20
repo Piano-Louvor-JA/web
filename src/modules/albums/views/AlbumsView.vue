@@ -227,6 +227,8 @@ function addPlaylist() {
 }
 
 // --- Minhas Coletâneas (custom, via API /v1/custom) ---
+// TODO(minhas-coletaneas): oculta por enquanto (ver ../constants.ts).
+import { SHOW_CUSTOM_COLLECTIONS } from '../constants'
 import {
   createCustomCollection,
   listCustomCollections,
@@ -301,7 +303,7 @@ function openCustomCollection(id: number) {
 }
 
 onMounted(() => {
-  void hydrateCustomCollections()
+  if (SHOW_CUSTOM_COLLECTIONS) void hydrateCustomCollections()
 })
 
 async function removePlaylist(id: string) {
@@ -620,7 +622,9 @@ async function runAction(
             class="albums-view__toolbar-count"
           >{{ playlists.length }}</span>
         </button>
+        <!-- TODO(minhas-coletaneas): botão oculto junto com a seção. -->
         <button
+          v-if="SHOW_CUSTOM_COLLECTIONS"
           type="button"
           class="albums-view__toolbar-btn"
           :aria-label="t('albums.custom.title')"
@@ -1090,7 +1094,7 @@ async function runAction(
     >
       <!-- Minhas Coletâneas (custom, API /v1/custom): mesma estética dos álbuns -->
       <section
-        v-if="customCollections.length > 0"
+        v-if="SHOW_CUSTOM_COLLECTIONS && customCollections.length > 0"
         class="albums-view__category albums-view__category--custom"
       >
         <header class="albums-view__category-header">
