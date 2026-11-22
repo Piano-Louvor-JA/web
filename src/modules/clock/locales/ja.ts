@@ -1,0 +1,46 @@
+// JA locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "ユーティリティ",
+    "subtitle": "礼拝の投影ツール",
+    "temporizador": "タイマー",
+    "temporizadorDescription": "時計・ストップウォッチ・カウントダウン",
+    "temporizadorSubtitle": "投影のための時間ツール",
+    "backToUtilities": "ユーティリティに戻る",
+    "clock": "時計",
+    "clockDescription": "投影画面に時刻を表示",
+    "random": "くじ引き",
+    "randomDescription": "名前と数字のアニメ抽選",
+    "draw": "描画",
+    "drawDescription": "投影上に注記と強調",
+    "timer": "ストップウォッチ",
+    "timerDescription": "投影されるカウントアップ",
+    "countdown": "タイマー",
+    "countdownDescription": "投影されるカウントダウン"
+  },
+  "clock": {
+    "title": "時計",
+    "config": "カスタマイズ",
+    "configTitle": "投影のカスタマイズ",
+    "configSubtitle": "画面上の時計の見た目を調整",
+    "style": "表示スタイル",
+    "digital": "デジタル",
+    "analog": "アナログ",
+    "options": "書式オプション",
+    "optionsHint": "時刻表示の設定",
+    "showSeconds": "秒を表示",
+    "format24h": "24 時間表記",
+    "bgColor": "背景色",
+    "bgColorHint": "表示画面のベース背景色",
+    "textColor": "文字 / 針の色",
+    "textColorHint": "時計のフォントや針の色",
+    "customColor": "カスタム色",
+    "reset": "デフォルトに戻す",
+    "apply": "適用",
+    "close": "閉じる",
+    "project": "投影",
+    "clearProjection": "投影から外す",
+    "projecting": "投影中",
+    "backToUtilities": "タイマーに戻る"
+  }
+}

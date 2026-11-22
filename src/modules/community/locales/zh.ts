@@ -1,0 +1,56 @@
+// ZH locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "社群",
+    "subtitle": "PIANO 网络的公开歌单",
+    "back": "返回",
+    "blockAuthor": "屏蔽作者",
+    "blockConfirmTitle": "屏蔽 {name}？",
+    "blockConfirmMessage": "该作者的歌单将不再在社区中显示给您。之后可在“已屏蔽用户”中解除。",
+    "blockConfirm": "屏蔽",
+    "blockDone": "已屏蔽 {name}。",
+    "blockFailed": "屏蔽失败 — 请检查连接/登录",
+    "blockedUsers": "已屏蔽用户",
+    "blockedEmpty": "您没有屏蔽任何人。",
+    "blockedLoadError": "无法加载。请重试。",
+    "blockedNoName": "未命名作者",
+    "unblock": "取消屏蔽",
+    "close": "关闭",
+    "loginToModerate": "举报或屏蔽需要登录。",
+    "trackCount": "{count} 首",
+    "byAuthor": "作者 {author}",
+    "empty": "还没有公开歌单。",
+    "loadError": "无法加载社区。",
+    "retry": "重试",
+    "loading": "加载中…",
+    "saveCopy": "保存副本",
+    "copySaved": "副本已保存到我的歌单",
+    "copyFailed": "无法保存副本。",
+    "ranking": "查看排行",
+    "pagination": "社区分页",
+    "searchPlaceholder": "搜索歌单或作者...",
+    "clearSearch": "清除搜索",
+    "noResults": "该搜索没有结果。"
+  },
+  "ranking": {
+    "title": "排行",
+    "subtitle": "社区贡献者",
+    "week": "每周",
+    "all": "全部",
+    "myPosition": "您的位置：#{position}",
+    "points": "{points} 分",
+    "notRankedYet": "您在此期间还没有得分。",
+    "empty": "还没有人得分。发布一个歌单吧！",
+    "loadError": "保存副本失败。",
+    "weeklyTasks": "本周任务",
+    "loginToSeePosition": "登录后查看您在排行中的位置。",
+    "report": "举报",
+    "reportPrompt": "请描述举报原因（至少 3 个字符）：",
+    "reportTooShort": "原因过短（至少 {min} 个字符）。"
+  },
+  "notifications": {
+    "title": "通知",
+    "markRead": "全部标为已读",
+    "empty": "暂无通知。"
+  }
+}

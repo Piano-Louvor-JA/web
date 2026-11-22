@@ -1,0 +1,56 @@
+// JA locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "コミュニティ",
+    "subtitle": "PIANO ネットワークの公開コレクション",
+    "back": "戻る",
+    "blockAuthor": "作者をブロック",
+    "blockConfirmTitle": "{name} をブロックしますか？",
+    "blockConfirmMessage": "この作者のコレクションはコミュニティに表示されなくなります。「ブロックしたユーザー」から後で解除できます。",
+    "blockConfirm": "ブロック",
+    "blockDone": "{name} をブロックしました。",
+    "blockFailed": "ブロック失敗 — 接続/ログインを確認",
+    "blockedUsers": "ブロックしたユーザー",
+    "blockedEmpty": "誰もブロックしていません。",
+    "blockedLoadError": "読み込めませんでした。再試行してください。",
+    "blockedNoName": "名前のない作者",
+    "unblock": "ブロック解除",
+    "close": "閉じる",
+    "loginToModerate": "通報やブロックにはログインしてください。",
+    "trackCount": "{count} 曲",
+    "byAuthor": "作者 {author}",
+    "empty": "公開コレクションはまだありません。",
+    "loadError": "コミュニティを読み込めませんでした。",
+    "retry": "もう一度試す",
+    "loading": "読み込み中…",
+    "saveCopy": "コピーを保存",
+    "copySaved": "コピーをマイコレクションに保存しました",
+    "copyFailed": "コピーを保存できませんでした。",
+    "ranking": "ランキングを見る",
+    "pagination": "コミュニティのページング",
+    "searchPlaceholder": "コレクションや作者を検索...",
+    "clearSearch": "検索をクリア",
+    "noResults": "この検索では何も見つかりませんでした。"
+  },
+  "ranking": {
+    "title": "ランキング",
+    "subtitle": "コミュニティの貢献者",
+    "week": "週間",
+    "all": "全期間",
+    "myPosition": "あなたの順位：#{position}",
+    "points": "{points} ポイント",
+    "notRankedYet": "この期間ではまだポイントがありません。",
+    "empty": "まだ誰もポイントを獲得していません。コレクションを公開しましょう！",
+    "loadError": "コピーの保存に失敗しました。",
+    "weeklyTasks": "今週のタスク",
+    "loginToSeePosition": "ランキングの順位を見るにはログインしてください。",
+    "report": "通報",
+    "reportPrompt": "通報の理由を記入してください（3 文字以上）：",
+    "reportTooShort": "理由が短すぎます（{min} 文字以上）。"
+  },
+  "notifications": {
+    "title": "通知",
+    "markRead": "すべて既読にする",
+    "empty": "通知はありません。"
+  }
+}

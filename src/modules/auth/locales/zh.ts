@@ -1,0 +1,36 @@
+// ZH locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "LouvorJA 账户",
+    "email": "电子邮箱",
+    "password": "密码",
+    "displayName": "您的姓名",
+    "newPassword": "新密码",
+    "resetToken": "重置令牌",
+    "emailRequired": "必须填写电子邮箱",
+    "emailInvalid": "电子邮箱无效",
+    "passwordRequired": "必须填写密码",
+    "passwordMin": "密码至少需要 6 个字符",
+    "newPasswordMin": "新密码至少需要 8 个字符",
+    "nameMin": "姓名至少需要 2 个字符",
+    "tokenMin": "令牌至少需要 16 个字符",
+    "login": "登录",
+    "register": "创建账户",
+    "logout": "退出登录",
+    "createAccount": "创建账户",
+    "alreadyHaveAccount": "我已有账户",
+    "forgotPassword": "忘记密码",
+    "back": "返回",
+    "sendResetToken": "生成重置令牌",
+    "changePassword": "更改密码",
+    "forgotHint": "请输入您的电子邮箱。没有自动邮件：生产环境中的重置令牌由项目支持团队提供。",
+    "resetHint": "粘贴重置令牌并设置新密码（至少 8 个字符）。",
+    "deleteAccount": "删除账户",
+    "deleteTitle": "删除您的账户",
+    "deleteWarning": "这将删除您的账户、私有歌单、积分和通知。公开歌单将保留在社区中，但不显示您的姓名。无法撤销。",
+    "deletePasswordHint": "输入您的密码以确认。",
+    "deleteGoogleHint": "您将通过 Google 账户确认。",
+    "deleteConfirm": "永久删除",
+    "cancel": "取消"
+  }
+}

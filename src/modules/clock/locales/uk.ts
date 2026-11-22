@@ -1,0 +1,46 @@
+// UK locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "Утиліти",
+    "subtitle": "Інструменти проєкції для богослужіння",
+    "temporizador": "Таймер",
+    "temporizadorDescription": "Годинник, секундомір і зворотний відлік",
+    "temporizadorSubtitle": "Засоби відліку часу для проєкції",
+    "backToUtilities": "Назад до утиліт",
+    "clock": "Годинник",
+    "clockDescription": "Показувати час на екрані проєкції",
+    "random": "Жеребкування",
+    "randomDescription": "Анімований розіграш імен і номерів",
+    "draw": "Малювання",
+    "drawDescription": "Анотуйте та виділяйте поверх проєкції",
+    "timer": "Секундомір",
+    "timerDescription": "Проеційований прямий відлік",
+    "countdown": "Таймер",
+    "countdownDescription": "Проеційований зворотний відлік"
+  },
+  "clock": {
+    "title": "Годинник",
+    "config": "Налаштувати",
+    "configTitle": "Налаштування проєкції",
+    "configSubtitle": "Налаштуйте вигляд Годинника на екрані",
+    "style": "Стиль відображення",
+    "digital": "Цифровий",
+    "analog": "Аналоговий",
+    "options": "Параметри формату",
+    "optionsHint": "Налаштування відображення часу",
+    "showSeconds": "Показувати секунди",
+    "format24h": "24-годинний формат",
+    "bgColor": "Колір фону",
+    "bgColorHint": "Базовий колір фону екрана відображення",
+    "textColor": "Колір тексту / стрілок",
+    "textColorHint": "Колір шрифту або стрілок Годинника",
+    "customColor": "Власний колір",
+    "reset": "Відновити типово",
+    "apply": "Застосувати",
+    "close": "Закрити",
+    "project": "Проеціювати",
+    "clearProjection": "Прибрати з проєкції",
+    "projecting": "У проєкції",
+    "backToUtilities": "Назад до Таймера"
+  }
+}

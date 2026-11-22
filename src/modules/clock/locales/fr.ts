@@ -1,0 +1,46 @@
+// FR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "Utilitaires",
+    "subtitle": "Outils de projection pour le culte",
+    "temporizador": "Minuteur",
+    "temporizadorDescription": "Horloge, chronomètre et compte à rebours",
+    "temporizadorSubtitle": "Outils temporels pour la projection",
+    "backToUtilities": "Retour aux utilitaires",
+    "clock": "Horloge",
+    "clockDescription": "Afficher l'heure sur l'écran de projection",
+    "random": "Tirage au sort",
+    "randomDescription": "Tirage au sort animé de noms et de numéros",
+    "draw": "Dessin",
+    "drawDescription": "Annoter et mettre en évidence sur la projection",
+    "timer": "Chronomètre",
+    "timerDescription": "Comptage progressif projeté",
+    "countdown": "Minuteur",
+    "countdownDescription": "Compte à rebours projeté"
+  },
+  "clock": {
+    "title": "Horloge",
+    "config": "Personnaliser",
+    "configTitle": "Personnalisation de la projection",
+    "configSubtitle": "Ajustez l'apparence de l'Horloge à l'écran",
+    "style": "Style d'affichage",
+    "digital": "Numérique",
+    "analog": "Analogique",
+    "options": "Options de format",
+    "optionsHint": "Paramètres d'affichage de l'heure",
+    "showSeconds": "Afficher les secondes",
+    "format24h": "Format 24 h",
+    "bgColor": "Couleur de fond",
+    "bgColorHint": "Couleur de base du fond de l'écran d'affichage",
+    "textColor": "Couleur du texte / des aiguilles",
+    "textColorHint": "Couleur de la police ou des aiguilles de l'Horloge",
+    "customColor": "Couleur personnalisée",
+    "reset": "Restaurer les valeurs par défaut",
+    "apply": "Appliquer",
+    "close": "Fermer",
+    "project": "Projeter",
+    "clearProjection": "Retirer de la projection",
+    "projecting": "En projection",
+    "backToUtilities": "Retour au Minuteur"
+  }
+}

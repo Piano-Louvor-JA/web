@@ -1,0 +1,56 @@
+// KO locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "공동체",
+    "subtitle": "PIANO 네트워크의 공개 컬렉션",
+    "back": "뒤로",
+    "blockAuthor": "작성자 차단",
+    "blockConfirmTitle": "{name}을(를) 차단할까요?",
+    "blockConfirmMessage": "이 작성자의 컬렉션이 커뮤니티에 더 이상 표시되지 않습니다. \"차단한 사용자\"에서 나중에 해제할 수 있습니다.",
+    "blockConfirm": "차단",
+    "blockDone": "{name}이(가) 차단되었습니다.",
+    "blockFailed": "차단 실패 — 연결/로그인을 확인하세요",
+    "blockedUsers": "차단한 사용자",
+    "blockedEmpty": "차단한 사람이 없습니다.",
+    "blockedLoadError": "불러올 수 없습니다. 다시 시도하세요.",
+    "blockedNoName": "이름 없는 작성자",
+    "unblock": "차단 해제",
+    "close": "닫기",
+    "loginToModerate": "신고나 차단은 로그인이 필요합니다.",
+    "trackCount": "{count}곡",
+    "byAuthor": "작성자 {author}",
+    "empty": "아직 공개 컬렉션이 없습니다.",
+    "loadError": "커뮤니티를 불러올 수 없습니다.",
+    "retry": "다시 시도",
+    "loading": "불러오는 중…",
+    "saveCopy": "사본 저장",
+    "copySaved": "사본이 내 컬렉션에 저장되었습니다",
+    "copyFailed": "사본을 저장할 수 없습니다.",
+    "ranking": "순위 보기",
+    "pagination": "커뮤니티 페이지 매김",
+    "searchPlaceholder": "컬렉션 또는 작성자 검색...",
+    "clearSearch": "검색 지우기",
+    "noResults": "이 검색에는 결과가 없습니다."
+  },
+  "ranking": {
+    "title": "랭킹",
+    "subtitle": "커뮤니티 기여자",
+    "week": "주간",
+    "all": "전체",
+    "myPosition": "내 순위: #{position}",
+    "points": "{points}점",
+    "notRankedYet": "이 기간에는 아직 포인트가 없습니다.",
+    "empty": "아직 아무도 포인트를 얻지 않았습니다. 컬렉션을 게시해 보세요!",
+    "loadError": "사본 저장에 실패했습니다.",
+    "weeklyTasks": "이번 주 과제",
+    "loginToSeePosition": "순위의 내 위치를 보려면 로그인하세요.",
+    "report": "신고",
+    "reportPrompt": "신고 사유를 적어주세요(최소 3자):",
+    "reportTooShort": "사유가 너무 짧습니다(최소 {min}자)."
+  },
+  "notifications": {
+    "title": "알림",
+    "markRead": "모두 읽음으로 표시",
+    "empty": "알림이 없습니다."
+  }
+}

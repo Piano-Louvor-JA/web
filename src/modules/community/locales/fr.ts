@@ -1,0 +1,56 @@
+// FR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "Communauté",
+    "subtitle": "Collections publiques du réseau PIANO",
+    "back": "Retour",
+    "blockAuthor": "Bloquer l'auteur",
+    "blockConfirmTitle": "Bloquer {name} ?",
+    "blockConfirmMessage": "Les collections de cet auteur cesseront d'apparaître pour vous dans la Communauté. Vous pourrez le débloquer plus tard dans « Utilisateurs bloqués ».",
+    "blockConfirm": "Bloquer",
+    "blockDone": "{name} bloqué.",
+    "blockFailed": "Échec du blocage — vérifiez la connexion/la session",
+    "blockedUsers": "Utilisateurs bloqués",
+    "blockedEmpty": "Vous n'avez bloqué personne.",
+    "blockedLoadError": "Impossible de charger. Réessayez.",
+    "blockedNoName": "Auteur sans nom",
+    "unblock": "Débloquer",
+    "close": "Fermer",
+    "loginToModerate": "Connectez-vous pour signaler ou bloquer.",
+    "trackCount": "{count} piste(s)",
+    "byAuthor": "par {author}",
+    "empty": "Aucune collection publique trouvée pour le moment.",
+    "loadError": "Impossible de charger la Communauté.",
+    "retry": "Réessayer",
+    "loading": "Chargement…",
+    "saveCopy": "Enregistrer une copie",
+    "copySaved": "Copie enregistrée dans Mes collections",
+    "copyFailed": "Impossible d'enregistrer la copie.",
+    "ranking": "Voir le classement",
+    "pagination": "Pagination de la Communauté",
+    "searchPlaceholder": "Rechercher une collection ou un auteur...",
+    "clearSearch": "Effacer la recherche",
+    "noResults": "Rien trouvé pour cette recherche."
+  },
+  "ranking": {
+    "title": "Classement",
+    "subtitle": "Contributeurs de la Communauté",
+    "week": "Semaine",
+    "all": "Général",
+    "myPosition": "Votre position : #{position}",
+    "points": "{points} pts",
+    "notRankedYet": "Vous n'avez pas encore marqué de points dans cette fenêtre.",
+    "empty": "Personne n'a encore marqué de points. Publiez une collection !",
+    "loadError": "Échec de l'enregistrement de la copie.",
+    "weeklyTasks": "Tâches de la semaine",
+    "loginToSeePosition": "Connectez-vous pour voir votre position dans le classement.",
+    "report": "Signaler",
+    "reportPrompt": "Décrivez le motif du signalement (min. 3 caractères) :",
+    "reportTooShort": "Motif trop court (min. {min} caractères)."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markRead": "Tout marquer comme lu",
+    "empty": "Aucune notification pour le moment."
+  }
+}
