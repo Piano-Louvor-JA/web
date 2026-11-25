@@ -1,0 +1,46 @@
+// AR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "الأدوات",
+    "subtitle": "أدوات العرض للعبادة",
+    "temporizador": "المؤقّت",
+    "temporizadorDescription": "الساعة ومؤقّت الوقت وعدّاد تنازلي",
+    "temporizadorSubtitle": "أدوات الوقت للعرض",
+    "backToUtilities": "العودة إلى الأدوات",
+    "clock": "الساعة",
+    "clockDescription": "عرض الوقت على شاشة العرض",
+    "random": "قرعة",
+    "randomDescription": "سحب متحرك للأسماء والأرقام",
+    "draw": "الرسم",
+    "drawDescription": "التدوين والتظليل فوق العرض",
+    "timer": "مؤقّت الوقت",
+    "timerDescription": "عدّ تصاعدي يُعرض على الشاشة",
+    "countdown": "العدّاد التنازلي",
+    "countdownDescription": "عدّ تنازلي يُعرض على الشاشة"
+  },
+  "clock": {
+    "title": "الساعة",
+    "config": "تخصيص",
+    "configTitle": "تخصيص العرض",
+    "configSubtitle": "اضبط مظهر الساعة على الشاشة",
+    "style": "نمط العرض",
+    "digital": "رقمي",
+    "analog": "عقارب",
+    "options": "خيارات التنسيق",
+    "optionsHint": "إعدادات عرض الوقت",
+    "showSeconds": "إظهار الثواني",
+    "format24h": "تنسيق 24 ساعة",
+    "bgColor": "لون الخلفية",
+    "bgColorHint": "اللون الأساسي لخلفية شاشة العرض",
+    "textColor": "لون النص / العقارب",
+    "textColorHint": "لون خط الساعة أو عقاربها",
+    "customColor": "لون مخصص",
+    "reset": "استعادة الافتراضي",
+    "apply": "تطبيق",
+    "close": "إغلاق",
+    "project": "عرض",
+    "clearProjection": "إخراج من العرض",
+    "projecting": "قيد العرض",
+    "backToUtilities": "العودة إلى المؤقّت"
+  }
+}

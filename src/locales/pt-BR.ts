@@ -8,6 +8,8 @@ export default {
     comingSoon: 'Em breve',
     cancel: 'Cancelar',
     apply: 'Aplicar',
+    on: 'Ligado',
+    off: 'Desligado',
   },
   community: {
     edits: {

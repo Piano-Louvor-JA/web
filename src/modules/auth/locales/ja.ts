@@ -1,0 +1,36 @@
+// JA locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "LouvorJA アカウント",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "displayName": "お名前",
+    "newPassword": "新しいパスワード",
+    "resetToken": "リセットトークン",
+    "emailRequired": "メールアドレスは必須です",
+    "emailInvalid": "メールアドレスが無効です",
+    "passwordRequired": "パスワードは必須です",
+    "passwordMin": "パスワードは 6 文字以上にしてください",
+    "newPasswordMin": "新しいパスワードは 8 文字以上にしてください",
+    "nameMin": "名前は 2 文字以上にしてください",
+    "tokenMin": "トークンは 16 文字以上にしてください",
+    "login": "サインイン",
+    "register": "アカウント作成",
+    "logout": "ログアウト",
+    "createAccount": "アカウント作成",
+    "alreadyHaveAccount": "アカウントを持っています",
+    "forgotPassword": "パスワードをお忘れですか",
+    "back": "戻る",
+    "sendResetToken": "リセットトークンを生成",
+    "changePassword": "パスワードを変更",
+    "forgotHint": "メールアドレスを入力してください。自動送信はありません：本番環境ではリセットトークンはプロジェクトのサポートから提供されます。",
+    "resetHint": "リセットトークンを貼り付けて新しいパスワードを設定してください（8 文字以上）。",
+    "deleteAccount": "アカウント削除",
+    "deleteTitle": "アカウントを削除",
+    "deleteWarning": "アカウント・非公開コレクション・ポイント・通知が削除されます。公開コレクションはお名前なしでコミュニティに残ります。取り消せません。",
+    "deletePasswordHint": "確認のためパスワードを入力してください。",
+    "deleteGoogleHint": "Google アカウントで確認します。",
+    "deleteConfirm": "完全に削除",
+    "cancel": "キャンセル"
+  }
+}

@@ -1,0 +1,36 @@
+// RU locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "Аккаунт LouvorJA",
+    "email": "E-mail",
+    "password": "Пароль",
+    "displayName": "Ваше имя",
+    "newPassword": "Новый пароль",
+    "resetToken": "Токен сброса",
+    "emailRequired": "Требуется e-mail",
+    "emailInvalid": "Неверный e-mail",
+    "passwordRequired": "Требуется пароль",
+    "passwordMin": "Пароль должен содержать минимум 6 символов",
+    "newPasswordMin": "Новый пароль должен содержать минимум 8 символов",
+    "nameMin": "Имя должно содержать минимум 2 символа",
+    "tokenMin": "Токен должен содержать минимум 16 символов",
+    "login": "Войти",
+    "register": "Создать аккаунт",
+    "logout": "Выйти",
+    "createAccount": "Создать аккаунт",
+    "alreadyHaveAccount": "У меня уже есть аккаунт",
+    "forgotPassword": "Забыли пароль?",
+    "back": "Назад",
+    "sendResetToken": "Сгенерировать токен сброса",
+    "changePassword": "Сменить пароль",
+    "forgotHint": "Укажите ваш e-mail. Автоматической рассылки нет: в рабочей среде токен сброса предоставляется поддержкой проекта.",
+    "resetHint": "Вставьте токен сброса и задайте новый пароль (мин. 8 символов).",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteTitle": "Удалить ваш аккаунт",
+    "deleteWarning": "Это удалит ваш аккаунт, личные подборки, очки и уведомления. Публичные подборки останутся в Сообществе, но без вашего имени. Действие необратимо.",
+    "deletePasswordHint": "Введите пароль для подтверждения.",
+    "deleteGoogleHint": "Вы подтвердите через свой аккаунт Google.",
+    "deleteConfirm": "Удалить навсегда",
+    "cancel": "Отмена"
+  }
+}

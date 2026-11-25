@@ -1,0 +1,36 @@
+// FR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "Compte LouvorJA",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "displayName": "Votre nom",
+    "newPassword": "Nouveau mot de passe",
+    "resetToken": "Jeton de réinitialisation",
+    "emailRequired": "L'e-mail est obligatoire",
+    "emailInvalid": "E-mail invalide",
+    "passwordRequired": "Le mot de passe est obligatoire",
+    "passwordMin": "Le mot de passe doit contenir au moins 6 caractères",
+    "newPasswordMin": "Le nouveau mot de passe doit contenir au moins 8 caractères",
+    "nameMin": "Le nom doit contenir au moins 2 caractères",
+    "tokenMin": "Le jeton doit contenir au moins 16 caractères",
+    "login": "Connexion",
+    "register": "Créer un compte",
+    "logout": "Déconnexion",
+    "createAccount": "Créer un compte",
+    "alreadyHaveAccount": "J'ai déjà un compte",
+    "forgotPassword": "Mot de passe oublié",
+    "back": "Retour",
+    "sendResetToken": "Générer un jeton de réinitialisation",
+    "changePassword": "Changer le mot de passe",
+    "forgotHint": "Indiquez votre e-mail. Sans e-mail automatique : en production, le jeton de réinitialisation est fourni par le support du projet.",
+    "resetHint": "Collez le jeton de réinitialisation et définissez le nouveau mot de passe (min. 8 caractères).",
+    "deleteAccount": "Supprimer le compte",
+    "deleteTitle": "Supprimer votre compte",
+    "deleteWarning": "Cela supprime votre compte, vos collections privées, vos points et vos notifications. Les collections publiques restent dans la Communauté, sans votre nom. Action irréversible.",
+    "deletePasswordHint": "Saisissez votre mot de passe pour confirmer.",
+    "deleteGoogleHint": "Vous allez confirmer avec votre compte Google.",
+    "deleteConfirm": "Supprimer définitivement",
+    "cancel": "Annuler"
+  }
+}

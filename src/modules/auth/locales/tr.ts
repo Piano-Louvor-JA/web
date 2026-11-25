@@ -1,0 +1,36 @@
+// TR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "LouvorJA Hesabı",
+    "email": "E-posta",
+    "password": "Parola",
+    "displayName": "Adınız",
+    "newPassword": "Yeni şifre",
+    "resetToken": "Sıfırlama anahtarı",
+    "emailRequired": "E-posta zorunludur",
+    "emailInvalid": "Geçersiz e-posta",
+    "passwordRequired": "Şifre zorunludur",
+    "passwordMin": "Şifre en az 6 karakter olmalı",
+    "newPasswordMin": "Yeni şifre en az 8 karakter olmalı",
+    "nameMin": "Ad en az 2 karakter olmalı",
+    "tokenMin": "Anahtar en az 16 karakter olmalı",
+    "login": "Giriş yap",
+    "register": "Hesap oluştur",
+    "logout": "Çıkış yap",
+    "createAccount": "Hesap oluştur",
+    "alreadyHaveAccount": "Hesabım var",
+    "forgotPassword": "Şifremi unuttum",
+    "back": "Geri",
+    "sendResetToken": "Sıfırlama anahtarı oluştur",
+    "changePassword": "Şifreyi değiştir",
+    "forgotHint": "E-postanızı girin. Otomatik e-posta yoktur: üretimde sıfırlama anahtarı proje desteği tarafından sağlanır.",
+    "resetHint": "Sıfırlama anahtarını yapıştırın ve yeni şifreyi belirleyin (en az 8 karakter).",
+    "deleteAccount": "Hesabı sil",
+    "deleteTitle": "Hesabınızı silin",
+    "deleteWarning": "Hesabınız, özel derlemeleriniz, puanlarınız ve bildirimleriniz silinir. Herkese açık derlemeler adınız olmadan Topluluk'ta kalır. Geri alınamaz.",
+    "deletePasswordHint": "Onaylamak için şifrenizi girin.",
+    "deleteGoogleHint": "Google hesabınızla onaylayacaksınız.",
+    "deleteConfirm": "Kalıcı olarak sil",
+    "cancel": "İptal"
+  }
+}

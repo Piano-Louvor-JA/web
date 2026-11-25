@@ -1,0 +1,46 @@
+// KO locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "유틸리티",
+    "subtitle": "예배 투영 도구",
+    "temporizador": "타이머",
+    "temporizadorDescription": "시계, 스톱워치, 카운트다운",
+    "temporizadorSubtitle": "투영용 시간 도구",
+    "backToUtilities": "유틸리티로 돌아가기",
+    "clock": "시계",
+    "clockDescription": "투영 화면에 시간 표시",
+    "random": "추첨",
+    "randomDescription": "이름과 숫자의 애니메이션 추첨",
+    "draw": "그리기",
+    "drawDescription": "투영 위에 주석과 강조",
+    "timer": "스톱워치",
+    "timerDescription": "투영되는 카운트업",
+    "countdown": "타이머",
+    "countdownDescription": "투영되는 카운트다운"
+  },
+  "clock": {
+    "title": "시계",
+    "config": "사용자 지정",
+    "configTitle": "투영 사용자 지정",
+    "configSubtitle": "화면에서 시계 모양을 조정",
+    "style": "표시 스타일",
+    "digital": "디지털",
+    "analog": "아날로그",
+    "options": "형식 옵션",
+    "optionsHint": "시간 표시 설정",
+    "showSeconds": "초 표시",
+    "format24h": "24시간 형식",
+    "bgColor": "배경색",
+    "bgColorHint": "표시 화면의 기본 배경색",
+    "textColor": "텍스트 / 바늘 색",
+    "textColorHint": "시계의 글꼴 또는 바늘 색",
+    "customColor": "사용자 지정 색",
+    "reset": "기본값 복원",
+    "apply": "적용",
+    "close": "닫기",
+    "project": "투영",
+    "clearProjection": "투영에서 제거",
+    "projecting": "투영 중",
+    "backToUtilities": "타이머로 돌아가기"
+  }
+}

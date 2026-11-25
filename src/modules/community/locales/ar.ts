@@ -1,0 +1,56 @@
+// AR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "المجتمع",
+    "subtitle": "مجموعات عامة من شبكة PIANO",
+    "back": "رجوع",
+    "blockAuthor": "حظر المؤلف",
+    "blockConfirmTitle": "حظر {name}؟",
+    "blockConfirmMessage": "لن تظهر مجموعات هذا المؤلف لك في المجتمع. يمكنك رفع الحظر لاحقًا في «المستخدمون المحظورون».",
+    "blockConfirm": "حظر",
+    "blockDone": "حُظر {name}.",
+    "blockFailed": "فشل الحظر — تحقق من الاتصال/تسجيل الدخول",
+    "blockedUsers": "المستخدمون المحظورون",
+    "blockedEmpty": "لم تحظر أحدًا.",
+    "blockedLoadError": "تعذّر التحميل. حاول مجددًا.",
+    "blockedNoName": "مؤلف بلا اسم",
+    "unblock": "رفع الحظر",
+    "close": "إغلاق",
+    "loginToModerate": "ادخل إلى حسابك للإبلاغ أو الحظر.",
+    "trackCount": "{count} مقطعًا",
+    "byAuthor": "بقلم {author}",
+    "empty": "لا توجد مجموعة عامة بعد.",
+    "loadError": "تعذّر تحميل المجتمع.",
+    "retry": "حاول مجدداً",
+    "loading": "جارٍ التحميل…",
+    "saveCopy": "حفظ نسخة",
+    "copySaved": "حُفظت النسخة في مجموعاتي",
+    "copyFailed": "تعذّر حفظ النسخة.",
+    "ranking": "عرض الترتيب",
+    "pagination": "ترقيم صفحات المجتمع",
+    "searchPlaceholder": "ابحث عن مجموعة أو مؤلف...",
+    "clearSearch": "مسح البحث",
+    "noResults": "لا شيء لهذا البحث."
+  },
+  "ranking": {
+    "title": "التصنيف",
+    "subtitle": "مشاركو المجتمع",
+    "week": "أسبوعي",
+    "all": "كل الوقت",
+    "myPosition": "مركزك: #{position}",
+    "points": "{points} نقطة",
+    "notRankedYet": "لم تجمع نقاطًا في هذه الفترة بعد.",
+    "empty": "لم يجمع أحد نقاطًا بعد. انشر مجموعة!",
+    "loadError": "فشل حفظ النسخة.",
+    "weeklyTasks": "مهام الأسبوع",
+    "loginToSeePosition": "ادخل بحسابك لرؤية مركزك في الترتيب.",
+    "report": "إبلاغ",
+    "reportPrompt": "صف سبب الإبلاغ (3 أحرف على الأقل):",
+    "reportTooShort": "السبب قصير جدًا ({min} أحرف على الأقل)."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "markRead": "وضع علامة مقروء على الكل",
+    "empty": "لا إشعارات هنا."
+  }
+}
