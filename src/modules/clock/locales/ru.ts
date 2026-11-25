@@ -1,0 +1,46 @@
+// RU locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "Утилиты",
+    "subtitle": "Инструменты проекции для богослужения",
+    "temporizador": "Таймер",
+    "temporizadorDescription": "Часы, секундомер и обратный отсчёт",
+    "temporizadorSubtitle": "Средства отсчёта времени для проекции",
+    "backToUtilities": "Назад к утилитам",
+    "clock": "Часы",
+    "clockDescription": "Показывать время на экране проекции",
+    "random": "Жеребьёвка",
+    "randomDescription": "Анимированный розыгрыш имён и номеров",
+    "draw": "Рисование",
+    "drawDescription": "Аннотировать и выделять поверх проекции",
+    "timer": "Секундомер",
+    "timerDescription": "Проецируемый прямой отсчёт",
+    "countdown": "Таймер",
+    "countdownDescription": "Проецируемый обратный отсчёт"
+  },
+  "clock": {
+    "title": "Часы",
+    "config": "Настроить",
+    "configTitle": "Настройка проекции",
+    "configSubtitle": "Настройте внешний вид Часов на экране",
+    "style": "Стиль отображения",
+    "digital": "Цифровой",
+    "analog": "Аналоговый",
+    "options": "Параметры формата",
+    "optionsHint": "Настройки отображения времени",
+    "showSeconds": "Показывать секунды",
+    "format24h": "24-часовой формат",
+    "bgColor": "Цвет фона",
+    "bgColorHint": "Базовый цвет фона экрана отображения",
+    "textColor": "Цвет текста / стрелок",
+    "textColorHint": "Цвет шрифта или стрелок Часов",
+    "customColor": "Свой цвет",
+    "reset": "Восстановить по умолчанию",
+    "apply": "Применить",
+    "close": "Закрыть",
+    "project": "Спроецировать",
+    "clearProjection": "Убрать с проекции",
+    "projecting": "В проекции",
+    "backToUtilities": "Назад к Таймеру"
+  }
+}

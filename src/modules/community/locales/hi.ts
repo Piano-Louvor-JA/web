@@ -1,0 +1,56 @@
+// HI locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "समुदाय",
+    "subtitle": "PIANO नेटवर्क के सार्वजनिक संग्रह",
+    "back": "वापस",
+    "blockAuthor": "लेखक को ब्लॉक करें",
+    "blockConfirmTitle": "{name} को ब्लॉक करें?",
+    "blockConfirmMessage": "इस लेखक के संग्रह समुदाय में आपको नहीं दिखेंगे। बाद में \"ब्लॉक किए गए उपयोगकर्ता\" में अनब्लॉक कर सकते हैं।",
+    "blockConfirm": "ब्लॉक करें",
+    "blockDone": "{name} ब्लॉक हुआ।",
+    "blockFailed": "ब्लॉक विफल — कनेक्शन/लॉगिन जाँचें",
+    "blockedUsers": "ब्लॉक किए गए उपयोगकर्ता",
+    "blockedEmpty": "आपने किसी को ब्लॉक नहीं किया।",
+    "blockedLoadError": "लोड करना संभव नहीं। फिर प्रयास करें।",
+    "blockedNoName": "बिना नाम का लेखक",
+    "unblock": "अनब्लॉक करें",
+    "close": "बंद करें",
+    "loginToModerate": "रिपोर्ट या ब्लॉक के लिए अपने खाते में लॉगिन करें।",
+    "trackCount": "{count} ट्रैक",
+    "byAuthor": "{author} द्वारा",
+    "empty": "अभी कोई सार्वजनिक संग्रह नहीं मिला।",
+    "loadError": "समुदाय लोड करना संभव नहीं।",
+    "retry": "पुनः प्रयास करें",
+    "loading": "लोड हो रहा है…",
+    "saveCopy": "प्रति सहेजें",
+    "copySaved": "प्रति मेरे संग्रह में सहेजी गई",
+    "copyFailed": "प्रति सहेजना संभव नहीं।",
+    "ranking": "रैंकिंग देखें",
+    "pagination": "समुदाय की पृष्ठ सूची",
+    "searchPlaceholder": "संग्रह या लेखक खोजें...",
+    "clearSearch": "खोज साफ़ करें",
+    "noResults": "इस खोज के लिए कुछ नहीं मिला।"
+  },
+  "ranking": {
+    "title": "रैंकिंग",
+    "subtitle": "समुदाय के योगदानकर्ता",
+    "week": "साप्ताहिक",
+    "all": "सभी समय",
+    "myPosition": "आपकी स्थिति: #{position}",
+    "points": "{points} अंक",
+    "notRankedYet": "आपने इस अवधि में अंक नहीं जमा किए।",
+    "empty": "अभी किसी ने अंक नहीं जमा किए। एक संग्रह प्रकाशित करें!",
+    "loadError": "प्रति सहेजना विफल।",
+    "weeklyTasks": "सप्ताह के कार्य",
+    "loginToSeePosition": "रैंकिंग में अपनी स्थिति देखने के लिए अपने खाते से लॉगिन करें।",
+    "report": "रिपोर्ट करें",
+    "reportPrompt": "रिपोर्ट का कारण बताएं (कम से कम 3 वर्ण):",
+    "reportTooShort": "कारण बहुत छोटा (कम से कम {min} वर्ण)।"
+  },
+  "notifications": {
+    "title": "सूचनाएँ",
+    "markRead": "सभी को पढ़ा हुआ चिह्नित करें",
+    "empty": "यहाँ कोई सूचना नहीं।"
+  }
+}

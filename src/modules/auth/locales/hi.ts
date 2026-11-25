@@ -1,0 +1,36 @@
+// HI locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "LouvorJA खाता",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "displayName": "आपका नाम",
+    "newPassword": "नया पासवर्ड",
+    "resetToken": "रीसेट टोकन",
+    "emailRequired": "ईमेल आवश्यक है",
+    "emailInvalid": "अवैध ईमेल",
+    "passwordRequired": "पासवर्ड आवश्यक है",
+    "passwordMin": "पासवर्ड कम से कम 6 वर्णों का होना चाहिए",
+    "newPasswordMin": "नया पासवर्ड कम से कम 8 वर्णों का होना चाहिए",
+    "nameMin": "नाम कम से कम 2 वर्णों का होना चाहिए",
+    "tokenMin": "टोकन कम से कम 16 वर्णों का होना चाहिए",
+    "login": "साइन इन",
+    "register": "खाता बनाएँ",
+    "logout": "लॉग आउट",
+    "createAccount": "खाता बनाएँ",
+    "alreadyHaveAccount": "मेरे पास खाता है",
+    "forgotPassword": "पासवर्ड भूल गए",
+    "back": "वापस",
+    "sendResetToken": "रीसेट टोकन बनाएँ",
+    "changePassword": "पासवर्ड बदलें",
+    "forgotHint": "अपना ईमेल दर्ज करें। स्वतः ईमेल नहीं: प्रोडक्शन में रीसेट टोकन प्रोजेक्ट सपोर्ट द्वारा दिया जाता है।",
+    "resetHint": "रीसेट टोकन पेस्ट करें और नया पासवर्ड सेट करें (कम से कम 8 वर्ण)।",
+    "deleteAccount": "खाता हटाएँ",
+    "deleteTitle": "अपना खाता हटाएँ",
+    "deleteWarning": "इससे आपका खाता, निजी संग्रह, अंक और सूचनाएँ मिट जाएँगी। सार्वजनिक संग्रह समुदाय में आपके नाम के बिना रहेंगे। वापस नहीं हो सकता।",
+    "deletePasswordHint": "पुष्टि के लिए अपना पासवर्ड लिखें।",
+    "deleteGoogleHint": "आप अपने Google खाते से पुष्टि करेंगे।",
+    "deleteConfirm": "स्थायी रूप से हटाएँ",
+    "cancel": "रद्द करें"
+  }
+}

@@ -1,13 +1,4 @@
 export default {
-  mobile: {
-    desktopOnly: {
-      title: 'Desktop only',
-      description: 'This feature is only available in the desktop version of the app.',
-      actionLabel: 'Back to home',
-      dismiss: 'Close',
-      hint: 'Some projection features require the desktop app.',
-    },
-  },
   app: {
     name: 'Louvor JA',
     nameLouvor: 'Louvor',
@@ -15,31 +6,10 @@ export default {
   },
   common: {
     comingSoon: 'Coming soon',
-    apply: 'Apply'
-  },
-  monitors: {
-    selectScreens: 'Select screens',
-    identify: 'Detect screens',
-    hint: 'Check the monitors where the resource should be projected.',
-    loading: 'Detecting monitors…',
-    empty: 'No extended monitors found.',
-    primary: 'Primary',
-    selectedCount: '{count} selected',
-    screenLabel: 'Screen {index}'
-  },
-  popupCount: {
-    label: 'Screens',
-    tooltip: 'Select projection screens'
-  },
-  popupControls: {
-    closeAll: 'Close all screens',
-    openScreens: 'Open projection screens',
-    clearScreen: 'Clear projection screen'
-  },
-  uiZoom: {
-    label: 'Page zoom',
-    zoomIn: 'Zoom in',
-    zoomOut: 'Zoom out'
+    cancel: 'Cancel',
+    apply: 'Apply',
+    on: 'On',
+    off: 'Off'
   },
   community: {
     edits: {
@@ -63,6 +33,21 @@ export default {
       utilities: 'Utilities',
       settings: 'Settings'
     },
+  popupCount: {
+    label: 'Screens',
+    tooltip: 'Select projection screens'
+  },
+  monitors: {
+    selectScreens: 'Select screens',
+    hint: 'Check the monitors where the resource should be projected.',
+    screenLabel: 'Screen {index}',
+    selectedCount: '{count} selected'
+  },
+  popupControls: {
+    closeAll: 'Close all screens',
+    openScreens: 'Open projection screens',
+    clearScreen: 'Clear projection screen'
+  },
   eula: {
     title: 'Software License Agreement',
     intro: 'Before continuing, please read and accept the software license terms.',
@@ -75,6 +60,29 @@ export default {
     confirmYes: 'Yes, decline',
     confirmNo: 'Back',
     exitMessage: 'You have not accepted the EULA terms. The application cannot continue.'
+  },
+  mobile: {
+    desktopOnly: {
+      title: 'Desktop only',
+      description: 'This feature is only available in the desktop version of the app.',
+      actionLabel: 'Back to home',
+      dismiss: 'Close',
+      hint: 'Some projection features require the desktop app.',
+    },
+    projection: {
+      desktopOnly: {
+        title: 'Desktop only',
+        description: 'Projection is only available in the desktop version of Louvor JA.',
+        actionLabel: 'Back to home',
+        dismiss: 'Dismiss',
+        hint: 'Use the desktop app to project.',
+      },
+    },
+  },
+  uiZoom: {
+    label: 'Page zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
   },
   countdown: {
     title: 'Countdown',

@@ -1,0 +1,46 @@
+// ZH locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "实用工具",
+    "subtitle": "崇拜投影工具",
+    "temporizador": "计时器",
+    "temporizadorDescription": "时钟、秒表和倒计时",
+    "temporizadorSubtitle": "投影用时间工具",
+    "backToUtilities": "返回实用工具",
+    "clock": "时钟",
+    "clockDescription": "在投影屏幕上显示时间",
+    "random": "抽奖",
+    "randomDescription": "姓名和数字的动画抽签",
+    "draw": "绘图",
+    "drawDescription": "在投影上标注和强调",
+    "timer": "秒表",
+    "timerDescription": "正计时投影",
+    "countdown": "计时器",
+    "countdownDescription": "倒计时投影"
+  },
+  "clock": {
+    "title": "时钟",
+    "config": "自定义",
+    "configTitle": "投影自定义",
+    "configSubtitle": "调整时钟在屏幕上的外观",
+    "style": "显示样式",
+    "digital": "数字",
+    "analog": "模拟",
+    "options": "格式选项",
+    "optionsHint": "时间显示设置",
+    "showSeconds": "显示秒数",
+    "format24h": "24 小时制",
+    "bgColor": "背景色",
+    "bgColorHint": "显示屏幕的背景基色",
+    "textColor": "文字 / 指针颜色",
+    "textColorHint": "时钟字体或指针的颜色",
+    "customColor": "自定义颜色",
+    "reset": "恢复默认",
+    "apply": "应用",
+    "close": "关闭",
+    "project": "投影",
+    "clearProjection": "从投影中移除",
+    "projecting": "投影中",
+    "backToUtilities": "返回计时器"
+  }
+}

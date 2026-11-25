@@ -15,15 +15,27 @@ export default {
       number: '#',
       title: 'Título / Colección',
       duration: 'Duración',
-      actions: 'Acciones'
+      actions: 'Acciones',
     },
     trackCount: '{count} pistas',
     loading: 'Cargando…',
     retry: 'Intentar de nuevo',
     dismiss: 'Descartar',
+    categories: {
+      hymnals: 'Himnarios Oficiales',
+      hymnalsSubtitle: 'Colecciones litúrgicas completas para uso sin conexión.',
+      youthAlbums: 'CDs Jóvenes & Colecciones',
+      albumsSubtitle: 'Álbumes anuales y producciones especiales.',
+      defaultSubtitle: 'Álbumes y producciones especiales.',
+    },
+    hymnal: {
+      edition1996Name: 'Himnario Adventista - Edición 1996',
+      officialSubtitle: '{count} himnos con partituras y letras',
+      edition1996Subtitle: 'Histórico - {count} himnos tradicionales',
+    },
     lyric: {
       title: 'Letra',
-      close: 'Cerrar letra'
+      close: 'Cerrar letra',
     },
     messages: {
       catalogEmpty: 'No se encontró ninguna colección en el catálogo local.',
@@ -34,19 +46,7 @@ export default {
       tracksFailed: 'No se pudieron cargar las pistas.',
       searchEmpty: 'No se encontró ninguna canción.',
       lyricMissing: 'Letra no disponible para esta pista.',
-      projectionFailed: 'No se pudo abrir la proyección en las pantallas configuradas.'
-    },
-    categories: {
-      hymnals: 'Himnarios Oficiales',
-      hymnalsSubtitle: 'Colecciones litúrgicas completas para uso sin conexión.',
-      youthAlbums: 'CDs Jóvenes & Colecciones',
-      albumsSubtitle: 'Álbumes anuales y producciones especiales.',
-      defaultSubtitle: 'Álbumes y producciones especiales.'
-    },
-    hymnal: {
-      edition1996Name: 'Himnario Adventista - Edición 1996',
-      officialSubtitle: '{count} himnos con partituras y letras',
-      edition1996Subtitle: 'Histórico - {count} himnos tradicionales'
+      projectionFailed: 'No se pudo abrir la proyección en las pantallas configuradas.',
     },
     playlists: {
       rename: 'Renombrar playlist {name}',
@@ -97,16 +97,16 @@ export default {
       emptyPlaylistFeedback: 'Playlist vacía — añade pistas antes de reproducir.',
     },
     custom: {
-          title: 'Mis Colecciones',
-          sectionSubtitle: 'Tus colecciones personalizadas — edita en el editor de letras',
-          changeCover: 'Cambiar portada de la colección',
-          removeCover: 'Quitar portada de la colección',
-          openEditor: 'Abrir editor',
-          open: 'Abrir colección {name}',
-          trackCount: '{count} pista(s)',
-          empty: 'Aún no hay colecciones. Importa un .slja en el editor.',
-          newPlaceholder: 'Nombre de la nueva colección...',
-          create: 'Crear',
-        },
-  }
+      title: 'Mis Colecciones',
+      sectionSubtitle: 'Tus colecciones — himnos agrupados por ti',
+      changeCover: 'Cambiar portada',
+      removeCover: 'Quitar portada',
+      openEditor: 'Abrir editor',
+      open: 'Abrir colección {name}',
+      trackCount: '{count} pista(s)',
+      empty: 'Aún no hay colecciones. Crea una para agrupar himnos a tu manera.',
+      newPlaceholder: 'Nombre de la colección',
+      create: 'Crear',
+    },
+  },
 }

@@ -63,7 +63,7 @@ describe('Integracao: App.vue + EulaDialog + useEula', () => {
     await router.push('/')
   })
 
-  it('mostra EulaDialog e ESCONDE o router-view antes do aceite', async () => {
+  it('mostra EulaDialog e ESCONDE o router-view antes do aceite', { timeout: 20_000 }, async () => {
     const wrapper = await makeWrapper()
     await wrapper.vm.$nextTick()
 

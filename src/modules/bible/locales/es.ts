@@ -11,6 +11,7 @@ export default {
     browseBooksAndChapters: 'Explorar Libros y Capítulos',
     books: 'Libros',
     chapters: 'Cap.',
+    chapter: 'Capítulo',
     testamentOld: 'AT',
     testamentNew: 'NT',
     searchBible: 'Buscar en la Biblia',
@@ -20,12 +21,14 @@ export default {
     copy: 'Copiar',
     share: 'Compartir',
     project: 'Proyectar',
-    previousVerse: 'Versículo anterior',
-    nextVerse: 'Siguiente versículo',
+    previousChapter: 'Versículo anterior',
+    nextChapter: 'Próximo versículo',
     clearSelection: 'Limpiar selección',
     clearProjection: 'Quitar de la proyección',
     emptyCatalog: 'No hay contenido bíblico disponible. Complete la inicialización de la app.',
     emptyChapter: 'No se encontraron versículos en este capítulo.',
+    selectBookAndChapter: 'Seleccione un libro y capítulo para comenzar',
+    selectChapterPrompt: 'Seleccione un capítulo',
     loading: 'Cargando Biblia...',
     noSelection: 'Seleccione un versículo para proyectar',
     copied: 'Texto copiado',
@@ -34,12 +37,7 @@ export default {
     dismiss: 'Descartar',
     errors: {
       loadCatalogFailed: 'No se pudieron cargar los libros y versiones de la Biblia.',
-      loadChapterFailed: 'No se pudo cargar el capítulo seleccionado.'
+      loadChapterFailed: 'No se pudo cargar el capítulo seleccionado.',
     },
-    chapter: 'Capítulo',
-    previousChapter: 'Versículo anterior',
-    nextChapter: 'Próximo versículo',
-    selectBookAndChapter: 'Seleccione un libro y capítulo para comenzar',
-    selectChapterPrompt: 'Seleccione un capítulo'
-  }
+  },
 }

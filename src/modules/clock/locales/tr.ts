@@ -1,0 +1,46 @@
+// TR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "Araçlar",
+    "subtitle": "İbadet için projeksiyon araçları",
+    "temporizador": "Zamanlayıcı",
+    "temporizadorDescription": "Saat, kronometre ve geri sayım",
+    "temporizadorSubtitle": "Projeksiyon için zaman araçları",
+    "backToUtilities": "Araçlara dön",
+    "clock": "Saat",
+    "clockDescription": "Saati projeksiyon ekranında göster",
+    "random": "Çekiliş",
+    "randomDescription": "İsim ve sayıların animasyonlu çekilişi",
+    "draw": "Çizim",
+    "drawDescription": "Projeksiyon üzerine not ve vurgu",
+    "timer": "Kronometre",
+    "timerDescription": "Yansıtılan ileri sayım",
+    "countdown": "Zamanlayıcı",
+    "countdownDescription": "Yansıtılan geri sayım"
+  },
+  "clock": {
+    "title": "Saat",
+    "config": "Özelleştir",
+    "configTitle": "Projeksiyon Özelleştirme",
+    "configSubtitle": "Saatin ekrandaki görünümünü ayarlayın",
+    "style": "Görünüm stili",
+    "digital": "Dijital",
+    "analog": "Analog",
+    "options": "Biçim seçenekleri",
+    "optionsHint": "Zaman görünümü ayarları",
+    "showSeconds": "Saniyeleri göster",
+    "format24h": "24 saat biçimi",
+    "bgColor": "Arka plan rengi",
+    "bgColorHint": "Görüntü ekranının temel arka plan rengi",
+    "textColor": "Metin / Akrep ibresi rengi",
+    "textColorHint": "Saatin yazı tipi veya ibre rengi",
+    "customColor": "Özel renk",
+    "reset": "Varsayılanı geri yükle",
+    "apply": "Uygula",
+    "close": "Kapat",
+    "project": "Yansıt",
+    "clearProjection": "Yansıtımdan çıkar",
+    "projecting": "Projeksiyonda",
+    "backToUtilities": "Zamanlayıcıya dön"
+  }
+}

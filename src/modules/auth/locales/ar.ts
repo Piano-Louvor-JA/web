@@ -1,0 +1,36 @@
+// AR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "auth": {
+    "title": "حساب LouvorJA",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "displayName": "اسمك",
+    "newPassword": "كلمة المرور الجديدة",
+    "resetToken": "رمز إعادة التعيين",
+    "emailRequired": "البريد الإلكتروني إلزامي",
+    "emailInvalid": "بريد إلكتروني غير صالح",
+    "passwordRequired": "كلمة المرور إلزامية",
+    "passwordMin": "يجب ألا تقل كلمة المرور عن 6 أحرف",
+    "newPasswordMin": "يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف",
+    "nameMin": "يجب ألا يقل الاسم عن حرفين",
+    "tokenMin": "يجب ألا يقل الرمز عن 16 حرفًا",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "logout": "تسجيل الخروج",
+    "createAccount": "إنشاء حساب",
+    "alreadyHaveAccount": "لديّ حساب بالفعل",
+    "forgotPassword": "نسيت كلمة المرور",
+    "back": "رجوع",
+    "sendResetToken": "توليد رمز إعادة التعيين",
+    "changePassword": "تغيير كلمة المرور",
+    "forgotHint": "أدخل بريدك الإلكتروني. بلا بريد تلقائي: في الإصدار الرسمي يوفّر الدعم رمز إعادة التعيين.",
+    "resetHint": "الصق رمز إعادة التعيين واضبط كلمة المرور الجديدة (8 أحرف على الأقل).",
+    "deleteAccount": "حذف الحساب",
+    "deleteTitle": "حذف حسابك",
+    "deleteWarning": "سيؤدي ذلك إلى حذف حسابك ومجموعاتك الخاصة ونقاطك وإشعاراتك. تبقى المجموعات العامة في المجتمع بدون اسمك. لا يمكن التراجع.",
+    "deletePasswordHint": "اكتب كلمة مرورك للتأكيد.",
+    "deleteGoogleHint": "ستؤكد عبر حسابك في Google.",
+    "deleteConfirm": "حذف نهائي",
+    "cancel": "إلغاء"
+  }
+}
