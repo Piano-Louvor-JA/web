@@ -1,6 +1,6 @@
 {
-  "version": "1.26.0",
-  "changelog": "## Novidades da versão 1.26.0\n\n### Playlists\n- Busque e adicione músicas, reordene por arraste e reproduza em sequência ou de forma aleatória.\n- Renomeie suas playlists e confirme a exclusão antes de removê-las.\n- Compartilhamento de playlists mais confiável.\n\n### Comunidade\n- Sugira correções de letras e marcações, salve rascunhos e publique para avaliação.\n- Suas correções locais e as edições aprovadas são aplicadas durante a reprodução.\n\n### Bíblia e projeção\n- Encontre passagens por referência e filtre listas ou intervalos de versículos.\n- Mais consistência na aparência das referências bíblicas entre dispositivos.\n- Vídeos na projeção com menos distrações durante o carregamento e ao terminar.\n\n### Áudio e uso offline\n- Mais formatos de áudio local reconhecidos corretamente.\n- Pausar a prévia não altera as marcações; use Marcar para sincronizar as estrofes.\n- Melhorias no armazenamento offline do catálogo e da Bíblia, inclusive para conteúdos maiores.\n\nAtualizações internas para mais estabilidade e segurança.\n",
-  "date": "2026-11-15",
+  "version": "1.28.0",
+  "changelog": "## Novidades da versão 1.28.0\n\n### Central de Mídia\n- A seção Minhas Coletâneas fica oculta enquanto o recurso é preparado para a Comunidade.\n\nAtualizações internas para mais estabilidade e segurança.\n",
+  "date": "2026-11-20",
   "platform": "web"
 }

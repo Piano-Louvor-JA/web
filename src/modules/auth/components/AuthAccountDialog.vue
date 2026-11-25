@@ -23,7 +23,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-const { session, isLoggedIn, userName, userEmail, login, register, loginGoogle, logout, forgotPassword, resetPassword } = useAuth()
+const { session, isLoggedIn, userName, userEmail, login, register, loginGoogle, logout, forgotPassword, resetPassword, accountProvider, deleteAccount } = useAuth()
 
 // Abertura controlada pelo pai (AppShell) via v-model — sem estado interno
 // para evitar divergência (bug 24/09: dialog nascia aberto/ignorava o pai).
@@ -37,6 +37,9 @@ const password = ref('')
 const displayName = ref('')
 const resetToken = ref('')
 const busy = ref(false)
+const deleting = ref(false)
+const deletePassword = ref('')
+const deleteNeedsPassword = ref(true)
 
 const isValid = computed(() => {
   if (mode.value === 'forgot') return email.value.includes('@')
@@ -114,7 +117,35 @@ function toggleForm(): void {
   }
 }
 
+function startDelete(): void {
+  deleteNeedsPassword.value = accountProvider() !== 'google'
+  deletePassword.value = ''
+  deleting.value = true
+}
+
+function cancelDelete(): void {
+  deleting.value = false
+  deletePassword.value = ''
+}
+
+async function confirmDelete(): Promise<void> {
+  if (busy.value || (deleteNeedsPassword.value && !deletePassword.value)) return
+  busy.value = true
+  try {
+    if (await deleteAccount(deleteNeedsPassword.value ? deletePassword.value : '')) {
+      deleting.value = false
+      deletePassword.value = ''
+      formOpen.value = false
+      emit('update:modelValue', false)
+    }
+  } finally {
+    busy.value = false
+  }
+}
+
 function close(): void {
+  deleting.value = false
+  deletePassword.value = ''
   formOpen.value = false
   emit('update:modelValue', false)
 }
@@ -131,7 +162,30 @@ function close(): void {
         <div style="width: 32px" />
       </div>
 
-      <template v-if="session">
+      <form v-if="session && deleting" class="d-flex flex-column ga-3" data-test="auth-delete" @submit.prevent="confirmDelete">
+        <div class="text-subtitle-1 font-weight-medium text-error">{{ t('auth.deleteTitle') }}</div>
+        <p class="text-body-2">{{ t('auth.deleteWarning') }}</p>
+        <v-text-field
+          v-if="deleteNeedsPassword"
+          v-model="deletePassword"
+          :label="t('auth.deletePasswordHint')"
+          type="password"
+          autocomplete="current-password"
+          density="comfortable"
+          variant="outlined"
+          hide-details
+          :disabled="busy"
+        />
+        <p v-else class="text-body-2">{{ t('auth.deleteGoogleHint') }}</p>
+        <v-btn type="submit" color="error" data-test="auth-delete-confirm" :loading="busy" :disabled="busy || (deleteNeedsPassword && !deletePassword)">
+          {{ t('auth.deleteConfirm') }}
+        </v-btn>
+        <v-btn variant="text" data-test="auth-delete-cancel" :disabled="busy" @click="cancelDelete">
+          {{ t('auth.cancel') }}
+        </v-btn>
+      </form>
+
+      <template v-else-if="session">
         <!-- Logado: nome + sair -->
         <div class="d-flex align-center justify-space-between">
           <span class="text-body-1 font-weight-medium" :title="userEmail">
@@ -139,6 +193,11 @@ function close(): void {
           </span>
           <v-btn variant="outlined" size="small" @click="onLogout">
             {{ t('auth.logout') }}
+          </v-btn>
+        </div>
+        <div class="d-flex justify-center mt-4">
+          <v-btn variant="text" color="error" size="small" data-test="auth-delete-start" @click="startDelete">
+            {{ t('auth.deleteAccount') }}
           </v-btn>
         </div>
       </template>
