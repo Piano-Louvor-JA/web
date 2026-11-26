@@ -1,6 +1,6 @@
 {
-  "version": "1.28.0",
-  "changelog": "## Novidades da versão 1.28.0\n\n### Central de Mídia\n- A seção Minhas Coletâneas fica oculta enquanto o recurso é preparado para a Comunidade.\n\nAtualizações internas para mais estabilidade e segurança.\n",
-  "date": "2026-11-20",
+  "version": "1.29.0",
+  "changelog": "## Novidades da versão 1.29.0\n\n### Novidades\n- Interface completa nos 12 idiomas do produto, com a mesma estrutura em todos eles.\n- Instruções do Roku no palco web: IP, porta e token manuais quando o discovery não basta.\n- Número do hino e nome do hinário na capa, alinhados ao app desktop.\n- O web se identifica nas chamadas à API com chave de parceiro por ambiente.\n- Assistente na primeira abertura e sinal de que o dispositivo está online.\n\n### Atualizações internas\n- Atualizações internas para mais estabilidade e segurança.\n",
+  "date": "2026-11-26",
   "platform": "web"
 }
