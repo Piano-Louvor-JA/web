@@ -150,6 +150,33 @@ Aliases: `version:bug` → patch · `version:min` → minor · `version:max` →
 
 ---
 
+## Identificação das chamadas à API
+
+O `fetch` instalado no boot envia `X-Client-Platform: web`, a versão do build
+em `X-Client-Version` e, quando configurado, o identificador revogável
+`X-Partner-Key`. Esse identificador é próprio do web; não reutilize as chaves
+do desktop ou do APK. `Api-Token` legado e `Authorization` da sessão continuam
+independentes.
+
+Configure `VITE_PARTNER_KEY_STG` para a API de staging e
+`VITE_PARTNER_KEY_PROD` para produção. A URL efetiva da requisição seleciona a
+chave; `VITE_PARTNER_KEY` é um override opcional para builds locais. Sem chave
+configurada, o header é omitido. Somente as APIs HTTPS
+`api-stg.pianolouvorja.com.br` e `api.pianolouvorja.com.br`, além de APIs locais
+em `localhost`/`127.0.0.1`, recebem a chave configurada. Upstream, CDN,
+Google/Firebase e requisições `no-cors` não recebem essa chave.
+
+No GitHub, os secrets do repositório web são `PARTNER_KEY_STG` e
+`PARTNER_KEY_PROD`. O build de CI usa apenas a chave e as URLs do ambiente
+alvo: PR/push de staging usa staging; PR/push de main usa produção.
+O deploy é gerenciado pela hospedagem: configure também nela as variáveis
+`VITE_*` do ambiente correspondente antes de gerar o build publicado.
+Secrets do GitHub não são repassados automaticamente à hospedagem.
+
+O Vite incorpora os valores no JavaScript distribuído. A chave identifica o
+parceiro nas métricas e permite revogação; ela não é uma credencial de usuário.
+Uma chave desconhecida ou revogada enviada à API resulta em 401.
+
 ## Contribuir
 
 Abra PRs de funcionalidades, correções e documentação para `staging`. A promoção para produção segue por PR de `staging` para `main`. Antes do merge, o CI valida lint, tipos, testes, build, contratos comuns app↔web, regressão e mutação do diff quando aplicável.

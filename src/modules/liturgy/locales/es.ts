@@ -5,6 +5,7 @@ export default {
     worshipOf: 'Programación de {day}',
     addItem: 'Añadir Categoría/Separador',
     addItemToLiturgy: 'Añadir categoría/separador a la liturgia',
+    clearLiturgy: 'Borrar liturgia',
     importJa: 'Importar .ja',
     slja: {
       importButton: 'Importar .slja',
@@ -22,7 +23,6 @@ export default {
       importFailed: 'Error al importar el archivo .slja. Verifica el archivo e inténtalo de nuevo.',
     },
     ok: 'OK',
-    importJaDesktopOnly: 'Importar archivos .ja solo en el escritorio.',
     importJaReadError: 'No se pudo leer el archivo.',
     importJaInvalid: 'Archivo .ja inválido.',
     importJaDone: 'Importado: {added} añadidos, {skipped} duplicados en {days} día(s).',
@@ -34,9 +34,8 @@ export default {
     scheduled: {
       import: 'Importar ítems agendados',
       imported: 'Importados {count} ítems agendados',
-      notPorted: 'Archivo de LouvorJA Delphi reconocido ({name}), pero este recurso aún no fue portado — llegará en una versión futura.'
+      notPorted: 'Archivo de LouvorJA Delphi reconocido ({name}), pero este recurso aún no fue portado — llegará en una versión futura.',
     },
-    clearLiturgy: 'Borrar liturgia',
     lockDeletions: 'Bloquear edición y eliminaciones',
     unlockDeletions: 'Desbloquear edición y eliminaciones',
     editItem: 'Editar elemento',
@@ -49,7 +48,7 @@ export default {
       title: 'Clonar Liturgia',
       hint: 'Elija un día o una liturgia personalizada con elementos para copiar al día actual.',
       source: 'Origen',
-      emptySources: 'Ninguna liturgia disponible para clonar'
+      emptySources: 'Ninguna liturgia disponible para clonar',
     },
     noPreview: 'Seleccione un elemento para previsualizar',
     noPreviewHint: 'Haga clic en un elemento de la lista para ver la vista previa aquí.',
@@ -70,17 +69,17 @@ export default {
       pickStart: 'Definir inicio',
       pickEnd: 'Definir fin',
       startCountdown: 'Iniciar cuenta regresiva',
-      stopCountdown: 'Detener cuenta'
+      stopCountdown: 'Detener cuenta',
     },
     team: {
       title: 'Equipo de Turno',
       empty: 'Ningún miembro en el equipo de este culto.',
       manage: 'Gestionar Equipo',
-      comingSoon: 'Gestión de equipo próximamente.'
+      comingSoon: 'Gestión de equipo próximamente.',
     },
     broadcastNote: {
       title: 'Notas Generales del Día',
-      placeholder: 'Notas, avisos, recordatorios generales para el equipo técnico de sonido'
+      placeholder: 'Notas, avisos, recordatorios generales para el equipo técnico de sonido',
     },
     days: {
       sunday: 'Domingo',
@@ -90,7 +89,7 @@ export default {
       thursday: 'Jueves',
       friday: 'Viernes',
       saturday: 'Sábado',
-      custom: 'Personalizada'
+      custom: 'Personalizada',
     },
     daysShort: {
       sunday: 'Dom',
@@ -100,7 +99,7 @@ export default {
       thursday: 'Jue',
       friday: 'Vie',
       saturday: 'Sáb',
-      custom: 'Personalizada'
+      custom: 'Personalizada',
     },
     types: {
       category: 'Categoría/Separador',
@@ -117,7 +116,7 @@ export default {
       other_files: 'Otros',
       online_video: 'YouTube/Vimeo/Otros',
       site: 'Sitios/Redes Sociales',
-      verse: 'Versículo'
+      verse: 'Versículo',
     },
     typeDescriptions: {
       category: 'Las categorías sirven como separadores visuales entre secciones de la liturgia.',
@@ -134,7 +133,7 @@ export default {
       other_files: 'Otros archivos locales',
       online_video: 'Video en línea (YouTube, Vimeo y otros)',
       site: 'Sitios y redes sociales',
-      verse: 'Versículo bíblico'
+      verse: 'Versículo bíblico',
     },
     dialog: {
       title: 'Nuevo Momento',
@@ -163,8 +162,8 @@ export default {
         default: 'Default',
         internal: 'Medios Internos',
         external: 'Medios Externos/Enlace',
-        legacy: 'Legado'
-      }
+        legacy: 'Legado',
+      },
     },
     fields: {
       name: 'Nombre',
@@ -186,6 +185,7 @@ export default {
       changePresentationButton: 'Cambiar presentación',
       changeFilesButton: 'Cambiar imágenes',
       filesSelected: '{count} imágenes seleccionadas',
+      fileSelectedLabel: 'Archivo {index}',
       fileDesktopOnly: 'La selección de archivos solo está disponible en la versión de escritorio.',
       book: 'Libro',
       chapter: 'Capítulo',
@@ -194,7 +194,6 @@ export default {
       musicMode: 'Modo',
       musicModeAudio: 'Audio',
       musicModeInstrumental: 'Instrumental',
-      fileSelectedLabel: 'Archivo {index}'
     },
     namePlaceholders: {
       category: 'Ej: Dirección Inicial, Apertura de Culto, Bienvenida, Escuela Sabática, Culto Divino, etc...',
@@ -211,7 +210,7 @@ export default {
       other_files: 'Ej.: Archivo auxiliar',
       online_video: 'Ej.: Himno en YouTube',
       site: 'Ej.: Página de la iglesia',
-      verse: 'Referencia o título'
+      verse: 'Referencia o título',
     },
     actions: {
       save: 'Guardar',
@@ -253,7 +252,7 @@ export default {
       collapseCategory: 'Minimizar categoría',
       expandCategory: 'Expandir categoría',
       addSubItem: 'Añadir sub-elemento',
-      reorder: 'Arrastrar para reordenar'
+      reorder: 'Arrastrar para reordenar',
     },
     messages: {
       confirmDelete: '¿Desea eliminar este elemento de la liturgia?',
@@ -263,7 +262,6 @@ export default {
       itemAdded: 'Elemento añadido con éxito.',
       liturgySaved: 'Liturgia guardada con éxito.',
       mediaDesktopOnly: 'Proporcione la ruta del archivo de medios.',
-      videoSelectFile: 'Seleccionar archivo',
       catalogEmpty: 'No se encontraron canciones en el catálogo local.',
       customRequired: 'Cree o seleccione una liturgia personalizada antes de añadir elementos.',
       booksEmpty: 'No hay libros bíblicos disponibles. Complete la inicialización.',
@@ -271,13 +269,13 @@ export default {
       urlInvalid: 'El enlace proporcionado no es válido para proyección.',
       projectionFailed: 'No se pudo abrir la proyección en las pantallas configuradas.',
       presentationOfficeMissing: 'Para proyectar PPT/PPTX, instale LibreOffice (o defina LIBREOFFICE_PATH).',
-      presentationWebUnsupported: 'Presentaciones PPT/PPTX no son compatibles en el navegador.'
+      presentationWebUnsupported: 'Presentaciones PPT/PPTX no son compatibles en el navegador.',
     },
     custom: {
       title: 'Liturgias personalizadas',
       new: 'Nueva liturgia personalizada',
       namePlaceholder: 'Nombre de la liturgia (ej.: Culto Joven 12/07)',
-      empty: 'Ninguna liturgia personalizada. Cree una para empezar.'
-    }
-  }
+      empty: 'Ninguna liturgia personalizada. Cree una para empezar.',
+    },
+  },
 }

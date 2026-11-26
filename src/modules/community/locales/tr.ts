@@ -1,0 +1,56 @@
+// TR locale — traduções aplicadas (glossário BARRA).
+export default {
+  "community": {
+    "title": "Topluluk",
+    "subtitle": "PIANO ağındaki herkese açık derlemeler",
+    "back": "Geri",
+    "blockAuthor": "Yazarı engelle",
+    "blockConfirmTitle": "{name} engellensin mi?",
+    "blockConfirmMessage": "Bu yazarın derlemeleri sizin için Topluluk'ta görünmez olur. \"Engellenen kullanıcılar\"dan sonra açabilirsiniz.",
+    "blockConfirm": "Engelle",
+    "blockDone": "{name} engellendi.",
+    "blockFailed": "Engelleme başarısız — bağlantı/oturumu kontrol edin",
+    "blockedUsers": "Engellenen kullanıcılar",
+    "blockedEmpty": "Kimseyi engellemediniz.",
+    "blockedLoadError": "Yüklenemedi. Tekrar deneyin.",
+    "blockedNoName": "Adsız yazar",
+    "unblock": "Engeli kaldır",
+    "close": "Kapat",
+    "loginToModerate": "Bildirmek veya engellemek için giriş yapın.",
+    "trackCount": "{count} parça",
+    "byAuthor": "yazar {author}",
+    "empty": "Henüz herkese açık derleme yok.",
+    "loadError": "Topluluk yüklenemedi.",
+    "retry": "Tekrar dene",
+    "loading": "Yükleniyor…",
+    "saveCopy": "Kopyayı kaydet",
+    "copySaved": "Kopya Derlemelerim'e kaydedildi",
+    "copyFailed": "Kopya kaydedilemedi.",
+    "ranking": "Sıralamayı gör",
+    "pagination": "Topluluk sayfalaması",
+    "searchPlaceholder": "Derleme veya yazar ara...",
+    "clearSearch": "Aramayı temizle",
+    "noResults": "Bu arama için sonuç yok."
+  },
+  "ranking": {
+    "title": "Sıralama",
+    "subtitle": "Topluluk Katkıda Bulunanları",
+    "week": "Haftalık",
+    "all": "Tümü",
+    "myPosition": "Sıranız: #{position}",
+    "points": "{points} puan",
+    "notRankedYet": "Bu dönemde henüz puanınız yok.",
+    "empty": "Henüz kimse puan almadı. Bir derleme yayınlayın!",
+    "loadError": "Kopya kaydedilemedi.",
+    "weeklyTasks": "Haftanın görevleri",
+    "loginToSeePosition": "Sıralamadaki yerinizi görmek için giriş yapın.",
+    "report": "Bildir",
+    "reportPrompt": "Bildirme nedenini yazın (en az 3 karakter):",
+    "reportTooShort": "Neden çok kısa (en az {min} karakter)."
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "markRead": "Tümünü okundu işaretle",
+    "empty": "Burada bildirim yok."
+  }
+}

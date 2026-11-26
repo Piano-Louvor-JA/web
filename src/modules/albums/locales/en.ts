@@ -15,15 +15,27 @@ export default {
       number: '#',
       title: 'Title / Collection',
       duration: 'Duration',
-      actions: 'Actions'
+      actions: 'Actions',
     },
     trackCount: '{count} tracks',
     loading: 'Loading…',
     retry: 'Try again',
     dismiss: 'Dismiss',
+    categories: {
+      hymnals: 'Official Hymnals',
+      hymnalsSubtitle: 'Complete liturgical collections for offline use.',
+      youthAlbums: 'Youth CDs & Collections',
+      albumsSubtitle: 'Annual albums and special productions.',
+      defaultSubtitle: 'Albums and special productions.',
+    },
+    hymnal: {
+      edition1996Name: 'Adventist Hymnal - 1996 Edition',
+      officialSubtitle: '{count} hymns with sheet music and lyrics',
+      edition1996Subtitle: 'Historic - {count} traditional hymns',
+    },
     lyric: {
       title: 'Lyrics',
-      close: 'Close lyrics'
+      close: 'Close lyrics',
     },
     messages: {
       catalogEmpty: 'No collection found in the local catalog.',
@@ -34,19 +46,7 @@ export default {
       tracksFailed: 'Could not load the tracks.',
       searchEmpty: 'No song found.',
       lyricMissing: 'Lyrics unavailable for this track.',
-      projectionFailed: 'Could not open projection on the configured screens.'
-    },
-    categories: {
-      hymnals: 'Official Hymnals',
-      hymnalsSubtitle: 'Complete liturgical collections for offline use.',
-      youthAlbums: 'Youth CDs & Collections',
-      albumsSubtitle: 'Annual albums and special productions.',
-      defaultSubtitle: 'Albums and special productions.'
-    },
-    hymnal: {
-      edition1996Name: 'Adventist Hymnal - 1996 Edition',
-      officialSubtitle: '{count} hymns with sheet music and lyrics',
-      edition1996Subtitle: 'Historic - {count} traditional hymns'
+      projectionFailed: 'Could not open projection on the configured screens.',
     },
     playlists: {
       rename: 'Rename playlist {name}',
@@ -98,9 +98,15 @@ export default {
     },
     custom: {
       title: 'My Collections',
+      sectionSubtitle: 'Your collections — hymns grouped by you',
+      changeCover: 'Change cover',
+      removeCover: 'Remove cover',
       openEditor: 'Open editor',
       open: 'Open collection {name}',
-      trackCount: '{count} track(s)'
-    }
-  }
+      trackCount: '{count} track(s)',
+      empty: 'No collections yet. Create one to group hymns your way.',
+      newPlaceholder: 'Collection name',
+      create: 'Create',
+    },
+  },
 }

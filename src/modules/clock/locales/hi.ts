@@ -1,0 +1,46 @@
+// HI locale — traduções aplicadas (glossário BARRA).
+export default {
+  "utilities": {
+    "title": "उपयोगिताएँ",
+    "subtitle": "पूजा के लिए प्रक्षेपण उपकरण",
+    "temporizador": "टाइमर",
+    "temporizadorDescription": "घड़ी, स्टॉपवॉच और काउंटडाउन",
+    "temporizadorSubtitle": "प्रक्षेपण के लिए समय उपकरण",
+    "backToUtilities": "यूटिलिटीज़ पर वापस",
+    "clock": "घड़ी",
+    "clockDescription": "प्रक्षेपण स्क्रीन पर समय दिखाएँ",
+    "random": "रैफ़ल",
+    "randomDescription": "नामों और संख्याओं का एनिमेटेड ड्रॉ",
+    "draw": "ड्रॉइंग",
+    "drawDescription": "प्रक्षेपण पर नोट करें और हाइलाइट करें",
+    "timer": "स्टॉपवॉच",
+    "timerDescription": "प्रक्षेपित प्रगतिशील गणना",
+    "countdown": "टाइमर",
+    "countdownDescription": "प्रक्षेपित काउंटडाउन"
+  },
+  "clock": {
+    "title": "घड़ी",
+    "config": "निजीकृत करें",
+    "configTitle": "प्रक्षेपण का निजीकरण",
+    "configSubtitle": "स्क्रीन पर घड़ी की दिखावट समायोजित करें",
+    "style": "डिस्प्ले शैली",
+    "digital": "डिजिटल",
+    "analog": "एनालॉग",
+    "options": "प्रारूप विकल्प",
+    "optionsHint": "समय प्रदर्शन की सेटिंग्स",
+    "showSeconds": "सेकंड दिखाएँ",
+    "format24h": "24 घंटे प्रारूप",
+    "bgColor": "पृष्ठभूमि का रंग",
+    "bgColorHint": "डिस्प्ले स्क्रीन की पृष्ठभूमि का आधार रंग",
+    "textColor": "पाठ / हाथों का रंग",
+    "textColorHint": "घड़ी के फ़ॉन्ट या हाथों का रंग",
+    "customColor": "कस्टम रंग",
+    "reset": "डिफ़ॉल्ट पुनर्स्थापित करें",
+    "apply": "लागू करें",
+    "close": "बंद करें",
+    "project": "प्रक्षेपित करें",
+    "clearProjection": "प्रक्षेपण से हटाएँ",
+    "projecting": "प्रक्षेपण में",
+    "backToUtilities": "टाइमर पर वापस"
+  }
+}

@@ -68,6 +68,10 @@ interface ImportMetaEnv {
   /** Origem upstream que publica /db/* (manifest + bundles) — SPEC v1.2.0 ADR-11. */
   readonly VITE_URL_BUNDLES?: string
   readonly VITE_API_TOKEN?: string
+  /** Identificador de parceiro do web: override opcional e chaves por ambiente. */
+  readonly VITE_PARTNER_KEY?: string
+  readonly VITE_PARTNER_KEY_STG?: string
+  readonly VITE_PARTNER_KEY_PROD?: string
 }
 
 interface ImportMeta {

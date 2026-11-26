@@ -54,8 +54,7 @@ export default {
     slideOf: 'Diapositiva {current} de {total}',
     coverSlide: 'Portada / título',
     playlist: 'Lista de diapositivas',
-    projectionHotkeyHint:
-      'ESC cierra la proyección  ·  Ctrl+Alt+P alterna con la pantalla del operador',
+    projectionHotkeyHint: 'ESC cierra la proyección  ·  Ctrl+Alt+P alterna con la pantalla del operador',
     ondemandDownload: 'Descarga bajo demanda',
     ondemandPreplay: 'Espera — descargando la canción...',
     ondemandDownloadSuccess: '¡Descarga bajo demanda completada con éxito!',
@@ -75,8 +74,7 @@ export default {
       downloading: 'Descargando…',
       thisTrack: 'esta pista',
       removeConfirmTitle: 'Eliminar medios',
-      removeConfirmText:
-        '¿Está seguro de que desea eliminar los medios de "{name}"? Esto borrará los archivos de su computadora.',
+      removeConfirmText: '¿Está seguro de que desea eliminar los medios de "{name}"? Esto borrará los archivos de su computadora.',
       removeConfirmYes: 'Eliminar',
       removeConfirmNo: 'Cancelar',
     },
@@ -88,12 +86,9 @@ export default {
     messages: {
       trackMissing: 'No se pudo cargar esta canción en el catálogo local.',
       audioMissing: 'Esta pista no tiene audio disponible para el modo seleccionado.',
-      notDownloaded:
-        'Esta colección aún no ha sido descargada. Descárguela desde el Centro de Medios para usar sin conexión.',
-      slidesOnlyNotDownloaded:
-        'Audio no disponible (colección no descargada). Proyectando solo diapositivas.',
-      slidesOnlyNoAudio:
-        'Audio no disponible para esta pista. Proyectando solo diapositivas.',
+      notDownloaded: 'Esta colección aún no ha sido descargada. Descárguela desde el Centro de Medios para usar sin conexión.',
+      slidesOnlyNotDownloaded: 'Audio no disponible (colección no descargada). Proyectando solo diapositivas.',
+      slidesOnlyNoAudio: 'Audio no disponible para esta pista. Proyectando solo diapositivas.',
       playbackFailed: 'No se pudo iniciar la reproducción del audio.',
     },
   },

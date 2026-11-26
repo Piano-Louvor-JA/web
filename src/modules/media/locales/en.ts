@@ -54,8 +54,7 @@ export default {
     slideOf: 'Slide {current} of {total}',
     coverSlide: 'Cover / title',
     playlist: 'Slide list',
-    projectionHotkeyHint:
-      'ESC ends projection  ·  Ctrl+Alt+P switches to the operator screen',
+    projectionHotkeyHint: 'ESC ends projection  ·  Ctrl+Alt+P switches to the operator screen',
     ondemandDownload: 'On-demand download',
     ondemandPreplay: 'Please wait — downloading the song...',
     ondemandDownloadSuccess: 'On-demand download completed successfully!',
@@ -75,8 +74,7 @@ export default {
       downloading: 'Downloading…',
       thisTrack: 'this track',
       removeConfirmTitle: 'Remove media',
-      removeConfirmText:
-        'Are you sure you want to remove the media for "{name}"? This will delete the files from your computer.',
+      removeConfirmText: 'Are you sure you want to remove the media for "{name}"? This will delete the files from your computer.',
       removeConfirmYes: 'Remove',
       removeConfirmNo: 'Cancel',
     },
@@ -88,12 +86,9 @@ export default {
     messages: {
       trackMissing: 'Could not load this song in the local catalog.',
       audioMissing: 'This track has no audio available for the selected mode.',
-      notDownloaded:
-        'This collection has not been downloaded. Download it from the Media Center to use offline.',
-      slidesOnlyNotDownloaded:
-        'Audio unavailable (collection not downloaded). Projecting slides only.',
-      slidesOnlyNoAudio:
-        'Audio unavailable for this track. Projecting slides only.',
+      notDownloaded: 'This collection has not been downloaded. Download it from the Media Center to use offline.',
+      slidesOnlyNotDownloaded: 'Audio unavailable (collection not downloaded). Projecting slides only.',
+      slidesOnlyNoAudio: 'Audio unavailable for this track. Projecting slides only.',
       playbackFailed: 'Could not start audio playback.',
     },
   },

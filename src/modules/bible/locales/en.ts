@@ -11,6 +11,7 @@ export default {
     browseBooksAndChapters: 'Browse Books and Chapters',
     books: 'Books',
     chapters: 'Ch.',
+    chapter: 'Chapter',
     testamentOld: 'OT',
     testamentNew: 'NT',
     searchBible: 'Search in the Bible',
@@ -20,12 +21,14 @@ export default {
     copy: 'Copy',
     share: 'Share',
     project: 'Project',
-    previousVerse: 'Previous verse',
-    nextVerse: 'Next verse',
+    previousChapter: 'Previous verse',
+    nextChapter: 'Next verse',
     clearSelection: 'Clear selection',
     clearProjection: 'Remove from projection',
     emptyCatalog: 'No Bible content available. Complete the app initialization.',
     emptyChapter: 'No verse found in this chapter.',
+    selectBookAndChapter: 'Select a book and chapter to start',
+    selectChapterPrompt: 'Select a chapter',
     loading: 'Loading Bible...',
     noSelection: 'Select a verse to project',
     copied: 'Text copied',
@@ -34,12 +37,7 @@ export default {
     dismiss: 'Dismiss',
     errors: {
       loadCatalogFailed: 'Could not load Bible books and versions.',
-      loadChapterFailed: 'Could not load the selected chapter.'
+      loadChapterFailed: 'Could not load the selected chapter.',
     },
-    chapter: 'Chapter',
-    previousChapter: 'Previous verse',
-    nextChapter: 'Next verse',
-    selectBookAndChapter: 'Select a book and chapter to start',
-    selectChapterPrompt: 'Select a chapter'
-  }
+  },
 }
