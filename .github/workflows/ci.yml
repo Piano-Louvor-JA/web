@@ -71,7 +71,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Build com identidade do ambiente alvo
+        env:
+          VITE_URL_DATABASE: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && 'https://api.pianolouvorja.com.br/json_db' || 'https://api-stg.pianolouvorja.com.br/json_db' }}
+          VITE_URL_FILES: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && 'https://api.pianolouvorja.com.br/file' || 'https://api-stg.pianolouvorja.com.br/file' }}
+          VITE_PARTNER_KEY_STG: ${{ github.base_ref != 'main' && github.ref != 'refs/heads/main' && secrets.PARTNER_KEY_STG || '' }}
+          VITE_PARTNER_KEY_PROD: ${{ (github.base_ref == 'main' || github.ref == 'refs/heads/main') && secrets.PARTNER_KEY_PROD || '' }}
+        run: npm run build
 
   paridade:
     name: Paridade app↔web (anti-deriva S1)
