@@ -82,6 +82,18 @@ import countdownRu from "@modules/countdown/locales/ru";
 import countdownTr from "@modules/countdown/locales/tr";
 import countdownUk from "@modules/countdown/locales/uk";
 import countdownZh from "@modules/countdown/locales/zh";
+import onboardingPtBR from "@modules/onboarding/locales/pt-BR";
+import onboardingEn from "@modules/onboarding/locales/en";
+import onboardingEs from "@modules/onboarding/locales/es";
+import onboardingFr from "@modules/onboarding/locales/fr";
+import onboardingRu from "@modules/onboarding/locales/ru";
+import onboardingUk from "@modules/onboarding/locales/uk";
+import onboardingJa from "@modules/onboarding/locales/ja";
+import onboardingKo from "@modules/onboarding/locales/ko";
+import onboardingZh from "@modules/onboarding/locales/zh";
+import onboardingTr from "@modules/onboarding/locales/tr";
+import onboardingAr from "@modules/onboarding/locales/ar";
+import onboardingHi from "@modules/onboarding/locales/hi";
 import homeAr from "@modules/home/locales/ar";
 import homeEn from "@modules/home/locales/en";
 import homeEs from "@modules/home/locales/es";
@@ -162,6 +174,7 @@ const modulesPtBR = {
 	...clockPtBR,
 	...countdownPtBR,
 	...homePtBR,
+	...onboardingPtBR,
 	...liturgyPtBR,
 	...mediaPtBR,
 	...randomPtBR,
@@ -176,6 +189,7 @@ const modulesEn = {
 	...clockEn,
 	...countdownEn,
 	...homeEn,
+	...onboardingEn,
 	...liturgyEn,
 	...mediaEn,
 	...randomEn,
@@ -190,6 +204,7 @@ const modulesEs = {
 	...clockEs,
 	...countdownEs,
 	...homeEs,
+	...onboardingEs,
 	...liturgyEs,
 	...mediaEs,
 	...randomEs,
@@ -204,6 +219,7 @@ const modulesFr = {
 	...clockFr,
 	...countdownFr,
 	...homeFr,
+	...onboardingFr,
 	...liturgyFr,
 	...mediaFr,
 	...randomFr,
@@ -218,6 +234,7 @@ const modulesRu = {
 	...clockRu,
 	...countdownRu,
 	...homeRu,
+	...onboardingRu,
 	...liturgyRu,
 	...mediaRu,
 	...randomRu,
@@ -232,6 +249,7 @@ const modulesUk = {
 	...clockUk,
 	...countdownUk,
 	...homeUk,
+	...onboardingUk,
 	...liturgyUk,
 	...mediaUk,
 	...randomUk,
@@ -246,6 +264,7 @@ const modulesJa = {
 	...clockJa,
 	...countdownJa,
 	...homeJa,
+	...onboardingJa,
 	...liturgyJa,
 	...mediaJa,
 	...randomJa,
@@ -260,6 +279,7 @@ const modulesKo = {
 	...clockKo,
 	...countdownKo,
 	...homeKo,
+	...onboardingKo,
 	...liturgyKo,
 	...mediaKo,
 	...randomKo,
@@ -274,6 +294,7 @@ const modulesZh = {
 	...clockZh,
 	...countdownZh,
 	...homeZh,
+	...onboardingZh,
 	...liturgyZh,
 	...mediaZh,
 	...randomZh,
@@ -288,6 +309,7 @@ const modulesTr = {
 	...clockTr,
 	...countdownTr,
 	...homeTr,
+	...onboardingTr,
 	...liturgyTr,
 	...mediaTr,
 	...randomTr,
@@ -302,6 +324,7 @@ const modulesAr = {
 	...clockAr,
 	...countdownAr,
 	...homeAr,
+	...onboardingAr,
 	...liturgyAr,
 	...mediaAr,
 	...randomAr,
@@ -316,6 +339,7 @@ const modulesHi = {
 	...clockHi,
 	...countdownHi,
 	...homeHi,
+	...onboardingHi,
 	...liturgyHi,
 	...mediaHi,
 	...randomHi,

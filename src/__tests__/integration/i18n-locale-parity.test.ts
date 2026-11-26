@@ -11,6 +11,7 @@ import ptClock from "@modules/clock/locales/pt-BR";
 import ptCommunity from "@modules/community/locales/pt-BR";
 import ptCountdown from "@modules/countdown/locales/pt-BR";
 import ptHome from "@modules/home/locales/pt-BR";
+import ptOnboarding from "@modules/onboarding/locales/pt-BR";
 import ptLiturgy from "@modules/liturgy/locales/pt-BR";
 import ptMedia from "@modules/media/locales/pt-BR";
 import ptRandom from "@modules/random/locales/pt-BR";
@@ -45,6 +46,7 @@ const ptModules: Record<string, Record<string, unknown>> = {
 	community: ptCommunity as Record<string, unknown>,
 	countdown: ptCountdown as Record<string, unknown>,
 	home: ptHome as Record<string, unknown>,
+	onboarding: ptOnboarding as Record<string, unknown>,
 	liturgy: ptLiturgy as Record<string, unknown>,
 	media: ptMedia as Record<string, unknown>,
 	random: ptRandom as Record<string, unknown>,
