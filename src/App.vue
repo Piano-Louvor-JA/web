@@ -9,6 +9,10 @@ import { authSession } from '@modules/auth/composables/useAuth'
 import { startOutboxTriggers, flushOutbox } from '@modules/sync/services/sync-outbox-service'
 import { flushMediaOutbox } from '@modules/media/services/outbox'
 import { startSljaMigrationWatch } from '@modules/liturgy/services/local-slja-migration'
+import OnboardingDialog from '@modules/onboarding/components/OnboardingDialog.vue'
+import { useOnboarding } from '@modules/onboarding/composables/useOnboarding'
+import { markFreshInstall } from '@modules/onboarding/services/onboarding-preferences'
+import { startHeartbeatLoop } from '@modules/telemetry/services/heartbeat-loop'
 
 const { isAccepted } = useEula()
 
@@ -24,6 +28,24 @@ const isPopupWindow = computed(
 const route = useRoute()
 const showEula = computed(() => !isAccepted.value && !isPopupWindow.value)
 const showApp = computed(() => isAccepted.value || isPopupWindow.value)
+
+// Telemetria de dispositivos (Fase 5): no web, quem abre sem ter aceitado a
+// EULA é instalação nova → assistente completo (cor, animação, distrito/igreja)
+// depois do aceite. Quem já usava e está sem distrito/igreja vê só essa etapa.
+if (!isAccepted.value && !isPopupWindow.value) markFreshInstall()
+const onboarding = useOnboarding()
+let onboardingChecked = false
+watch(
+  isAccepted,
+  (accepted) => {
+    if (!accepted || onboardingChecked || isPopupWindow.value) return
+    onboardingChecked = true
+    onboarding.start({ isFirstBoot: false })
+    // Sinal de "online" a cada 5 min com a aba visível.
+    startHeartbeatLoop()
+  },
+  { immediate: true },
+)
 
 let stopSync: (() => void) | undefined
 const flushMedia = () => { void flushMediaOutbox().catch(console.error) }
@@ -51,4 +73,5 @@ onMounted(async () => {
 <template>
   <EulaDialog v-if="showEula" />
   <RouterView v-if="showApp" />
+  <OnboardingDialog v-if="showApp && !isPopupWindow" />
 </template>
