@@ -19,6 +19,9 @@ export interface PalcoSlotInfo {
   wsPort: number
 }
 
+/** Roku é receiver LAN: conecta ao sender do desktop/APK; o browser só controla o slot. */
+export const palcoRokuInstructions = 'Na Roku: Configuração → informe IP, porta WS e token do sender. O browser não abre conexão Roku direta.'
+
 export interface PalcoStatusInfo {
   running: boolean
   clients: number
