@@ -1,0 +1,38 @@
+export default {
+  auth: {
+    title: "LouvorJA-account",
+    email: "E-mail",
+    password: "Wachtwoord",
+    displayName: "Uw naam",
+    newPassword: "Nieuw wachtwoord",
+    resetToken: "Hersteltoken",
+    emailRequired: "E-mail is vereist",
+    emailInvalid: "Ongeldig e-mailadres",
+    passwordRequired: "Wachtwoord is vereist",
+    passwordMin: "Wachtwoord moet minimaal 6 tekens bevatten",
+    newPasswordMin: "Nieuw wachtwoord moet minimaal 8 tekens bevatten",
+    nameMin: "Naam moet minimaal 2 tekens bevatten",
+    tokenMin: "Token moet minimaal 16 tekens bevatten",
+    login: "Aanmelden",
+    register: "Account maken",
+    logout: "Afmelden",
+    createAccount: "Account maken",
+    alreadyHaveAccount: "Hebt u al een account?",
+    forgotPassword: "Wachtwoord vergeten",
+    back: "Terug",
+    sendResetToken: "Hersteltoken genereren",
+    changePassword: "Wachtwoord wijzigen",
+    forgotHint:
+      "Voer uw e-mailadres in. Zonder geautomatiseerde e-mail ontvangt u in productie het hersteltoken via projectondersteuning.",
+    resetHint:
+      "Plak het hersteltoken en stel het nieuwe wachtwoord in (min. 8 tekens).",
+    deleteAccount: "Account verwijderen",
+    deleteTitle: "Uw account verwijderen",
+    deleteWarning:
+      "Hiermee verwijdert u uw account, privécollecties, punten en meldingen. Openbare collecties blijven zonder uw naam in de Community. Dit kan niet ongedaan worden gemaakt.",
+    deletePasswordHint: "Voer uw wachtwoord in ter bevestiging.",
+    deleteGoogleHint: "U bevestigt met uw Google-account.",
+    deleteConfirm: "Definitief verwijderen",
+    cancel: "Annuleren",
+  },
+};
