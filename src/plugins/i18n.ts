@@ -5,6 +5,7 @@ import fr from "@locales/fr";
 import hi from "@locales/hi";
 import nl from "@locales/nl";
 import it from "@locales/it";
+import pl from "@locales/pl";
 import ja from "@locales/ja";
 import ko from "@locales/ko";
 import ptBR from "@locales/pt-BR";
@@ -19,6 +20,7 @@ import albumsFr from "@modules/albums/locales/fr";
 import albumsHi from "@modules/albums/locales/hi";
 import albumsIt from "@modules/albums/locales/it";
 import albumsNl from "@modules/albums/locales/nl";
+import albumsPl from "@modules/albums/locales/pl";
 import albumsJa from "@modules/albums/locales/ja";
 import albumsKo from "@modules/albums/locales/ko";
 import albumsPtBR from "@modules/albums/locales/pt-BR";
@@ -33,6 +35,7 @@ import authFr from "@modules/auth/locales/fr";
 import authHi from "@modules/auth/locales/hi";
 import authIt from "@modules/auth/locales/it";
 import authNl from "@modules/auth/locales/nl";
+import authPl from "@modules/auth/locales/pl";
 import authJa from "@modules/auth/locales/ja";
 import authKo from "@modules/auth/locales/ko";
 import authPtBR from "@modules/auth/locales/pt-BR";
@@ -47,6 +50,7 @@ import bibleFr from "@modules/bible/locales/fr";
 import bibleHi from "@modules/bible/locales/hi";
 import bibleIt from "@modules/bible/locales/it";
 import bibleNl from "@modules/bible/locales/nl";
+import biblePl from "@modules/bible/locales/pl";
 import bibleJa from "@modules/bible/locales/ja";
 import bibleKo from "@modules/bible/locales/ko";
 import biblePtBR from "@modules/bible/locales/pt-BR";
@@ -61,6 +65,7 @@ import clockFr from "@modules/clock/locales/fr";
 import clockHi from "@modules/clock/locales/hi";
 import clockIt from "@modules/clock/locales/it";
 import clockNl from "@modules/clock/locales/nl";
+import clockPl from "@modules/clock/locales/pl";
 import clockJa from "@modules/clock/locales/ja";
 import clockKo from "@modules/clock/locales/ko";
 import clockPtBR from "@modules/clock/locales/pt-BR";
@@ -75,6 +80,7 @@ import communityFr from "@modules/community/locales/fr";
 import communityHi from "@modules/community/locales/hi";
 import communityIt from "@modules/community/locales/it";
 import communityNl from "@modules/community/locales/nl";
+import communityPl from "@modules/community/locales/pl";
 import communityJa from "@modules/community/locales/ja";
 import communityKo from "@modules/community/locales/ko";
 import communityPtBR from "@modules/community/locales/pt-BR";
@@ -89,6 +95,7 @@ import countdownFr from "@modules/countdown/locales/fr";
 import countdownHi from "@modules/countdown/locales/hi";
 import countdownIt from "@modules/countdown/locales/it";
 import countdownNl from "@modules/countdown/locales/nl";
+import countdownPl from "@modules/countdown/locales/pl";
 import countdownJa from "@modules/countdown/locales/ja";
 import countdownKo from "@modules/countdown/locales/ko";
 import countdownPtBR from "@modules/countdown/locales/pt-BR";
@@ -110,6 +117,7 @@ import onboardingAr from "@modules/onboarding/locales/ar";
 import onboardingHi from "@modules/onboarding/locales/hi";
 import onboardingIt from "@modules/onboarding/locales/it";
 import onboardingNl from "@modules/onboarding/locales/nl";
+import onboardingPl from "@modules/onboarding/locales/pl";
 import homeAr from "@modules/home/locales/ar";
 import homeEn from "@modules/home/locales/en";
 import homeEs from "@modules/home/locales/es";
@@ -117,6 +125,7 @@ import homeFr from "@modules/home/locales/fr";
 import homeHi from "@modules/home/locales/hi";
 import homeIt from "@modules/home/locales/it";
 import homeNl from "@modules/home/locales/nl";
+import homePl from "@modules/home/locales/pl";
 import homeJa from "@modules/home/locales/ja";
 import homeKo from "@modules/home/locales/ko";
 import homePtBR from "@modules/home/locales/pt-BR";
@@ -131,6 +140,7 @@ import liturgyFr from "@modules/liturgy/locales/fr";
 import liturgyHi from "@modules/liturgy/locales/hi";
 import liturgyIt from "@modules/liturgy/locales/it";
 import liturgyNl from "@modules/liturgy/locales/nl";
+import liturgyPl from "@modules/liturgy/locales/pl";
 import liturgyJa from "@modules/liturgy/locales/ja";
 import liturgyKo from "@modules/liturgy/locales/ko";
 import liturgyPtBR from "@modules/liturgy/locales/pt-BR";
@@ -145,6 +155,7 @@ import mediaFr from "@modules/media/locales/fr";
 import mediaHi from "@modules/media/locales/hi";
 import mediaIt from "@modules/media/locales/it";
 import mediaNl from "@modules/media/locales/nl";
+import mediaPl from "@modules/media/locales/pl";
 import mediaJa from "@modules/media/locales/ja";
 import mediaKo from "@modules/media/locales/ko";
 import mediaPtBR from "@modules/media/locales/pt-BR";
@@ -159,6 +170,7 @@ import randomFr from "@modules/random/locales/fr";
 import randomHi from "@modules/random/locales/hi";
 import randomIt from "@modules/random/locales/it";
 import randomNl from "@modules/random/locales/nl";
+import randomPl from "@modules/random/locales/pl";
 import randomJa from "@modules/random/locales/ja";
 import randomKo from "@modules/random/locales/ko";
 import randomPtBR from "@modules/random/locales/pt-BR";
@@ -173,6 +185,7 @@ import settingsFr from "@modules/settings/locales/fr";
 import settingsHi from "@modules/settings/locales/hi";
 import settingsIt from "@modules/settings/locales/it";
 import settingsNl from "@modules/settings/locales/nl";
+import settingsPl from "@modules/settings/locales/pl";
 import settingsJa from "@modules/settings/locales/ja";
 import settingsKo from "@modules/settings/locales/ko";
 import settingsPtBR from "@modules/settings/locales/pt-BR";
@@ -187,6 +200,7 @@ import timerFr from "@modules/timer/locales/fr";
 import timerHi from "@modules/timer/locales/hi";
 import timerIt from "@modules/timer/locales/it";
 import timerNl from "@modules/timer/locales/nl";
+import timerPl from "@modules/timer/locales/pl";
 import timerJa from "@modules/timer/locales/ja";
 import timerKo from "@modules/timer/locales/ko";
 import timerPtBR from "@modules/timer/locales/pt-BR";
@@ -391,6 +405,21 @@ const modulesNl = {
   ...authNl,
   ...communityNl,
 };
+const modulesPl = {
+  ...albumsPl,
+  ...biblePl,
+  ...clockPl,
+  ...countdownPl,
+  ...homePl,
+  ...onboardingPl,
+  ...liturgyPl,
+  ...mediaPl,
+  ...randomPl,
+  ...settingsPl,
+  ...timerPl,
+  ...authPl,
+  ...communityPl,
+};
 const modulesHi = {
   ...albumsHi,
   ...bibleHi,
@@ -423,6 +452,7 @@ export const SUPPORTED_LOCALES = [
   "hi",
   "it",
   "nl",
+  "pl",
 ] as const;
 
 /** Locale persistido: Settings grava em localStorage['user_data'].language
@@ -463,5 +493,6 @@ export default createI18n({
     hi: { ...hi, ...modulesHi },
     it: { ...it, ...modulesIt },
     nl: { ...nl, ...modulesNl },
+    pl: { ...pl, ...modulesPl },
   },
 });
