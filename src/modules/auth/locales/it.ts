@@ -1,0 +1,38 @@
+export default {
+  auth: {
+    title: "Account LouvorJA",
+    email: "E-mail",
+    password: "Password",
+    displayName: "Il tuo nome",
+    newPassword: "Nuova password",
+    resetToken: "Token di reimpostazione",
+    emailRequired: "L'e-mail è obbligatoria",
+    emailInvalid: "E-mail non valida",
+    passwordRequired: "La password è obbligatoria",
+    passwordMin: "La password deve contenere almeno 6 caratteri",
+    newPasswordMin: "La nuova password deve contenere almeno 8 caratteri",
+    nameMin: "Il nome deve contenere almeno 2 caratteri",
+    tokenMin: "Il token deve contenere almeno 16 caratteri",
+    login: "Accedi",
+    register: "Crea account",
+    logout: "Esci",
+    createAccount: "Crea account",
+    alreadyHaveAccount: "Hai già un account",
+    forgotPassword: "Password dimenticata",
+    back: "Indietro",
+    sendResetToken: "Genera token di reimpostazione",
+    changePassword: "Cambia password",
+    forgotHint:
+      "Inserisci la tua e-mail. Senza e-mail automatica: in produzione il token di reimpostazione è fornito dal supporto del progetto.",
+    resetHint:
+      "Incolla il token di reimpostazione e imposta la nuova password (min. 8 caratteri).",
+    deleteAccount: "Elimina account",
+    deleteTitle: "Elimina il tuo account",
+    deleteWarning:
+      "Questa operazione elimina il tuo account, le tue raccolte private, i punti e le notifiche. Le raccolte pubbliche restano nella Comunità senza il tuo nome. Non può essere annullata.",
+    deletePasswordHint: "Inserisci la password per confermare.",
+    deleteGoogleHint: "Confermerai con il tuo account Google.",
+    deleteConfirm: "Elimina definitivamente",
+    cancel: "Annulla",
+  },
+};

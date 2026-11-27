@@ -19,7 +19,7 @@ import ptSettings from "@modules/settings/locales/pt-BR";
 import ptTimer from "@modules/timer/locales/pt-BR";
 import { describe, expect, it } from "vitest";
 
-// Locales suportados pelo produto (12 idiomas). pt-BR é a fonte canônica.
+// Locales suportados pelo produto (15 idiomas). pt-BR é a fonte canônica.
 const SUPPORTED_LOCALES = [
 	"pt-BR",
 	"en",
@@ -33,6 +33,9 @@ const SUPPORTED_LOCALES = [
 	"tr",
 	"ar",
 	"hi",
+	"it",
+	"nl",
+	"pl",
 ] as const;
 
 const ROOT = join(__dirname, "..", "..", "..");
