@@ -32,6 +32,7 @@ const locales = [
   { value: "es", label: "Español" },
   { value: "it", label: "Italiano" },
   { value: "nl", label: "Nederlands" },
+  { value: "pl", label: "Polski" },
   // { value: 'en', label: 'English' },
 ] as const;
 
